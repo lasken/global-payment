@@ -27,16 +27,19 @@
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--white);font-family:var(--font-body);overflow-x:hidden;min-height:100vh}
 
+/* ── NOISE OVERLAY ── */
 body::before{
   content:'';position:fixed;inset:0;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
   pointer-events:none;z-index:0;opacity:0.4
 }
 
+/* ── AMBIENT GLOWS ── */
 .glow-orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
 .glow-orb.one{width:600px;height:600px;background:radial-gradient(circle,rgba(124,58,237,0.18),transparent 70%);top:-200px;left:-150px}
 .glow-orb.two{width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,0.12),transparent 70%);bottom:-100px;right:-100px}
 
+/* ── NAV ── */
 nav{
   position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;
@@ -70,9 +73,11 @@ nav{
 }
 .nav-cta:hover{background:var(--purple-light);box-shadow:0 0 30px rgba(124,58,237,0.5)}
 
+/* ── PAGE SYSTEM ── */
 .page{display:none;min-height:100vh;padding-top:80px;position:relative;z-index:1}
 .page.active{display:block}
 
+/* ── HERO ── */
 #page-home{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-height:100vh;text-align:center;padding:80px 2rem 4rem;
@@ -80,6 +85,7 @@ nav{
 }
 #page-home{display:flex}
 
+/* Grid lines bg */
 #page-home::after{
   content:'';position:absolute;inset:0;z-index:0;
   background-image:
@@ -156,6 +162,7 @@ nav{
 .stat-num span{color:var(--purple-light)}
 .stat-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:0.2rem}
 
+/* ── FLOATING TICKER ── */
 .mini-ticker{
   display:flex;gap:2rem;margin-top:2.5rem;
   background:rgba(13,8,32,0.8);border:1px solid var(--border);
@@ -176,6 +183,7 @@ nav{
 .up{color:#22c55e}.down{color:#ef4444}
 .ticker-ngn{font-size:0.72rem;color:var(--muted)}
 
+/* ── SECTION SHARED ── */
 .section{padding:4rem 3rem;max-width:1200px;margin:0 auto}
 .section-label{
   font-family:var(--font-display);font-size:0.65rem;font-weight:700;letter-spacing:0.2em;
@@ -187,6 +195,7 @@ nav{
 }
 .section-sub{font-size:0.88rem;color:var(--muted);line-height:1.75;max-width:500px}
 
+/* ── HOW IT WORKS ── */
 #page-how .section{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start}
 .how-steps{display:flex;flex-direction:column;gap:0}
 
@@ -237,6 +246,7 @@ nav{
   font-family:var(--font-display);font-size:0.78rem;font-weight:600;color:#22c55e;
 }
 
+/* ── RATES ── */
 #page-rates .section{display:flex;flex-direction:column;gap:3rem}
 .rates-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem}
 .live-badge{
@@ -294,6 +304,7 @@ nav{
 .rate-btn.sell{background:rgba(255,255,255,0.06);color:var(--white);border:1px solid var(--border)}
 .rate-btn:hover{opacity:0.85;transform:scale(0.97)}
 
+/* Market stats row */
 .market-stats{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;
   background:var(--glass);border:1px solid var(--border);
@@ -305,10 +316,12 @@ nav{
 .mstat-val.green{color:#22c55e}
 .mstat-val.purple{color:var(--purple-glow)}
 
+/* Chart bars */
 .mini-chart{margin-top:1rem;display:flex;align-items:flex-end;gap:3px;height:48px}
 .bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--purple-light),var(--purple));opacity:0.6;transition:opacity 0.2s}
 .bar:hover{opacity:1}
 
+/* Volume ticker */
 .ticker-strip{
   overflow:hidden;border:1px solid var(--border);border-radius:12px;
   background:rgba(13,8,32,0.5);padding:0.75rem 0;position:relative;
@@ -325,6 +338,7 @@ nav{
 }
 .tick-item strong{color:var(--white)}
 
+/* ── WAITLIST ── */
 #page-waitlist{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:80px 2rem 4rem}
 
 .waitlist-wrap{
@@ -393,6 +407,7 @@ nav{
 .success-title{font-family:var(--font-display);font-size:1.75rem;font-weight:800;margin-bottom:0.75rem}
 .success-sub{color:var(--muted);line-height:1.7}
 
+/* ── FOOTER ── */
 footer{
   border-top:1px solid var(--border);padding:2.5rem 3rem;
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;
@@ -408,6 +423,7 @@ footer{
 .footer-links a{font-size:0.78rem;color:var(--muted);text-decoration:none;transition:color 0.2s}
 .footer-links a:hover{color:var(--purple-light)}
 
+/* ── ANIMATIONS ── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}
 @keyframes scrollTicker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
@@ -415,8 +431,10 @@ footer{
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes numberCount{from{opacity:0}to{opacity:1}}
 
+/* ── CANVAS ── */
 #hero-canvas{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0.4}
 
+/* ── HAMBURGER DEFAULT STYLES (PC/Desktop) ── */
 .hamburger {
   display: none; 
   flex-direction: column;
@@ -442,6 +460,7 @@ footer{
 .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
 
+/* ── RESPONSIVE STYLES (Mobile Breakpoint) ── */
 @media (max-width: 768px) {
   nav { padding: 1rem 1.25rem; }
   .nav-links { display: none; } 
@@ -491,6 +510,7 @@ footer{
 <div class="glow-orb one"></div>
 <div class="glow-orb two"></div>
 
+<!-- NAV -->
 <nav>
   <a href="#" class="nav-logo" onclick="showPage('home');return false">Global Payment</a>
     <ul class="nav-links">
@@ -514,6 +534,7 @@ footer{
   <a href="#" class="mob-cta" onclick="showPage('waitlist');toggleMenu();return false">Get Early Access</a>
 </div>
 
+<!-- PAGE: HOME -->
 <div class="page active" id="page-home">
   <canvas id="hero-canvas"></canvas>
 
@@ -602,6 +623,7 @@ footer{
   </div>
 </div>
 
+<!-- PAGE: HOW IT WORKS -->
 <div class="page" id="page-how">
   <div class="section">
     <div class="how-left">
@@ -690,6 +712,7 @@ footer{
   </div>
 </div>
 
+<!-- PAGE: RATES -->
 <div class="page" id="page-rates">
   <div class="section">
     <div class="rates-header">
@@ -703,12 +726,16 @@ footer{
       </div>
     </div>
 
+    <!-- ticker strip -->
     <div class="ticker-strip">
       <div class="ticker-inner" id="ticker-inner">
+        <!-- filled by JS -->
       </div>
     </div>
 
+    <!-- rate cards -->
     <div class="rates-grid">
+      <!-- BTC -->
       <div class="rate-card" id="btc-card">
         <div class="rate-card-header">
           <div class="coin-badge">
@@ -726,6 +753,7 @@ footer{
           <button class="rate-btn sell" onclick="showPage('waitlist');return false">Sell</button>
         </div>
       </div>
+      <!-- ETH -->
       <div class="rate-card" id="eth-card" style="transition-delay:0.05s">
         <div class="rate-card-header">
           <div class="coin-badge">
@@ -743,6 +771,7 @@ footer{
           <button class="rate-btn sell" onclick="showPage('waitlist');return false">Sell</button>
         </div>
       </div>
+      <!-- SOL -->
       <div class="rate-card" id="sol-card" style="transition-delay:0.1s">
         <div class="rate-card-header">
           <div class="coin-badge">
@@ -762,6 +791,7 @@ footer{
           <button class="rate-btn sell" onclick="showPage('waitlist');return false">Sell</button>
         </div>
       </div>
+      <!-- BNB -->
       <div class="rate-card" id="bnb-card" style="transition-delay:0.15s">
         <div class="rate-card-header">
           <div class="coin-badge">
@@ -781,6 +811,7 @@ footer{
           <button class="rate-btn sell" onclick="showPage('waitlist');return false">Sell</button>
         </div>
       </div>
+      <!-- USDT -->
       <div class="rate-card" id="usdt-card" style="transition-delay:0.2s">
         <div class="rate-card-header">
           <div class="coin-badge">
@@ -800,6 +831,7 @@ footer{
           <button class="rate-btn sell" onclick="showPage('waitlist');return false">Sell</button>
         </div>
       </div>
+      <!-- XRP -->
       <div class="rate-card" id="xrp-card" style="transition-delay:0.25s">
         <div class="rate-card-header">
           <div class="coin-badge">
@@ -850,6 +882,7 @@ footer{
   </div>
 </div>
 
+<!-- PAGE: WAITLIST -->
 <div class="page" id="page-waitlist">
   <div class="waitlist-glow"></div>
   <div class="waitlist-wrap">
@@ -924,6 +957,7 @@ footer{
   </div>
 </div>
 
+<!-- FOOTER -->
 <footer>
   <div class="footer-logo">Global Payment</div>
   <div class="footer-note">© 2025 Global Payment Financial Technologies. All rights reserved. · Nigeria</div>
@@ -943,6 +977,7 @@ footer{
 </div>
 
 <script>
+// ── PAGE ROUTER ──
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
@@ -955,6 +990,7 @@ function showPage(id){
   if(id==='rates'){ initRateAnimations(); const lu=document.getElementById('last-updated');if(lu)lu.textContent='Last updated: just now'; }
 }
 
+// ── HERO CANVAS ──
 (function(){
   const c = document.getElementById('hero-canvas');
   if(!c) return;
@@ -978,6 +1014,7 @@ function showPage(id){
       ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
       ctx.fillStyle=`rgba(168,85,247,${p.a})`;ctx.fill();
     });
+    // connections
     for(let i=0;i<particles.length;i++){
       for(let j=i+1;j<particles.length;j++){
         const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y;
@@ -996,6 +1033,7 @@ function showPage(id){
   draw();
 })();
 
+// ── PRICES ──
 let USD_NGN = 1600;
 let prices = {
   btc:  { usd:0, chg:0, step:120  },
@@ -1008,6 +1046,8 @@ let prices = {
 
 async function fetchLivePrices(){
   try {
+    // 1. Fetch the absolute real fiat USD/NGN exchange rate first
+    // This API has no CORS limits or strict API key blocks for local devs
     const fiatRes = await fetch('https://open.er-api.com/v6/latest/USD');
     const fiatData = await fiatRes.json();
     if (fiatData && fiatData.rates && fiatData.rates.NGN) {
@@ -1046,6 +1086,7 @@ async function fetchLivePrices(){
   }
 }
 
+// Fetch immediately on load, then every 60 seconds
 fetchLivePrices();
 setInterval(fetchLivePrices, 60000);
 
@@ -1062,22 +1103,27 @@ function updatePrices(){
     const ngn = p.usd * USD_NGN;
     const dec = p.usd < 10 ? 4 : p.usd < 100 ? 2 : 0;
 
+    // hero ticker
     set('ht-'+k+'-usd', fmt(p.usd, dec));
     set('ht-'+k+'-ngn', fmtAbbr(ngn));
     const hchg = document.getElementById('ht-'+k+'-chg');
     if(hchg){ hchg.textContent=(p.chg>0?'+':'')+p.chg.toFixed(2)+'%'; hchg.className='ticker-change '+(p.chg>0?'up':'down'); }
 
+    // rates page
     set(k+'-usd', fmt(p.usd, dec));
     set(k+'-ngn', '≈ '+fmtNGN(Math.round(ngn)));
     const badge = document.getElementById(k+'-badge');
     if(badge){ badge.textContent=(p.chg>0?'+':'')+p.chg.toFixed(2)+'%'; badge.className='rate-change-badge '+(p.chg>0?'up':'down'); }
   });
 
+  // market stats
   set('p2p-orders', Math.floor(Math.random()*5)+4);
 }
 
+// Small random walk between live fetches to keep UI feeling alive
 setInterval(updatePrices, 4000);
 
+// ── TICKER STRIP ──
 function buildTicker(){
   const items = [
     'BTC/NGN · ₦107.6M','ETH/NGN · ₦5.62M','SOL/NGN · ₦275K','BNB/NGN · ₦972K',
@@ -1091,6 +1137,7 @@ function buildTicker(){
 }
 buildTicker();
 
+// ── MINI CHARTS ──
 function buildChart(id, baseH){
   const el = document.getElementById(id);
   if(!el) return;
@@ -1104,6 +1151,7 @@ function buildChart(id, baseH){
 }
 ['btc','eth','sol','bnb','usdt','xrp'].forEach((c,i)=>buildChart(c+'-chart',50+i*3));
 
+// ── STEP ANIMATIONS ──
 function initStepAnimations(){
   setTimeout(()=>{
     document.querySelectorAll('.step').forEach((s,i)=>{
@@ -1112,6 +1160,7 @@ function initStepAnimations(){
   },100);
 }
 
+// ── RATE CARD ANIMATIONS ──
 function initRateAnimations(){
   setTimeout(()=>{
     document.querySelectorAll('.rate-card').forEach((c,i)=>{
@@ -1120,6 +1169,7 @@ function initRateAnimations(){
   },100);
 }
 
+// ── COUNTER ──
 function animateCount(el, target, dur){
   let start=0,step=target/60;
   const t=setInterval(()=>{
@@ -1133,7 +1183,9 @@ setTimeout(()=>{
   if(el) animateCount(el,6,1500);
 },600);
 
+// ── WAITLIST ──
 let wlCount = 6;
+// ── APPWRITE CONFIG ──
 const AW_PROJECT_ID    = '6a01b4dc0029322c5943';
 const AW_DATABASE_ID   = '6a02680700177899ed52';
 const AW_COLLECTION_ID = 'waitlist';
@@ -1177,6 +1229,7 @@ async function submitWaitlist(){
       }
     );
 
+    // Success — user stays on site, nothing else opens
     wlCount++;
     document.getElementById('wl-count').textContent = wlCount;
     document.getElementById('waitlist-form').style.display = 'none';
@@ -1190,6 +1243,7 @@ async function submitWaitlist(){
   }
 }
 
+// ── LEGAL MODALS ──
 const legalContent={
   privacy:`
     <h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:0.5rem;background:linear-gradient(135deg,#fff,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Privacy Policy</h2>
@@ -1295,6 +1349,33 @@ const legalContent={
   `
 };
 
+function openLegalModal(type){
+  const overlay=document.getElementById('legal-overlay');
+  const content=document.getElementById('legal-content');
+  if(!overlay||!content)return;
+  content.innerHTML=legalContent[type]||'';
+  overlay.style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeLegalModal(){
+  const overlay=document.getElementById('legal-overlay');
+  if(overlay)overlay.style.display='none';
+  document.body.style.overflow='';
+}
+// close on overlay click
+document.getElementById('legal-overlay').addEventListener('click',function(e){if(e.target===this)closeLegalModal();});
+
+function submitContact(){
+  const name=document.getElementById('ct-name').value.trim();
+  const email=document.getElementById('ct-email').value.trim();
+  const msg=document.getElementById('ct-message').value.trim();
+  if(!name||!email||!msg){alert('Please fill in your name, email and message.');return;}
+  const text=`Hello RAVE,\n\nName: ${name}\nEmail: ${email}\nSubject: ${document.getElementById('ct-subject').value}\n\nMessage:\n${msg}`;
+  window.open('https://wa.me/2348159718496?text='+encodeURIComponent(text),'_blank');
+  closeLegalModal();
+}
+
+// ── HAMBURGER ──
 function toggleMenu(){
   const h = document.getElementById('hamburger');
   const m = document.getElementById('mobile-menu');
