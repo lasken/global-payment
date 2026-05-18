@@ -1309,14 +1309,39 @@ function closeLegalModal(){
 }
 document.getElementById('legal-overlay').addEventListener('click',function(e){if(e.target===this)closeLegalModal();});
 
-function submitContact(){
+async function submitContact(){
   const name=document.getElementById('ct-name').value.trim();
   const email=document.getElementById('ct-email').value.trim();
+  const subject=document.getElementById('ct-subject').value;
   const msg=document.getElementById('ct-message').value.trim();
   if(!name||!email||!msg){alert('Please fill in your name, email and message.');return;}
-  const text=`Hello Global Payment,\n\nName: ${name}\nEmail: ${email}\nSubject: ${document.getElementById('ct-subject').value}\n\nMessage:\n${msg}`;
-  window.open('https://wa.me/2348159718496?text='+encodeURIComponent(text),'_blank');
-  closeLegalModal();
+
+  const btn=document.querySelector('#legal-content button');
+  if(btn){btn.textContent='Sending...';btn.disabled=true;}
+
+  try{
+    await fetch(`https://cloud.appwrite.io/v1/databases/6a02680700177899ed52/collections/contacts/documents`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Appwrite-Project':'6a01b4dc0029322c5943',
+      },
+      body:JSON.stringify({
+        documentId:'unique()',
+        data:{name,email,subject,message:msg}
+      })
+    });
+    document.getElementById('legal-content').innerHTML=`
+      <div style="text-align:center;padding:3rem 1rem">
+        <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#f0ebff;margin-bottom:0.75rem">Message Sent!</h3>
+        <p style="font-size:0.85rem;color:#9d8fb5;line-height:1.7">Thanks ${name}, we received your message and will get back to you within 24 hours.</p>
+        <button onclick="closeLegalModal()" style="margin-top:1.5rem;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.75rem 2rem;border-radius:9px;border:none;cursor:pointer">Close</button>
+      </div>`;
+  }catch(err){
+    if(btn){btn.textContent='Send Message';btn.disabled=false;}
+    alert('Something went wrong. Please try again.');
+  }
 }
 
 function toggleMenu(){
