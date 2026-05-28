@@ -339,18 +339,18 @@ const DB = {
 
 const S = {
   page : 'land',
-  user : null,         
+  user : null,        
 
   mTab   : 'board',
   mFilter: 'all',
-  orders : null,        
+  orders : null,       
   msgs   : null,      
   ordersLoading: false,
   msgsLoading  : false,
 
   viewedOrder: null,
 
-  coins     : [],     
+  coins     : [],    
   coinsState: 'idle',  
   cryptoSub : 'market',
   selCoin   : null,
@@ -469,7 +469,7 @@ async function loadOrders(){
   if(S.ordersLoading) return;
   S.ordersLoading=true;
   render();
-  const res=await DB.list('orders',[Query.orderDesc('createdAt'),Query.limit(100)]);
+  const res=await DB.list('orders',[Query.orderDesc('$createdAt'),Query.limit(100)]);
   S.orders=res.documents.map(d=>({
     id          : d.$id,
     userId      : d.userId,
@@ -481,7 +481,7 @@ async function loadOrders(){
     price       : d.price,
     desc        : d.desc||'',
     status      : d.status,
-    createdAt   : d.createdAt,
+    createdAt   : d.$createdAt,
   }));
   S.ordersLoading=false;
   render();
@@ -491,7 +491,7 @@ async function loadChat(){
   if(S.msgsLoading) return;
   S.msgsLoading=true;
   render();
-  const res=await DB.list('chat',[Query.orderAsc('createdAt'),Query.limit(200)]);
+  const res=await DB.list('chat',[Query.orderAsc('$createdAt'),Query.limit(200)]);
   S.msgs=res.documents.map(d=>({
     id      : d.$id,
     userId  : d.userId,
@@ -499,7 +499,7 @@ async function loadChat(){
     inits   : d.initials,
     text    : d.text,
     own     : S.user?.id===d.userId,
-    ts      : d.createdAt,
+    ts      : d.$createdAt,
   }));
   S.msgsLoading=false;
   render();
@@ -570,7 +570,7 @@ const P = {
     return `
     <div id="pg-land" class="page">
       <p class="l-ey">The unified commerce layer</p>
-      <h1 class="l-h">Your passport to <em>trade & access data,</em> globally.</h1>
+      <h1 class="l-h">Your passport to <em>trade & access data</em> globally.</h1>
       <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time crypto markets — all in one place.</p>
       <div class="ggrid">
         <div class="gcard" onclick="R.acct()">
@@ -1306,7 +1306,7 @@ const A = {
     try{
       const u=await DB.register(email,pwd,name);
       await DB.login(email,pwd);
-      await DB.create('profiles',{userId:u.$id,name,email,type,createdAt:new Date().toISOString()});
+      await DB.create('profiles',{userId:u.$id,name,email,type});
       S.user={id:u.$id,name,email,type,inits:initials(name)};
       M.close(); R.go('profile');
       toast('Account created! Welcome, '+name.split(' ')[0]+'.','ok');
@@ -1381,12 +1381,11 @@ const A = {
         price:price||'Negotiable',
         desc:desc||'',
         status:'open',
-        createdAt:new Date().toISOString(),
       });
       if(!S.orders) S.orders=[];
       S.orders.unshift({id:doc.$id,userId:S.user.id,userName:S.user.name,
         userInitials:inits2,category:cat,type,title,price:price||'Negotiable',
-        desc:desc||'',status:'open',createdAt:doc.createdAt||new Date().toISOString()});
+        desc:desc||'',status:'open',createdAt:doc.$createdAt||new Date().toISOString()});
       M.close(); render();
       toast('Listing posted!','ok');
     }catch(e){
@@ -1407,7 +1406,7 @@ const A = {
     S.msgs.push(msg);
     render();
     DB.create('chat',{userId:S.user.id,userName:S.user.name,
-      initials:S.user.inits,text:txt,createdAt:now})
+      initials:S.user.inits,text:txt})
       .catch(e=>console.warn('chat persist:',e.message));
   },
 
