@@ -373,7 +373,7 @@ const AW_COL = {
   watchlist    : 'watchlist',
   connections  : 'connections',   
   verifications: 'verifications',  
-  subscriptions: 'subscriptions',  
+  subscription: 'subscription',  
 };
 
 const { Client, Account, Databases, Query, ID } = Appwrite;
@@ -526,7 +526,7 @@ async function saveWatchlist(){
 }
 async function loadSubscription(){
   if(!S.user){S.subscribed=false;S.subStatus=null;return;}
-  const r=await DB.list('subscriptions',[Query.equal('userId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(1)]);
+  const r=await DB.list('subscription',[Query.equal('userId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(1)]);
   const doc=r.documents[0];
   S.subStatus=doc?.status||null;
   S.subscribed=S.subStatus==='active';
@@ -1378,7 +1378,7 @@ const A = {
     if(!method){err.textContent='Please select your payment method.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
-      await DB.create('subscriptions',{userId:S.user.id,status:'pending',plan:'monthly',amount:'5',reference:ref,paymentMethod:method});
+      await DB.create('subscription',{userId:S.user.id,status:'pending',plan:'monthly',amount:'5',reference:ref,paymentMethod:method});
       S.subStatus='pending';
       toast('Reference submitted! Access granted within 24 hours.','ok');
       render();
@@ -1469,7 +1469,7 @@ const PAY = {
       callback: async function(data){
         if(data.status === 'successful' || data.status === 'completed'){
           try{
-            await DB.create('subscriptions',{
+            await DB.create('subscription',{
               userId       : S.user.id,
               status       : 'active',
               plan         : 'monthly',
@@ -1511,7 +1511,7 @@ const PAY = {
       const body = JSON.parse(result.responseBody || '{}');
       if(body.error) throw new Error(body.error);
       if(body.checkout_url){
-        await DB.create('subscriptions',{
+        await DB.create('subscription',{
           userId:'pending_'+S.user.id, status:'pending', plan:'monthly',
           amount:'5', reference:ref, paymentMethod:'ivorypay',
           userId: S.user.id,
