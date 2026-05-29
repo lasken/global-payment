@@ -1,0 +1,7 @@
+{
+  "name": "global-payment",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo \"window.TMC_CONFIG = { FW_PUBLIC_KEY: '$FW_PUBLIC_KEY' };\" > config.js"
+  }
+}
