@@ -9,11 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/iife/sdk.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://checkout.flutterwave.com/v3.js"></script>
+  <script src="config.js" onerror="console.warn('config.js not found — set window.TMC_CONFIG manually')"></script>
   <style>
     :root{
       --white:#fff;--off:#F8F7F4;--surf:#F2F1EE;--bdr:#E4E2DC;--bdr2:#C8C5BC;
       --t1:#1A1916;--t2:#6B6860;--t3:#A8A49C;
-      --grn:#1A7A4A;--red:#C43030;--blu:#2B5BE0;--org:#C4622D;--gld:#B8892A;
+      --grn:#1A7A4A;--red:#C43030;--blu:#2B5BE0;--org:#C4622D;--gld:#B8892A;--pur:#7C3AED;
       --rsm:6px;--rmd:12px;--rlg:20px;
       --s1:0 1px 3px rgba(26,25,22,.06),0 1px 2px rgba(26,25,22,.04);
       --s2:0 4px 16px rgba(26,25,22,.08),0 2px 6px rgba(26,25,22,.05);
@@ -39,6 +41,8 @@
     .bsm{padding:7px 14px;font-size:.8125rem}
     .bc{background:var(--grn);color:var(--white)}
     .bc:hover:not(:disabled){background:#155f39;transform:translateY(-1px)}
+    .bpur{background:var(--pur);color:var(--white)}
+    .bpur:hover:not(:disabled){background:#6d28d9;transform:translateY(-1px);box-shadow:var(--s2)}
 
     .tag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:.75rem;font-weight:500}
     .tg{background:#E6F5EE;color:var(--grn)}
@@ -47,6 +51,7 @@
     .to{background:#FDF0EA;color:var(--org)}
     .tgd{background:#FBF4E6;color:var(--gld)}
     .tn{background:var(--surf);color:var(--t2)}
+    .tpur{background:#F3EEFF;color:var(--pur)}
 
     input,textarea,select{font-family:var(--fb);font-size:.875rem;border:1.5px solid var(--bdr);border-radius:var(--rsm);padding:10px 14px;width:100%;background:var(--white);color:var(--t1);outline:none;transition:var(--ease);appearance:none}
     input:focus,textarea:focus,select:focus{border-color:var(--t1);box-shadow:0 0 0 3px rgba(26,25,22,.08)}
@@ -55,6 +60,9 @@
     label{display:block;font-size:.8125rem;font-weight:500;color:var(--t2);margin-bottom:6px}
     .fg{margin-bottom:18px}
     .ferr{font-size:.75rem;color:var(--red);margin-top:5px;min-height:18px}
+    .pfx{position:relative;display:flex;align-items:center}
+    .pfx-sym{position:absolute;left:12px;color:var(--t1);font-weight:600;font-size:.95rem;pointer-events:none;z-index:1}
+    .pfx input{padding-left:26px}
 
     #gnav{position:fixed;top:0;left:0;right:0;z-index:900;background:rgba(255,255,255,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px}
     .nbrand{font-family:var(--fd);font-size:1.375rem;color:var(--t1);cursor:pointer;user-select:none}
@@ -119,11 +127,26 @@
     .psv{font-family:var(--fd);font-size:1.7rem;margin-bottom:4px}
     .psl{font-size:.8125rem;color:var(--t2)}
     .psec{background:var(--white);border:1px solid var(--bdr);border-radius:var(--rmd);padding:22px;margin-bottom:14px}
-    .psect{font-weight:600;font-size:.875rem;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--bdr)}
+    .psect{font-weight:600;font-size:.875rem;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
     .irow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr);font-size:.875rem}
     .irow:last-child{border-bottom:none}
     .irl{color:var(--t2)}
     .irv{font-weight:500}
+
+    .cxcard{border:1px solid var(--bdr);border-radius:var(--rmd);padding:16px;margin-bottom:10px;background:var(--white)}
+    .cxcard:last-child{margin-bottom:0}
+    .cxhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .cxavat{width:34px;height:34px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;font-family:var(--fd);flex-shrink:0}
+    .cxname{font-weight:600;font-size:.875rem}
+    .cxorder{font-size:.75rem;color:var(--t2)}
+    .cxmsg{font-size:.8125rem;color:var(--t2);line-height:1.55;margin-bottom:8px;background:var(--surf);border-radius:var(--rsm);padding:10px 12px}
+    .cxcontact{font-size:.8125rem;font-weight:500;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+
+    .vstat-box{border-radius:var(--rmd);padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+    .vstat-unverified{background:var(--surf);border:1px solid var(--bdr)}
+    .vstat-pending{background:#FBF4E6;border:1px solid #E8D9B0}
+    .vstat-verified{background:#E6F5EE;border:1px solid #B3DFCA}
+    .vstat-rejected{background:#FDEAEA;border:1px solid #F0BFBF}
 
     #pg-market{padding:40px 24px;max-width:1080px;margin:0 auto}
     .pghdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px}
@@ -150,6 +173,14 @@
     .oempty{text-align:center;padding:56px 24px;color:var(--t3)}
     .oloading{text-align:center;padding:40px;color:var(--t3);font-size:.875rem}
 
+    .rind{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;color:var(--t3)}
+    .rdot{width:6px;height:6px;border-radius:50%;background:var(--grn);animation:rpl 2s ease-in-out infinite;flex-shrink:0}
+    @keyframes rpl{0%,100%{opacity:.4}50%{opacity:1}}
+
+    .comm-box{background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:12px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px}
+    .comm-box-t{font-size:.8125rem;font-weight:600;color:var(--gld);margin-bottom:3px}
+    .comm-box-d{font-size:.78rem;color:#8a6820;line-height:1.5}
+
     .odh{background:var(--off);border-radius:var(--rmd);padding:22px;margin-bottom:22px}
     .odtags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
     .odtitle{font-family:var(--fd);font-size:1.3rem;margin-bottom:10px;line-height:1.25}
@@ -164,6 +195,32 @@
     .selstat{font-size:.75rem;color:var(--t2)}
     .cform{background:var(--off);border-radius:var(--rmd);padding:18px;border:1.5px solid var(--bdr)}
     .cformtitle{font-weight:600;font-size:.875rem;margin-bottom:14px}
+
+    .gate-banner{background:linear-gradient(135deg,#F3EEFF,#E8EEFB);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:36px 24px;text-align:center}
+    .gate-icon{width:52px;height:52px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--white)}
+    .gate-t{font-family:var(--fd);font-size:1.2rem;margin-bottom:7px}
+    .gate-d{font-size:.875rem;color:var(--t2);margin-bottom:18px;line-height:1.6;max-width:380px;margin-left:auto;margin-right:auto}
+
+    .crypto-gate-wrap{position:relative}
+    .crypto-gate-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,0) 0%,rgba(255,255,255,.96) 35%,rgba(255,255,255,1) 100%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:36px;border-radius:0 0 var(--rmd) var(--rmd);pointer-events:none}
+    .crypto-gate-overlay>div{pointer-events:all;text-align:center}
+
+    #pg-sub{padding:60px 24px 80px;max-width:800px;margin:0 auto}
+    .sub-badge{display:inline-flex;align-items:center;gap:6px;background:#F3EEFF;color:var(--pur);border:1px solid #D4C8F0;border-radius:100px;padding:6px 16px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px}
+    .sub-price{font-family:var(--fd);font-size:3rem;margin-bottom:6px}
+    .sub-price span{font-size:1.1rem;color:var(--t2);font-family:var(--fb)}
+    .sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:32px 0}
+    .sub-feat{background:var(--white);border:1px solid var(--bdr);border-radius:var(--rmd);padding:20px}
+    .sub-feat-i{width:36px;height:36px;border-radius:var(--rsm);background:#F3EEFF;color:var(--pur);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+    .sub-feat-t{font-weight:600;font-size:.9rem;margin-bottom:5px}
+    .sub-feat-d{font-size:.8rem;color:var(--t2);line-height:1.5}
+    .pay-card{background:var(--off);border:1.5px solid var(--bdr);border-radius:var(--rlg);padding:30px;max-width:500px;margin:0 auto}
+    .pay-step{display:flex;gap:14px;margin-bottom:18px;align-items:flex-start}
+    .pay-step-n{width:26px;height:26px;border-radius:50%;background:var(--t1);color:var(--white);font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .pay-step-t{font-weight:600;font-size:.875rem;margin-bottom:3px}
+    .pay-step-d{font-size:.8rem;color:var(--t2);line-height:1.5}
+    .pay-acct{background:var(--white);border:1px solid var(--bdr);border-radius:var(--rsm);padding:11px 14px;font-size:.8rem;margin-top:8px;font-family:monospace;line-height:1.6}
+    .pay-acct strong{color:var(--t1);display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;font-family:var(--fb)}
 
     .fab{position:fixed;bottom:32px;right:32px;background:var(--t1);color:var(--white);border:none;border-radius:100px;padding:13px 22px;font-family:var(--fb);font-size:.875rem;font-weight:500;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--s3);transition:var(--ease);z-index:100}
     .fab:hover{transform:translateY(-2px);box-shadow:0 20px 60px rgba(26,25,22,.22)}
@@ -244,8 +301,6 @@
     .mcl{font-size:.68rem;color:var(--t2);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
     .mcv{font-family:var(--fd);font-size:1.2rem;color:var(--t1)}
     .mcs{font-size:.72rem;color:var(--t2);margin-top:3px}
-    .backbtn{display:inline-flex;align-items:center;gap:7px;font-size:.875rem;font-weight:500;color:var(--t2);cursor:pointer;padding:8px 0;margin-bottom:18px;background:none;border:none;transition:var(--ease)}
-    .backbtn:hover{color:var(--t1)}
     .wempty{text-align:center;padding:72px 24px;color:var(--t3)}
     .wemi{width:60px;height:60px;background:var(--surf);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:var(--t3)}
     .wemt{font-family:var(--fd);font-size:1.2rem;color:var(--t2);margin-bottom:7px}
@@ -255,19 +310,19 @@
     .css{font-size:.875rem;color:var(--t2);line-height:1.65;max-width:360px;margin:0 auto}
     .csgfx{width:110px;height:110px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;margin:0 auto 26px;color:var(--t3)}
 
+    .back{display:inline-flex;align-items:center;gap:7px;font-size:.875rem;font-weight:500;color:var(--t2);cursor:pointer;padding:8px 0;margin-bottom:18px;background:none;border:none;transition:var(--ease)}
+    .back:hover{color:var(--t1)}
+
     .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--t1);color:var(--white);padding:11px 20px;border-radius:var(--rmd);font-size:.875rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .28s,transform .28s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 48px)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .toast.ok{background:var(--grn)}
     .toast.err{background:var(--red)}
 
-    .back{display:inline-flex;align-items:center;gap:7px;font-size:.875rem;font-weight:500;color:var(--t2);cursor:pointer;padding:8px 0;margin-bottom:18px;background:none;border:none;transition:var(--ease)}
-    .back:hover{color:var(--t1)}
-
     @media(max-width:768px){
       #gnav{padding:0 16px}
       .ggrid{grid-template-columns:1fr}
       .gcard{padding:26px 22px}
-      #pg-market,#pg-crypto,#pg-profile{padding:22px 16px}
+      #pg-market,#pg-crypto,#pg-profile,#pg-sub{padding:22px 16px}
       .pstats{grid-template-columns:1fr 1fr}
       .tbtn span{display:none}
       .ocard{flex-direction:column}
@@ -281,6 +336,7 @@
       .pstats{grid-template-columns:1fr}
       .csubnav{max-width:100%}
       .odmeta{grid-template-columns:1fr}
+      .sub-grid{grid-template-columns:1fr}
     }
     @media(max-width:480px){
       .aheroprice{font-size:1.7rem}
@@ -289,12 +345,10 @@
   </style>
 </head>
 <body>
-
 <nav id="gnav">
   <div class="nbrand" onclick="R.go('land')">Toomuchcoin<span>.</span></div>
   <div class="nact" id="nact"></div>
 </nav>
-
 <main id="root"></main>
 <div id="mroot"></div>
 <div class="toast" id="toast"></div>
@@ -302,18 +356,24 @@
   <i data-lucide="plus" style="width:17px;height:17px"></i>
   <span>Post Listing</span>
 </button>
-
 <script>
 'use strict';
+
+const TMC = window.TMC_CONFIG || {};
+const _hasFwKey  = !!(TMC.FW_PUBLIC_KEY  && !TMC.FW_PUBLIC_KEY.includes('YOUR_'));
+const _hasFnId   = !!(TMC.APPWRITE_FN_ID && !TMC.APPWRITE_FN_ID.includes('your_'));
 
 const AW_ENDPOINT   = 'https://cloud.appwrite.io/v1';
 const AW_PROJECT_ID = '6a163159003bd203c63f';
 const AW_DB_ID      = '6a1631ee00269fc986b8';
 const AW_COL = {
-  profiles : 'profiles',
-  orders   : 'orders',
-  chat     : 'chat',
-  watchlist: 'watchlist',
+  profiles     : 'profiles',
+  orders       : 'orders',
+  chat         : 'chat',
+  watchlist    : 'watchlist',
+  connections  : 'connections',   
+  verifications: 'verifications',  
+  subscriptions: 'subscriptions',  
 };
 
 const { Client, Account, Databases, Query, ID } = Appwrite;
@@ -322,361 +382,372 @@ const _acc = new Account(_cl);
 const _db  = new Databases(_cl);
 
 const DB = {
-  me()          { return _acc.get().catch(()=>null) },
-  login(e,p)    { return _acc.createEmailPasswordSession(e,p) },
-  register(e,p,n){ return _acc.create(ID.unique(),e,p,n) },
-  logout()      { return _acc.deleteSession('current').catch(()=>{}) },
-  list(col,q=[]) {
-    return _db.listDocuments(AW_DB_ID, AW_COL[col], q).catch(()=>({documents:[]}));
-  },
-  create(col,data) {
-    return _db.createDocument(AW_DB_ID, AW_COL[col], ID.unique(), data);
-  },
-  update(col,id,data) {
-    return _db.updateDocument(AW_DB_ID, AW_COL[col], id, data);
-  },
+  me()            { return _acc.get().catch(()=>null) },
+  login(e,p)      { return _acc.createEmailPasswordSession(e,p) },
+  register(e,p,n) { return _acc.create(ID.unique(),e,p,n) },
+  logout()        { return _acc.deleteSession('current').catch(()=>{}) },
+  list(col,q=[])  { return _db.listDocuments(AW_DB_ID,AW_COL[col],q).catch(()=>({documents:[]})); },
+  create(col,data){ return _db.createDocument(AW_DB_ID,AW_COL[col],ID.unique(),data); },
+  update(col,id,d){ return _db.updateDocument(AW_DB_ID,AW_COL[col],id,d); },
 };
 
 const S = {
-  page : 'land',
-  user : null,        
-
-  mTab   : 'board',
-  mFilter: 'all',
-  orders : null,       
-  msgs   : null,      
-  ordersLoading: false,
-  msgsLoading  : false,
-
-  viewedOrder: null,
-
-  coins     : [],    
-  coinsState: 'idle',  
-  cryptoSub : 'market',
-  selCoin   : null,
-  watchlist : new Set(),
-  wlDocId   : null,
-  interval  : 'ytd',
-  csearch   : '',
-  cpage     : 1,
-  cps       : 20,
-
-  authTab  : 'login',
-  signupType: null,
+  page:'land', user:null,
+  mTab:'board', mFilter:'all',
+  orders:null, msgs:null,
+  ordersLoading:false, msgsLoading:false,
+  viewedOrder:null, myConnections:null,
+  coins:[], coinsState:'idle',
+  cryptoSub:'market', selCoin:null,
+  watchlist:new Set(), wlDocId:null,
+  interval:'ytd', csearch:'', cpage:1, cps:20,
+  authTab:'login', signupType:null,
+  subscribed:false, subStatus:null,
+  verifyStatus:null, lastRefresh:null,
 };
 
-function initials(n=''){
-  return (n||'').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'??';
+let _rt = null;
+function startAR(){
+  stopAR();
+  _rt = setInterval(async()=>{
+    if(S.page!=='market') return;
+    if(S.mTab==='board') await _silentOrders();
+    else if(S.mTab==='forum') await _silentChat();
+  }, 20000);
 }
+function stopAR(){ if(_rt){clearInterval(_rt);_rt=null;} }
+
+function mapOrder(d){
+  return {id:d.$id,userId:d.userId,userName:d.userName,userInitials:d.userInitials,
+    category:d.category,type:d.type,title:d.title,price:d.price,
+    desc:d.desc||'',status:d.status,createdAt:d.$createdAt};
+}
+async function _silentOrders(){
+  const r=await DB.list('orders',[Query.orderDesc('$createdAt'),Query.limit(100)]);
+  S.orders=r.documents.map(mapOrder);
+  S.lastRefresh=new Date(); render();
+}
+async function _silentChat(){
+  const r=await DB.list('chat',[Query.orderAsc('$createdAt'),Query.limit(200)]);
+  S.msgs=r.documents.map(d=>({id:d.$id,userId:d.userId,userName:d.userName,
+    inits:d.initials,text:d.text,own:S.user?.id===d.userId,ts:d.$createdAt}));
+  S.lastRefresh=new Date(); render();
+}
+
+function initials(n=''){return(n||'').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'??';}
 function ago(iso){
   const s=Math.floor((Date.now()-new Date(iso).getTime())/1000);
-  if(s<60) return 'just now';
-  if(s<3600) return Math.floor(s/60)+'m ago';
-  if(s<86400) return Math.floor(s/3600)+'h ago';
-  return Math.floor(s/86400)+'d ago';
+  if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';
 }
 function fmtp(p){
-  if(p==null||isNaN(p)) return '—';
-  if(p<0.0001) return '$'+p.toFixed(8);
-  if(p<0.01)   return '$'+p.toFixed(6);
-  if(p<1)      return '$'+p.toFixed(4);
-  return '$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(p==null||isNaN(p))return'—';
+  if(p<0.0001)return'$'+p.toFixed(8);if(p<0.01)return'$'+p.toFixed(6);
+  if(p<1)return'$'+p.toFixed(4);
+  return'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
-function fmtpct(n){
-  if(n==null||isNaN(n)) return '—';
-  return (n>=0?'+':'')+Number(n).toFixed(2)+'%';
-}
+function fmtpct(n){if(n==null||isNaN(n))return'—';return(n>=0?'+':'')+Number(n).toFixed(2)+'%';}
 function toast(msg,type=''){
   const el=document.getElementById('toast');
-  el.textContent=msg; el.className='toast'+(type?' '+type:'');
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t=setTimeout(()=>el.classList.remove('show'),3200);
+  el.textContent=msg;el.className='toast'+(type?' '+type:'');el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3200);
 }
 const COLORS=[
-  ['#F7931A','#1A1916'],['#627EEA','#fff'],['#26A17B','#fff'],
-  ['#E84142','#fff'],['#2775CA','#fff'],['#F3BA2F','#1A1916'],
-  ['#9945FF','#fff'],['#00FFA3','#1A1916'],['#E5179E','#fff'],
-  ['#1DA1F2','#fff'],['#FF007A','#fff'],['#8247E5','#fff'],
+  ['#F7931A','#1A1916'],['#627EEA','#fff'],['#26A17B','#fff'],['#E84142','#fff'],
+  ['#2775CA','#fff'],['#F3BA2F','#1A1916'],['#9945FF','#fff'],['#00FFA3','#1A1916'],
+  ['#E5179E','#fff'],['#1DA1F2','#fff'],['#FF007A','#fff'],['#8247E5','#fff'],
   ['#F0B90B','#1A1916'],['#2B9FDB','#fff'],['#C2A633','#fff'],
 ];
 function coinIcon(coin,idx,size=34){
-  const [bg,fg]=COLORS[idx%COLORS.length];
-  if(coin.logo){
-    return `<div class="aico" style="width:${size}px;height:${size}px;background:#f0f0f0">
-      <img src="${coin.logo}" alt="${coin.sym}" width="${size}" height="${size}"
-           onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=color:${fg};font-size:.62rem;font-weight:700>${coin.sym.slice(0,3)}</span>'"/>
-    </div>`;
-  }
-  return `<div class="aico" style="width:${size}px;height:${size}px;background:${bg};color:${fg}">${coin.sym.slice(0,3)}</div>`;
+  const[bg,fg]=COLORS[idx%COLORS.length];
+  if(coin.logo){return`<div class="aico" style="width:${size}px;height:${size}px;background:#f0f0f0"><img src="${coin.logo}" alt="${coin.sym}" width="${size}" height="${size}" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=color:${fg};font-size:.62rem;font-weight:700>${coin.sym.slice(0,3)}</span>'"/></div>`;}
+  return`<div class="aico" style="width:${size}px;height:${size}px;background:${bg};color:${fg}">${coin.sym.slice(0,3)}</div>`;
 }
 function mockBars(id,iv){
   const seed=[...id].reduce((a,c)=>a+c.charCodeAt(0),0);
   const n=iv==='ytd'?12:iv==='5y'?20:40;
-  return Array.from({length:n},(_,i)=>({
-    h:30+((seed*(i+7)*13)%220),up:(seed+i)%3!==0
-  }));
+  return Array.from({length:n},(_,i)=>({h:30+((seed*(i+7)*13)%220),up:(seed+i)%3!==0}));
 }
 function mockMetrics(id,iv){
   const s=[...id].reduce((a,c)=>a+c.charCodeAt(0),0);
   const m=iv==='ytd'?1:iv==='5y'?5:10;
   const r=(a,b,k)=>+(a+((s*k)%(b-a))).toFixed(2);
-  return {
-    'All-Time High':'$'+r(100,9999,17)*m,
-    'All-Time Low' :'$'+r(1,200,3),
-    'Avg. Return'  :r(-15,80,7)+'%',
-    'Volatility'   :r(20,95,11)+'%',
-    'Sharpe Ratio' :r(0.4,3.2,13).toFixed(2),
-    'Max Drawdown' :'-'+r(20,85,5)+'%',
-    'Total Volume' :'$'+r(1,900,9)+'B',
-    'Market Cap'   :'$'+r(5,8000,19)+'B',
-  };
+  return{'All-Time High':'$'+r(100,9999,17)*m,'All-Time Low':'$'+r(1,200,3),
+    'Avg. Return':r(-15,80,7)+'%','Volatility':r(20,95,11)+'%',
+    'Sharpe Ratio':r(0.4,3.2,13).toFixed(2),'Max Drawdown':'-'+r(20,85,5)+'%',
+    'Total Volume':'$'+r(1,900,9)+'B','Market Cap':'$'+r(5,8000,19)+'B'};
 }
 
 async function loadCoins(){
-  if(S.coinsState==='loading') return;
-  S.coinsState='loading';
-  render();
+  if(S.coinsState==='loading')return;
+  S.coinsState='loading';render();
   try{
     const pages=await Promise.all([1,2,3,4,5].map(pg=>
-      fetch(
-        `https://api.coingecko.com/api/v3/coins/markets`+
-        `?vs_currency=usd&order=market_cap_desc`+
-        `&per_page=100&page=${pg}&sparkline=false`+
-        `&price_change_percentage=24h`
-      ).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+      fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=${pg}&sparkline=false&price_change_percentage=24h`)
+        .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
     ));
     S.coins=pages.flat().filter(c=>c&&c.id).map(c=>({
-      id   : c.id,
-      name : c.name,
-      sym  : (c.symbol||'').toUpperCase(),
-      price: c.current_price||0,
-      chg  : c.price_change_percentage_24h||0,
-      logo : c.image||'',
-      rank : c.market_cap_rank||999,
-      mcap : c.market_cap||0,
-      vol  : c.total_volume||0,
+      id:c.id,name:c.name,sym:(c.symbol||'').toUpperCase(),price:c.current_price||0,
+      chg:c.price_change_percentage_24h||0,logo:c.image||'',
+      rank:c.market_cap_rank||999,mcap:c.market_cap||0,vol:c.total_volume||0,
     }));
     S.coinsState='ok';
-  }catch(e){
-    S.coinsState='err';
-    console.warn('CoinGecko error:',e.message);
-  }
+  }catch(e){S.coinsState='err';console.warn('CoinGecko:',e.message);}
   render();
 }
-
 async function loadOrders(){
-  if(S.ordersLoading) return;
-  S.ordersLoading=true;
-  render();
-  const res=await DB.list('orders',[Query.orderDesc('$createdAt'),Query.limit(100)]);
-  S.orders=res.documents.map(d=>({
-    id          : d.$id,
-    userId      : d.userId,
-    userName    : d.userName,
-    userInitials: d.userInitials,
-    category    : d.category,
-    type        : d.type,
-    title       : d.title,
-    price       : d.price,
-    desc        : d.desc||'',
-    status      : d.status,
-    createdAt   : d.$createdAt,
-  }));
-  S.ordersLoading=false;
-  render();
+  if(S.ordersLoading)return;
+  S.ordersLoading=true;render();
+  const r=await DB.list('orders',[Query.orderDesc('$createdAt'),Query.limit(100)]);
+  S.orders=r.documents.map(mapOrder);
+  S.ordersLoading=false;S.lastRefresh=new Date();render();
 }
-
 async function loadChat(){
-  if(S.msgsLoading) return;
-  S.msgsLoading=true;
-  render();
-  const res=await DB.list('chat',[Query.orderAsc('$createdAt'),Query.limit(200)]);
-  S.msgs=res.documents.map(d=>({
-    id      : d.$id,
-    userId  : d.userId,
-    userName: d.userName,
-    inits   : d.initials,
-    text    : d.text,
-    own     : S.user?.id===d.userId,
-    ts      : d.$createdAt,
-  }));
-  S.msgsLoading=false;
-  render();
+  if(S.msgsLoading)return;
+  S.msgsLoading=true;render();
+  const r=await DB.list('chat',[Query.orderAsc('$createdAt'),Query.limit(200)]);
+  S.msgs=r.documents.map(d=>({id:d.$id,userId:d.userId,userName:d.userName,
+    inits:d.initials,text:d.text,own:S.user?.id===d.userId,ts:d.$createdAt}));
+  S.msgsLoading=false;S.lastRefresh=new Date();render();
 }
-
 async function loadWatchlist(){
-  if(!S.user) return;
-  const res=await DB.list('watchlist',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
-  const doc=res.documents[0];
-  if(doc){
-    S.watchlist=new Set(doc.coinIds||[]);
-    S.wlDocId=doc.$id;
-  }
+  if(!S.user)return;
+  const r=await DB.list('watchlist',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
+  const doc=r.documents[0];
+  if(doc){S.watchlist=new Set(doc.coinIds||[]);S.wlDocId=doc.$id;}
 }
-
 async function saveWatchlist(){
-  if(!S.user) return;
+  if(!S.user)return;
   const coinIds=[...S.watchlist];
   try{
-    if(S.wlDocId){
-      await DB.update('watchlist',S.wlDocId,{coinIds});
-    } else {
-      const doc=await DB.create('watchlist',{userId:S.user.id,coinIds});
-      S.wlDocId=doc.$id;
-    }
-  }catch(e){console.warn('wl save:',e.message);}
+    if(S.wlDocId)await DB.update('watchlist',S.wlDocId,{coinIds});
+    else{const d=await DB.create('watchlist',{userId:S.user.id,coinIds});S.wlDocId=d.$id;}
+  }catch(e){console.warn('wl:',e.message);}
+}
+async function loadSubscription(){
+  if(!S.user){S.subscribed=false;S.subStatus=null;return;}
+  const r=await DB.list('subscriptions',[Query.equal('userId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(1)]);
+  const doc=r.documents[0];
+  S.subStatus=doc?.status||null;
+  S.subscribed=S.subStatus==='active';
+}
+async function loadVerifyStatus(){
+  if(!S.user){S.verifyStatus=null;return;}
+  const r=await DB.list('verifications',[Query.equal('userId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(1)]);
+  S.verifyStatus=r.documents[0]?.status||null;
+}
+async function loadMyConnections(){
+  if(!S.user)return;
+  const r=await DB.list('connections',[Query.equal('toUserId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(50)]);
+  S.myConnections=r.documents.map(d=>({
+    id:d.$id,orderId:d.orderId,orderTitle:d.orderTitle,
+    fromUserId:d.fromUserId,fromName:d.fromName,fromInitials:d.fromInitials,
+    message:d.message,contact:d.contact,commission:d.commission,
+    status:d.status||'pending',createdAt:d.$createdAt,
+  }));
 }
 
 function render(){
   const root=document.getElementById('root');
-  if     (S.page==='land')   root.innerHTML=P.land();
+  if     (S.page==='land')    root.innerHTML=P.land();
   else if(S.page==='profile') root.innerHTML=P.profile();
   else if(S.page==='market')  root.innerHTML=P.market();
   else if(S.page==='crypto')  root.innerHTML=P.crypto();
+  else if(S.page==='sub')     root.innerHTML=P.subscribe();
   else                        root.innerHTML=P.land();
 
   const fab=document.getElementById('fab');
   (S.page==='market'&&S.mTab==='board')
-    ?fab.classList.remove('hidden')
-    :fab.classList.add('hidden');
-
-  renderNav();
-  lucide.createIcons();
-
+    ?fab.classList.remove('hidden'):fab.classList.add('hidden');
+  renderNav();lucide.createIcons();
   const feed=document.getElementById('cfeed');
-  if(feed) feed.scrollTop=feed.scrollHeight;
+  if(feed)feed.scrollTop=feed.scrollHeight;
 }
-
 function renderNav(){
   const el=document.getElementById('nact');
   if(S.user){
-    el.innerHTML=`
-      <div class="nubadge" onclick="R.go('profile')">
-        <div class="navat">${S.user.inits[0]}</div>
-        <span>${S.user.name.split(' ')[0]}</span>
-      </div>`;
-  } else {
-    el.innerHTML=`
-      <button class="btn bg bsm" onclick="M.auth()">Sign In</button>
-      <button class="btn bp bsm" onclick="M.auth()">Get Started</button>`;
+    const sub=S.subscribed
+      ?`<span class="tag tpur" style="font-size:.68rem;padding:2px 8px">Pro</span>`
+      :`<span class="tag tn" style="font-size:.68rem;padding:2px 8px;cursor:pointer" onclick="R.go('sub')">Free</span>`;
+    el.innerHTML=`<div class="nubadge" onclick="R.go('profile')"><div class="navat">${S.user.inits[0]}</div><span>${S.user.name.split(' ')[0]}</span>${sub}</div>`;
+  }else{
+    el.innerHTML=`<button class="btn bg bsm" onclick="M.auth()">Sign In</button><button class="btn bp bsm" onclick="M.auth()">Get Started</button>`;
   }
   lucide.createIcons();
 }
 
 const P = {
-
   land(){
-    return `
-    <div id="pg-land" class="page">
+    return `<div id="pg-land" class="page">
       <p class="l-ey">The unified commerce layer</p>
-      <h1 class="l-h">Your passport to <em>trade & access </em> the globe. 🌎</h1>
-      <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time crypto markets — all in one place.</p>
+      <h1 class="l-h">Your passport to <em>trade & access</em> the globe. 🌎</h1>
+      <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time financial markets — all in one place.</p>
       <div class="ggrid">
         <div class="gcard" onclick="R.acct()">
           <div class="gci id"><i data-lucide="${S.user?'user-check':'user'}" style="width:22px;height:22px"></i></div>
           <span class="gcl">Identity</span>
           <h2 class="gct">${S.user?S.user.name.split(' ')[0]+"'s Profile":'Account Gateway'}</h2>
-          <p class="gcd">${S.user
-            ?'View your profile, track your orders, and manage account settings.'
-            :'Sign in or create an account to access personalised features and trade on the marketplace.'}</p>
-          <div class="gca">
-            <span>${S.user?'View Profile':'Sign In / Register'}</span>
-            <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
-          </div>
+          <p class="gcd">${S.user?'View your profile, track your orders, and manage account settings.':'Sign in or create an account to access personalised features and trade on the marketplace.'}</p>
+          <div class="gca"><span>${S.user?'View Profile':'Sign In / Register'}</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
         <div class="gcard" onclick="R.go('market')">
           <div class="gci iw"><i data-lucide="store" style="width:22px;height:22px"></i></div>
           <span class="gcl">Commerce</span>
           <h2 class="gct">Datum Marketplace</h2>
-          <p class="gcd">logistics, P2P, goods, and service requests — live order board with a community forum.</p>
-          <div class="gca">
-            <span>Enter Marketplace</span>
-            <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
-          </div>
+          <p class="gcd">Logistics, P2P, goods, and service requests — live order board with a community forum.</p>
+          <div class="gca"><span>Enter Marketplace</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
         <div class="gcard" onclick="R.go('crypto')">
           <div class="gci ib"><i data-lucide="bar-chart-2" style="width:22px;height:22px"></i></div>
           <span class="gcl">Markets</span>
-          <h2 class="gct">Crypto Rates</h2>
+          <h2 class="gct">Financial Rates</h2>
           <p class="gcd">Live prices for 500+ assets, deep-dive analytics, interval charts, and your personal watchlist.</p>
-          <div class="gca">
-            <span>View Markets</span>
-            <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
-          </div>
+          <div class="gca"><span>View Markets</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
       </div>
     </div>`;
   },
 
   profile(){
-    const u=S.user;
-    if(!u){R.go('land');return '';}
+    const u=S.user;if(!u){R.go('land');return'';}
     const tl=u.type==='A'?'Business / Merchant':'Individual Trader';
     const ti=u.type==='A'?'briefcase':'user';
-    return `
-    <div id="pg-profile" class="page">
-      <button class="back" onclick="R.go('land')">
-        <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Back
-      </button>
+    const myOrders=(S.orders||[]).filter(o=>o.userId===u.id);
+    const myMsgs=(S.msgs||[]).filter(m=>m.userId===u.id);
+    const cons=S.myConnections||[];
+
+    const vInfo={
+      verified:{cls:'vstat-verified',icon:'check-circle',col:'var(--grn)',title:'Identity Verified',
+        desc:'Your identity is confirmed. Your listings display a verified badge.'},
+      pending:{cls:'vstat-pending',icon:'clock',col:'var(--gld)',title:'Review In Progress',
+        desc:'Submitted — we will update you within 24–48 hours.'},
+      rejected:{cls:'vstat-rejected',icon:'x-circle',col:'var(--red)',title:'Verification Rejected',
+        desc:'Your submission was rejected. Please re-submit with a clearer ID.'},
+    }[S.verifyStatus]||{cls:'vstat-unverified',icon:'shield-off',col:'var(--t3)',title:'Not Verified',
+      desc:'Submit a government-issued ID to get the verified badge on your listings.'};
+
+    const subInfo={
+      active:{cls:'vstat-verified',icon:'zap',col:'var(--pur)',title:'Pro Membership Active',
+        desc:'Full access to all marketplace, forum, and 500+ crypto features.'},
+      pending:{cls:'vstat-pending',icon:'clock',col:'var(--gld)',title:'Payment Under Review',
+        desc:'Your payment reference is being confirmed. Access granted within 24 hours.'},
+    }[S.subStatus]||{cls:'vstat-unverified',icon:'lock',col:'var(--t3)',title:'Free Plan',
+      desc:'Upgrade to Pro ($5/month) to unlock full marketplace, forum, and 500+ crypto assets.'};
+
+    const vTag=S.verifyStatus==='verified'?`<span class="tag tg"><i data-lucide="check-circle" style="width:11px;height:11px"></i>Verified</span>`
+      :S.verifyStatus==='pending'?`<span class="tag tgd"><i data-lucide="clock" style="width:11px;height:11px"></i>Pending Review</span>`
+      :S.verifyStatus==='rejected'?`<span class="tag tr"><i data-lucide="x-circle" style="width:11px;height:11px"></i>Rejected</span>`
+      :`<span class="tag tn"><i data-lucide="shield-off" style="width:11px;height:11px"></i>Unverified</span>`;
+
+    const subTag=S.subscribed
+      ?`<span class="tag tpur"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro</span>`
+      :S.subStatus==='pending'
+      ?`<span class="tag tgd"><i data-lucide="clock" style="width:11px;height:11px"></i>Sub Pending</span>`
+      :`<span class="tag tn" style="cursor:pointer" onclick="R.go('sub')"><i data-lucide="lock" style="width:11px;height:11px"></i>Free Plan</span>`;
+
+    return `<div id="pg-profile" class="page">
+      <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i> Back</button>
       <div class="phero">
         <div class="pavat">${u.inits}</div>
         <div>
           <div class="pname">${u.name}</div>
           <div class="pmeta">${u.email}</div>
-          <div class="ptbadge">
-            <i data-lucide="${ti}" style="width:13px;height:13px"></i>${tl}
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:10px">
+            <div class="ptbadge"><i data-lucide="${ti}" style="width:13px;height:13px"></i>${tl}</div>
+            ${vTag}${subTag}
           </div>
         </div>
       </div>
+
       <div class="pstats">
         <div class="psc"><div class="psv">${S.watchlist.size}</div><div class="psl">Watchlisted</div></div>
-        <div class="psc"><div class="psv">${S.orders?S.orders.filter(o=>o.userId===u.id).length:0}</div><div class="psl">My Orders</div></div>
-        <div class="psc"><div class="psv">${S.msgs?S.msgs.filter(m=>m.userId===u.id).length:0}</div><div class="psl">Forum Posts</div></div>
+        <div class="psc"><div class="psv">${myOrders.length}</div><div class="psl">My Orders</div></div>
+        <div class="psc"><div class="psv">${myMsgs.length}</div><div class="psl">Forum Posts</div></div>
       </div>
+
+      <div class="psec">
+        <div class="psect">Identity Verification
+          ${!S.verifyStatus||S.verifyStatus==='rejected'
+            ?`<button class="btn bpur bsm" onclick="M.verifyForm()"><i data-lucide="shield" style="width:13px;height:13px"></i>${S.verifyStatus==='rejected'?'Re-submit':'Get Verified'}</button>`:''}
+        </div>
+        <div class="vstat-box ${vInfo.cls}">
+          <i data-lucide="${vInfo.icon}" style="width:20px;height:20px;color:${vInfo.col};flex-shrink:0;margin-top:1px"></i>
+          <div><div style="font-weight:600;font-size:.875rem;margin-bottom:3px">${vInfo.title}</div><div style="font-size:.8rem;color:var(--t2);line-height:1.5">${vInfo.desc}</div></div>
+        </div>
+      </div>
+
+      <div class="psec">
+        <div class="psect">Subscription
+          ${!S.subscribed&&S.subStatus!=='pending'
+            ?`<button class="btn bpur bsm" onclick="R.go('sub')"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — $5/mo</button>`:''}
+        </div>
+        <div class="vstat-box ${subInfo.cls}">
+          <i data-lucide="${subInfo.icon}" style="width:20px;height:20px;color:${subInfo.col};flex-shrink:0;margin-top:1px"></i>
+          <div><div style="font-weight:600;font-size:.875rem;margin-bottom:3px">${subInfo.title}</div><div style="font-size:.8rem;color:var(--t2);line-height:1.5">${subInfo.desc}</div></div>
+        </div>
+      </div>
+
+      <div class="psec">
+        <div class="psect">Connection Requests Inbox
+          <button class="btn bg bsm" onclick="A.reloadConnections()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i>Refresh</button>
+        </div>
+        ${cons.length===0
+          ?`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:16px 0">No connection requests yet. Post a listing to receive them here.</p>`
+          :cons.map(c=>`
+          <div class="cxcard">
+            <div class="cxhead">
+              <div class="cxavat">${c.fromInitials}</div>
+              <div style="flex:1;min-width:0">
+                <div class="cxname">${c.fromName}</div>
+                <div class="cxorder">Re: <em>${c.orderTitle||'your listing'}</em> &nbsp;•&nbsp; ${ago(c.createdAt)}</div>
+              </div>
+              <span class="tag ${c.status==='pending'?'to':c.status==='accepted'?'tg':'tn'}">${c.status}</span>
+            </div>
+            <div class="cxmsg">"${c.message}"</div>
+            <div class="cxcontact">
+              <i data-lucide="phone" style="width:12px;height:12px;color:var(--t3)"></i>
+              <strong>${c.contact}</strong>
+              <span style="color:var(--t3);font-size:.72rem;font-weight:400">Commission: ${c.commission}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+
       <div class="psec">
         <div class="psect">Account Details</div>
         <div class="irow"><span class="irl">Full Name</span><span class="irv">${u.name}</span></div>
         <div class="irow"><span class="irl">Email</span><span class="irv">${u.email}</span></div>
         <div class="irow"><span class="irl">Account Type</span><span class="irv">${tl}</span></div>
         <div class="irow"><span class="irl">User ID</span><span class="irv" style="font-family:monospace;font-size:.78rem">${u.id.slice(0,18)}…</span></div>
-        <div class="irow"><span class="irl">Status</span><span class="irv"><span class="tag tg"><i data-lucide="check-circle" style="width:11px;height:11px"></i> Verified</span></span></div>
+        <div class="irow"><span class="irl">Verification</span><span class="irv">${vTag}</span></div>
+        <div class="irow"><span class="irl">Plan</span><span class="irv">${subTag}</span></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
-        <button class="btn bo" onclick="A.logout()">
-          <i data-lucide="log-out" style="width:14px;height:14px"></i> Sign Out
-        </button>
-        <button class="btn bg" onclick="R.go('market')">
-          <i data-lucide="store" style="width:14px;height:14px"></i> Marketplace
-        </button>
-        <button class="btn bg" onclick="R.go('crypto')">
-          <i data-lucide="bar-chart-2" style="width:14px;height:14px"></i> Markets
-        </button>
+        <button class="btn bo" onclick="A.logout()"><i data-lucide="log-out" style="width:14px;height:14px"></i>Sign Out</button>
+        <button class="btn bg" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Marketplace</button>
+        <button class="btn bg" onclick="R.go('crypto')"><i data-lucide="bar-chart-2" style="width:14px;height:14px"></i>Markets</button>
       </div>
     </div>`;
   },
 
   market(){
     const isBoard=S.mTab==='board';
-    return `
-    <div id="pg-market" class="page">
+    const lr=S.lastRefresh?`<span class="rind"><div class="rdot"></div> ${S.lastRefresh.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>`:'';
+    return `<div id="pg-market" class="page">
       <div class="pghdr">
         <div>
-          <button class="back" onclick="R.go('land')">
-            <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Back
-          </button>
+          <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
           <h1 class="pgttl">Datum Marketplace</h1>
-          <p class="pgsub">Browse live listings or join the community forum.</p>
+          <p class="pgsub" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Browse live listings or join the community forum.${lr?'&nbsp;'+lr:''}</p>
         </div>
       </div>
       <div class="tnav">
         <button class="tbtn ${isBoard?'on':''}" onclick="A.setMTab('board')">
-          <i data-lucide="layout-list" style="width:15px;height:15px"></i>
-          <span>Order Board</span>
+          <i data-lucide="layout-list" style="width:15px;height:15px"></i><span>Order Board</span>
         </button>
         <button class="tbtn ${!isBoard?'on':''}" onclick="A.setMTab('forum')">
           <i data-lucide="message-circle" style="width:15px;height:15px"></i>
           <span>Open Forum</span>
+          ${!S.subscribed?`<i data-lucide="lock" style="width:11px;height:11px;color:var(--pur);opacity:.8"></i>`:''}
         </button>
       </div>
       ${isBoard?P._board():P._forum()}
@@ -684,39 +755,25 @@ const P = {
   },
 
   _board(){
-    const cats=[
-      {id:'all',l:'All Listings'},
-      {id:'p2p',l:'P2P Crypto'},
-      {id:'logistics',l:'Logistics'},
-      {id:'goods',l:'Buy / Sell Goods'},
-      {id:'handyman',l:'Handyman'},
-    ];
-    if(S.ordersLoading){
-      return `<div class="oloading"><div class="spin"></div><br>Loading listings…</div>`;
-    }
+    const cats=[{id:'all',l:'All Listings'},{id:'p2p',l:'P2P Crypto'},{id:'logistics',l:'Logistics'},{id:'goods',l:'Buy / Sell Goods'},{id:'handyman',l:'Handyman'}];
+    if(S.ordersLoading)return`<div class="oloading"><div class="spin"></div><br>Loading listings…</div>`;
     const all=S.orders||[];
     const list=S.mFilter==='all'?all:all.filter(o=>o.category===S.mFilter);
     const sc={open:'tg',negotiating:'to',filled:'tn',closed:'tn'};
     const tc={buy:'tb',sell:'tg',request:'to'};
-    return `
+    return`
       <div class="fbar">
         <span class="flbl">Filter:</span>
-        ${cats.map(c=>`
-          <button class="ftag ${S.mFilter===c.id?'on':''}" onclick="A.setFilter('${c.id}')">${c.l}</button>
-        `).join('')}
+        ${cats.map(c=>`<button class="ftag ${S.mFilter===c.id?'on':''}" onclick="A.setFilter('${c.id}')">${c.l}</button>`).join('')}
       </div>
-      ${list.length===0?`
-        <div class="oempty">
-          <div style="width:52px;height:52px;background:var(--surf);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--t3)">
-            <i data-lucide="inbox" style="width:22px;height:22px"></i>
-          </div>
+      ${list.length===0?`<div class="oempty">
+          <div style="width:52px;height:52px;background:var(--surf);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--t3)"><i data-lucide="inbox" style="width:22px;height:22px"></i></div>
           <p style="font-family:var(--fd);font-size:1.1rem;color:var(--t2);margin-bottom:6px">No listings yet</p>
           <p style="font-size:.875rem">${S.user?'Be the first to post a listing.':'Sign in to post the first listing.'}</p>
-        </div>
-      `:`
+        </div>`:`
         <div class="ogrid">
           ${list.map(o=>`
-          <div class="ocard" onclick="A.viewOrder('${o.id}')">
+          <div class="ocard">
             <div class="oavat">${o.userInitials}</div>
             <div class="obody">
               <div class="otop">
@@ -727,64 +784,49 @@ const P = {
               <div class="ometa">${(o.desc||'').length>100?(o.desc||'').slice(0,100)+'…':(o.desc||'No description.')}</div>
               <div class="ofoot">
                 <span class="oprice">${o.price}</span>
-                <span style="font-size:.72rem;color:var(--t3);display:flex;align-items:center;gap:3px">
-                  <i data-lucide="clock" style="width:11px;height:11px"></i>${ago(o.createdAt)}
-                </span>
+                <span style="font-size:.72rem;color:var(--t3);display:flex;align-items:center;gap:3px"><i data-lucide="clock" style="width:11px;height:11px"></i>${ago(o.createdAt)}</span>
                 <span style="font-size:.72rem;color:var(--t2)">by ${o.userName}</span>
-                <div class="oacts" onclick="event.stopPropagation()">
-                  ${o.status!=='filled'&&o.status!=='closed'?`
-                    <button class="btn bc bsm" onclick="event.stopPropagation();A.connectOrder('${o.id}')">
-                      <i data-lucide="plug" style="width:12px;height:12px"></i> Connect
-                    </button>
-                  `:''}
-                  <button class="btn bo bsm" onclick="event.stopPropagation();A.viewOrder('${o.id}')">
-                    <i data-lucide="eye" style="width:12px;height:12px"></i> View
-                  </button>
+                <div class="oacts">
+                  ${o.status!=='filled'&&o.status!=='closed'?`<button class="btn bc bsm" onclick="A.connectOrder('${o.id}')"><i data-lucide="${S.subscribed?'plug':'lock'}" style="width:12px;height:12px"></i>Connect</button>`:''}
+                  <button class="btn bo bsm" onclick="A.viewOrder('${o.id}')"><i data-lucide="${S.subscribed?'eye':'lock'}" style="width:12px;height:12px"></i>View</button>
                 </div>
               </div>
             </div>
           </div>`).join('')}
-        </div>
-      `}`;
+        </div>`}`;
   },
 
   _forum(){
-    if(S.msgsLoading){
-      return `<div class="chat-wrap"><div class="chat-empty"><div class="spin"></div><br>Loading forum…</div></div>`;
-    }
+    if(!S.subscribed){return`<div class="gate-banner">
+      <div class="gate-icon"><i data-lucide="message-circle" style="width:24px;height:24px"></i></div>
+      <h3 class="gate-t">Open Forum is a Pro Feature</h3>
+      <p class="gate-d">Join the community, share market insights, and connect with traders — included in the $5/month Pro plan.</p>
+      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $5/month</button>
+    </div>`;}
+    if(S.msgsLoading)return`<div class="chat-wrap"><div class="chat-empty"><div class="spin"></div><br>Loading forum…</div></div>`;
     const msgs=S.msgs||[];
-    return `
-      <div class="chat-wrap">
-        <div class="chat-hdr">
-          <div class="cdot"></div>
-          <span style="font-weight:600;font-size:.9375rem">Datum Open Forum</span>
-          <span style="font-size:.8125rem;color:var(--t2);margin-left:8px">${msgs.length} messages</span>
-          <span style="margin-left:auto;font-size:.72rem;color:var(--t3)">Messages are public</span>
-        </div>
-        <div class="chat-feed" id="cfeed">
-          ${msgs.length===0
-            ?'<div class="chat-empty">No messages yet. Be the first to say something!</div>'
-            :msgs.map(m=>`
-            <div class="cmsg ${m.own?'own':''}">
-              <div class="cavat">${m.inits}</div>
-              <div class="cbwrap">
-                ${!m.own?`<div class="csender">${m.userName}</div>`:''}
-                <div class="cbub">${m.text}</div>
-                <div class="ctime">${ago(m.ts)}</div>
-              </div>
-            </div>`).join('')
-          }
-        </div>
-        <div class="chat-ibar">
-          <input type="text" id="cinput"
-            placeholder="${S.user?'Share a thought with the forum…':'Sign in to join the conversation…'}"
-            ${!S.user?'disabled':''}
-            onkeydown="if(event.key==='Enter')A.sendMsg()" />
-          <button class="csendbtn" onclick="A.sendMsg()" ${!S.user?'disabled':''}>
-            <i data-lucide="send" style="width:15px;height:15px"></i>
-          </button>
-        </div>
-      </div>`;
+    return`<div class="chat-wrap">
+      <div class="chat-hdr">
+        <div class="cdot"></div>
+        <span style="font-weight:600;font-size:.9375rem">Datum Open Forum</span>
+        <span style="font-size:.8125rem;color:var(--t2);margin-left:8px">${msgs.length} messages</span>
+      </div>
+      <div class="chat-feed" id="cfeed">
+        ${msgs.length===0?'<div class="chat-empty">No messages yet. Be the first to say something!</div>'
+          :msgs.map(m=>`<div class="cmsg ${m.own?'own':''}">
+            <div class="cavat">${m.inits}</div>
+            <div class="cbwrap">
+              ${!m.own?`<div class="csender">${m.userName}</div>`:''}
+              <div class="cbub">${m.text}</div>
+              <div class="ctime">${ago(m.ts)}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="chat-ibar">
+        <input type="text" id="cinput" placeholder="${S.user?'Share a thought with the forum…':'Sign in to join the conversation…'}" ${!S.user?'disabled':''} onkeydown="if(event.key==='Enter')A.sendMsg()"/>
+        <button class="csendbtn" onclick="A.sendMsg()" ${!S.user?'disabled':''}><i data-lucide="send" style="width:15px;height:15px"></i></button>
+      </div>
+    </div>`;
   },
 
   crypto(){
@@ -792,32 +834,20 @@ const P = {
     const total=S.coins.length;
     const subtitle=S.coinsState==='loading'?'Fetching live data from CoinGecko…'
       :S.coinsState==='err'?'Could not reach CoinGecko — retry below'
-      :total>0?`${total.toLocaleString()} assets tracked live`
-      :'Initialising…';
-    return `
-    <div id="pg-crypto" class="page">
+      :total>0?`${total.toLocaleString()} assets tracked live`:'Initialising…';
+    return`<div id="pg-crypto" class="page">
       <div class="pghdr">
         <div>
-          <button class="back" onclick="R.go('land')">
-            <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Back
-          </button>
-          <h1 class="pgttl">Crypto Markets</h1>
-          <p class="pgsub">${subtitle}</p>
+          <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
+          <h1 class="pgttl">Financial Markets</h1>
+          <p class="pgsub">${subtitle}${!S.subscribed?' &nbsp;•&nbsp; <span style="color:var(--pur);font-size:.8rem;font-weight:500"></span>':''}</p>
         </div>
-        ${S.coinsState==='err'?`<button class="btn bo bsm" onclick="loadCoins()">
-          <i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Retry
-        </button>`:''}
+        ${S.coinsState==='err'?`<button class="btn bo bsm" onclick="loadCoins()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i>Retry</button>`:''}
       </div>
       <div class="csubnav">
-        <button class="tbtn ${sub==='market'?'on':''}" onclick="A.setCryptoSub('market')">
-          <i data-lucide="trending-up" style="width:13px;height:13px"></i><span>Market</span>
-        </button>
-        <button class="tbtn ${sub==='watchlist'?'on':''}" onclick="A.setCryptoSub('watchlist')">
-          <i data-lucide="star" style="width:13px;height:13px"></i><span>Watchlist</span>
-        </button>
-        <button class="tbtn ${sub==='portfolio'?'on':''}" onclick="A.setCryptoSub('portfolio')">
-          <i data-lucide="pie-chart" style="width:13px;height:13px"></i><span>Portfolio</span>
-        </button>
+        <button class="tbtn ${sub==='market'?'on':''}" onclick="A.setCryptoSub('market')"><i data-lucide="trending-up" style="width:13px;height:13px"></i><span>Market</span></button>
+        <button class="tbtn ${sub==='watchlist'?'on':''}" onclick="A.setCryptoSub('watchlist')"><i data-lucide="star" style="width:13px;height:13px"></i><span>Watchlist</span></button>
+        <button class="tbtn ${sub==='portfolio'?'on':''}" onclick="A.setCryptoSub('portfolio')"><i data-lucide="pie-chart" style="width:13px;height:13px"></i><span>Portfolio</span></button>
       </div>
       ${sub==='market'?P._mktTable():sub==='deepdive'?P._deepdive():sub==='watchlist'?P._watchlist():P._portfolio()}
     </div>`;
@@ -825,80 +855,65 @@ const P = {
 
   _mktTable(){
     if(S.coinsState==='loading'||S.coinsState==='idle'){
-      return `<div class="mtwrap"><div class="lrow"><div class="spin"></div><br>Fetching 500 assets from CoinGecko…</div></div>`;
+      return`<div class="mtwrap"><div class="lrow"><div class="spin"></div><br>Fetching 500 assets from CoinGecko…</div></div>`;
     }
     if(S.coinsState==='err'&&S.coins.length===0){
-      return `<div class="mtwrap"><div class="lrow" style="color:var(--red)">
-        <i data-lucide="alert-circle" style="width:24px;height:24px;display:block;margin:0 auto 10px"></i>
-        Could not load market data. Check your connection and retry.
-      </div></div>`;
+      return`<div class="mtwrap"><div class="lrow" style="color:var(--red)"><i data-lucide="alert-circle" style="width:24px;height:24px;display:block;margin:0 auto 10px"></i>Could not load market data.</div></div>`;
     }
     const q=S.csearch.toLowerCase().trim();
     const filtered=q?S.coins.filter(c=>c.name.toLowerCase().includes(q)||c.sym.toLowerCase().includes(q)):S.coins;
     const total=filtered.length;
+
+    const tblRow=(c,i)=>{const pos=c.chg>=0;const st=S.watchlist.has(c.id);return`
+      <tr onclick="A.openCoin('${c.id}')">
+        <td style="color:var(--t3);font-size:.78rem">${c.rank||i+1}</td>
+        <td><div class="acell">${coinIcon(c,i,34)}<div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div></div></td>
+        <td class="r price-c">${fmtp(c.price)}</td>
+        <td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td>
+        <td class="r" onclick="event.stopPropagation()"><button class="wbtn ${st?'on':''}" onclick="A.toggleWatch('${c.id}')"><i data-lucide="star" style="width:15px;height:15px;${st?'fill:currentColor':''}"></i></button></td>
+      </tr>`;};
+
+    const thead=`<thead><tr><th style="width:38px">#</th><th>Asset</th><th class="r">Price</th><th class="r">24h</th><th class="r" style="width:48px">★</th></tr></thead>`;
+
+    if(!S.subscribed){
+      const top5=filtered.slice(0,5);
+      return`
+        <div class="mtbar">
+          <div class="swrap"><i data-lucide="search" style="width:14px;height:14px"></i><input type="text" placeholder="Search assets…" value="${S.csearch}" oninput="A.cSearch(this.value)"/></div>
+          <span style="font-size:.8rem;color:var(--t2);margin-left:auto">${total.toLocaleString()} assets</span>
+        </div>
+        <div class="crypto-gate-wrap">
+          <div class="mtwrap"><table>${thead}<tbody>${top5.map((c,i)=>tblRow(c,i)).join('')}</tbody></table></div>
+          <div class="crypto-gate-overlay">
+            <div>
+              <div style="width:44px;height:44px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#fff"><i data-lucide="lock" style="width:20px;height:20px"></i></div>
+              <div style="font-family:var(--fd);font-size:1.05rem;margin-bottom:6px">Unlock all ${total.toLocaleString()} assets</div>
+              <p style="font-size:.8rem;color:var(--t2);margin-bottom:14px;max-width:280px;margin-left:auto;margin-right:auto">Upgrade to Pro for full market table, watchlist, and deep-dive charts.</p>
+              <button class="btn bpur bsm" onclick="R.go('sub')"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — $5/month</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
     const pages=Math.max(1,Math.ceil(total/S.cps));
     const pg=Math.min(S.cpage,pages);
     const start=(pg-1)*S.cps;
     const slice=filtered.slice(start,start+S.cps);
-    const maxPagesShown=7;
-
-    return `
+    const maxPg=7;
+    return`
       <div class="mtbar">
-        <div class="swrap">
-          <i data-lucide="search" style="width:14px;height:14px"></i>
-          <input type="text" placeholder="Search assets…" value="${S.csearch}"
-                 oninput="A.cSearch(this.value)"/>
-        </div>
+        <div class="swrap"><i data-lucide="search" style="width:14px;height:14px"></i><input type="text" placeholder="Search assets…" value="${S.csearch}" oninput="A.cSearch(this.value)"/></div>
         <span style="font-size:.8rem;color:var(--t2);margin-left:auto">${total.toLocaleString()} result${total!==1?'s':''}</span>
       </div>
       <div class="mtwrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:38px">#</th>
-              <th>Asset</th>
-              <th class="r">Price</th>
-              <th class="r">24h</th>
-              <th class="r" style="width:48px">★</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${slice.map((c,i)=>{
-              const idx=start+i;
-              const pos=c.chg>=0;
-              const st=S.watchlist.has(c.id);
-              return `
-              <tr onclick="A.openCoin('${c.id}')">
-                <td style="color:var(--t3);font-size:.78rem">${c.rank||idx+1}</td>
-                <td><div class="acell">
-                  ${coinIcon(c,idx,34)}
-                  <div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div>
-                </div></td>
-                <td class="r price-c">${fmtp(c.price)}</td>
-                <td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td>
-                <td class="r" onclick="event.stopPropagation()">
-                  <button class="wbtn ${st?'on':''}" onclick="A.toggleWatch('${c.id}')">
-                    <i data-lucide="star" style="width:15px;height:15px;${st?'fill:currentColor':''}"></i>
-                  </button>
-                </td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
+        <table>${thead}<tbody>${slice.map((c,i)=>tblRow(c,start+i)).join('')}</tbody></table>
         <div class="pgn">
           <span class="pgninf">Page ${pg} / ${pages} &nbsp;•&nbsp; ${total.toLocaleString()} assets</span>
           <div class="pgnc">
-            <button class="pgbtn" onclick="A.cPage(${pg-1})" ${pg<=1?'disabled':''}>
-              <i data-lucide="chevron-left" style="width:13px;height:13px"></i>
-            </button>
-            ${Array.from({length:Math.min(pages,maxPagesShown)},(_,i)=>{
-              const p=i+1;
-              return `<button class="pgbtn ${p===pg?'on':''}" onclick="A.cPage(${p})">${p}</button>`;
-            }).join('')}
-            ${pages>maxPagesShown?`<span style="padding:0 4px;color:var(--t3);font-size:.78rem">…${pages}</span>`:''}
-            <button class="pgbtn" onclick="A.cPage(${pg+1})" ${pg>=pages?'disabled':''}>
-              <i data-lucide="chevron-right" style="width:13px;height:13px"></i>
-            </button>
+            <button class="pgbtn" onclick="A.cPage(${pg-1})" ${pg<=1?'disabled':''}><i data-lucide="chevron-left" style="width:13px;height:13px"></i></button>
+            ${Array.from({length:Math.min(pages,maxPg)},(_,i)=>{const p=i+1;return`<button class="pgbtn ${p===pg?'on':''}" onclick="A.cPage(${p})">${p}</button>`;}).join('')}
+            ${pages>maxPg?`<span style="padding:0 4px;color:var(--t3);font-size:.78rem">…${pages}</span>`:''}
+            <button class="pgbtn" onclick="A.cPage(${pg+1})" ${pg>=pages?'disabled':''}><i data-lucide="chevron-right" style="width:13px;height:13px"></i></button>
           </div>
         </div>
       </div>`;
@@ -906,158 +921,132 @@ const P = {
 
   _deepdive(){
     const coin=S.coins.find(c=>c.id===S.selCoin);
-    if(!coin) return '<p style="padding:40px;color:var(--t2)">Asset not found.</p>';
-    const idx=S.coins.indexOf(coin);
-    const pos=coin.chg>=0;
-    const iv=S.interval;
-    const bars=mockBars(coin.id,iv);
-    const maxH=Math.max(...bars.map(b=>b.h));
+    if(!coin)return'<p style="padding:40px;color:var(--t2)">Asset not found.</p>';
+    const idx=S.coins.indexOf(coin);const pos=coin.chg>=0;const iv=S.interval;
+    const bars=mockBars(coin.id,iv);const maxH=Math.max(...bars.map(b=>b.h));
     const mets=mockMetrics(coin.id,iv);
-    const xlabels={
-      ytd:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-      '5y':['2020','2021','2022','2023','2024'],
-      '10y':['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024'],
-    };
-    const st=S.watchlist.has(coin.id);
-    const [bg,fg]=COLORS[idx%COLORS.length];
-
-    return `
-      <button class="back" onclick="A.setCryptoSub('market')">
-        <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Back to Market
-      </button>
+    const xlabels={ytd:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],'5y':['2020','2021','2022','2023','2024'],'10y':['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024']};
+    const st=S.watchlist.has(coin.id);const[bg,fg]=COLORS[idx%COLORS.length];
+    return`
+      <button class="back" onclick="A.setCryptoSub('market')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Market</button>
       <div class="ahero">
         <div class="aherol">
           <div class="aheroico" style="${coin.logo?'background:#f0f0f0':'background:'+bg+';color:'+fg}">
-            ${coin.logo
-              ?`<img src="${coin.logo}" alt="${coin.sym}" width="54" height="54"
-                    onerror="this.parentNode.style.background='${bg}';this.parentNode.style.color='${fg}';this.parentNode.innerHTML='${coin.sym.slice(0,3)}'">`
-              :coin.sym.slice(0,3)}
+            ${coin.logo?`<img src="${coin.logo}" alt="${coin.sym}" width="54" height="54" onerror="this.parentNode.style.background='${bg}';this.parentNode.style.color='${fg}';this.parentNode.innerHTML='${coin.sym.slice(0,3)}'">`:coin.sym.slice(0,3)}
           </div>
-          <div>
-            <div class="aheroname">${coin.name}</div>
-            <div class="aherosym">${coin.sym} &nbsp;•&nbsp; Rank #${coin.rank||idx+1}</div>
-          </div>
+          <div><div class="aheroname">${coin.name}</div><div class="aherosym">${coin.sym} &nbsp;•&nbsp; Rank #${coin.rank||idx+1}</div></div>
         </div>
         <div style="text-align:right">
           <div class="aheroprice">${fmtp(coin.price)}</div>
           <div class="${pos?'cp':'cn'}" style="font-size:.95rem;font-weight:500;margin-top:4px">${fmtpct(coin.chg)} (24h)</div>
-          <div style="margin-top:12px">
-            <button class="btn bo bsm" onclick="A.toggleWatch('${coin.id}');render()">
-              <i data-lucide="star" style="width:13px;height:13px;${st?'fill:var(--gld);color:var(--gld)':''}"></i>
-              ${st?'Watchlisted':'Add to Watchlist'}
-            </button>
-          </div>
+          <div style="margin-top:12px"><button class="btn bo bsm" onclick="A.toggleWatch('${coin.id}');render()"><i data-lucide="star" style="width:13px;height:13px;${st?'fill:var(--gld);color:var(--gld)':''}"></i>${st?'Watchlisted':'Add to Watchlist'}</button></div>
         </div>
       </div>
-      <div class="itabs">
-        ${['ytd','5y','10y'].map(iv2=>`
-          <button class="ibtn ${iv===iv2?'on':''}" onclick="A.setIv('${iv2}')">${iv2.toUpperCase()}</button>
-        `).join('')}
-      </div>
+      <div class="itabs">${['ytd','5y','10y'].map(iv2=>`<button class="ibtn ${iv===iv2?'on':''}" onclick="A.setIv('${iv2}')">${iv2.toUpperCase()}</button>`).join('')}</div>
       <div class="chartwrap">
         <div class="chartarea" style="padding-top:36px">
           <span class="cylabel">${coin.sym}/USD — ${iv.toUpperCase()} Performance (illustrative)</span>
-          ${bars.map(b=>`
-            <div class="cbar" style="height:${Math.round((b.h/maxH)*220)}px;background:${b.up?'var(--grn)':'var(--red)'};opacity:.72"></div>
-          `).join('')}
+          ${bars.map(b=>`<div class="cbar" style="height:${Math.round((b.h/maxH)*220)}px;background:${b.up?'var(--grn)':'var(--red)'};opacity:.72"></div>`).join('')}
         </div>
-        <div class="cxlabels">
-          ${xlabels[iv].map(l=>`<span>${l}</span>`).join('')}
-        </div>
+        <div class="cxlabels">${xlabels[iv].map(l=>`<span>${l}</span>`).join('')}</div>
       </div>
-      <div class="mgrid">
-        ${Object.entries(mets).map(([k,v])=>`
-          <div class="mc">
-            <div class="mcl">${k}</div>
-            <div class="mcv">${v}</div>
-            <div class="mcs">${iv.toUpperCase()} period</div>
-          </div>`).join('')}
-      </div>`;
+      <div class="mgrid">${Object.entries(mets).map(([k,v])=>`<div class="mc"><div class="mcl">${k}</div><div class="mcv">${v}</div><div class="mcs">${iv.toUpperCase()} period</div></div>`).join('')}</div>`;
   },
 
   _watchlist(){
     const starred=S.coins.filter(c=>S.watchlist.has(c.id));
-    if(starred.length===0){
-      return `
-        <div class="wempty">
-          <div class="wemi"><i data-lucide="star" style="width:26px;height:26px"></i></div>
-          <div class="wemt">Your watchlist is empty</div>
-          <p style="font-size:.875rem">Star assets from the market table to track them here.</p>
-          <button class="btn bp" style="margin-top:18px" onclick="A.setCryptoSub('market')">Browse Market</button>
-        </div>`;
-    }
-    return `
-      <div class="mtwrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Asset</th><th class="r">Price</th><th class="r">24h</th>
-              <th class="r" style="width:48px">★</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${starred.map((c)=>{
-              const idx=S.coins.indexOf(c);
-              const pos=c.chg>=0;
-              return `
-              <tr onclick="A.openCoin('${c.id}')">
-                <td><div class="acell">
-                  ${coinIcon(c,idx,34)}
-                  <div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div>
-                </div></td>
-                <td class="r price-c">${fmtp(c.price)}</td>
-                <td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td>
-                <td class="r" onclick="event.stopPropagation()">
-                  <button class="wbtn on" onclick="A.toggleWatch('${c.id}')">
-                    <i data-lucide="star" style="width:15px;height:15px;fill:currentColor"></i>
-                  </button>
-                </td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>`;
+    if(starred.length===0)return`<div class="wempty"><div class="wemi"><i data-lucide="star" style="width:26px;height:26px"></i></div><div class="wemt">Your watchlist is empty</div><p style="font-size:.875rem">Star assets from the market table to track them here.</p><button class="btn bp" style="margin-top:18px" onclick="A.setCryptoSub('market')">Browse Market</button></div>`;
+    return`<div class="mtwrap"><table><thead><tr><th>Asset</th><th class="r">Price</th><th class="r">24h</th><th class="r" style="width:48px">★</th></tr></thead><tbody>
+      ${starred.map(c=>{const i=S.coins.indexOf(c);const pos=c.chg>=0;return`<tr onclick="A.openCoin('${c.id}')"><td><div class="acell">${coinIcon(c,i,34)}<div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div></div></td><td class="r price-c">${fmtp(c.price)}</td><td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td><td class="r" onclick="event.stopPropagation()"><button class="wbtn on" onclick="A.toggleWatch('${c.id}')"><i data-lucide="star" style="width:15px;height:15px;fill:currentColor"></i></button></td></tr>`;}).join('')}
+    </tbody></table></div>`;
   },
 
   _portfolio(){
-    return `
-      <div style="display:flex;align-items:center;justify-content:center;padding:56px 24px">
-        <div class="cscard">
-          <div class="csgfx"><i data-lucide="line-chart" style="width:48px;height:48px"></i></div>
-          <div class="csbadge"><i data-lucide="clock" style="width:11px;height:11px"></i> Coming Soon</div>
-          <h2 class="cst">Portfolio Tracker</h2>
-          <p class="css">Automated portfolio tracking with real-time P&L, allocation charts, and multi-exchange sync is in development. Join the waitlist to be first in line.</p>
-          <button class="btn bp" style="margin-top:26px">
-            <i data-lucide="bell" style="width:14px;height:14px"></i> Join Waitlist
-          </button>
-        </div>
-      </div>`;
+    return`<div style="display:flex;align-items:center;justify-content:center;padding:56px 24px"><div class="cscard">
+      <div class="csgfx"><i data-lucide="line-chart" style="width:48px;height:48px"></i></div>
+      <div class="csbadge"><i data-lucide="clock" style="width:11px;height:11px"></i>Coming Soon</div>
+      <h2 class="cst">Portfolio Tracker</h2>
+      <p class="css">Automated portfolio tracking with real-time P&L, allocation charts, and multi-exchange sync is in development.</p>
+      <button class="btn bp" style="margin-top:26px"><i data-lucide="bell" style="width:14px;height:14px"></i>Join Waitlist</button>
+    </div></div>`;
+  },
+
+  subscribe(){
+    const isActive=S.subStatus==='active';
+    const isPending=S.subStatus==='pending';
+    return`<div id="pg-sub" class="page">
+      <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
+      <div style="text-align:center;margin-bottom:8px">
+        <div class="sub-badge"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro Membership</div>
+        <h1 class="l-h" style="font-size:clamp(1.8rem,4vw,2.8rem);margin-bottom:10px">Unlock <em>everything</em> on Datum.</h1>
+        <div class="sub-price">$5 <span>/ month</span></div>
+        <p style="font-size:.95rem;color:var(--t2);max-width:420px;margin:10px auto 0;line-height:1.6">One flat rate. Full access to marketplace, open forum, and 500+ live crypto assets.</p>
+      </div>
+
+      <div class="sub-grid">
+        <div class="sub-feat"><div class="sub-feat-i"><i data-lucide="layout-list" style="width:18px;height:18px"></i></div><div class="sub-feat-t">Full Marketplace</div><div class="sub-feat-d">View, connect and interact with every listing on the board.</div></div>
+        <div class="sub-feat"><div class="sub-feat-i"><i data-lucide="message-circle" style="width:18px;height:18px"></i></div><div class="sub-feat-t">Open Forum</div><div class="sub-feat-d">Join the community conversation and share market insights.</div></div>
+        <div class="sub-feat"><div class="sub-feat-i"><i data-lucide="bar-chart-2" style="width:18px;height:18px"></i></div><div class="sub-feat-t">500+ Crypto Assets</div><div class="sub-feat-d">Full market table with search, pagination, and deep-dive analytics.</div></div>
+        <div class="sub-feat"><div class="sub-feat-i"><i data-lucide="star" style="width:18px;height:18px"></i></div><div class="sub-feat-t">Watchlist & Charts</div><div class="sub-feat-d">Track your favourites and access historical performance charts.</div></div>
+      </div>
+
+      ${isActive?`<div style="max-width:480px;margin:0 auto;background:#E6F5EE;border:1px solid #B3DFCA;border-radius:var(--rlg);padding:28px;text-align:center">
+          <i data-lucide="check-circle" style="width:28px;height:28px;color:var(--grn);display:block;margin:0 auto 12px"></i>
+          <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">You're already a Pro Member!</div>
+          <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:18px">You have full access to all Pro features.</p>
+          <button class="btn bc" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Go to Marketplace</button>
+        </div>`
+      :isPending?`<div style="max-width:480px;margin:0 auto;background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rlg);padding:28px;text-align:center">
+          <i data-lucide="clock" style="width:28px;height:28px;color:var(--gld);display:block;margin:0 auto 12px"></i>
+          <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">Payment Under Review</div>
+          <p style="font-size:.875rem;color:var(--t2);line-height:1.6">Your payment reference has been submitted and is being confirmed by our team. Access will be granted within 24 hours. Check back soon!</p>
+        </div>`
+      :`<div class="pay-card">
+        <h3 style="font-family:var(--fd);font-size:1.35rem;margin-bottom:5px">Choose Payment Method</h3>
+        <p style="font-size:.8rem;color:var(--t2);margin-bottom:22px;line-height:1.6">$5/month — secure checkout, instant activation for card/bank payments.</p>
+        ${!S.user
+          ?`<div style="text-align:center;padding:14px;background:var(--surf);border-radius:var(--rsm);font-size:.875rem;color:var(--t2)"><a onclick="M.auth()" style="color:var(--t1);font-weight:500;cursor:pointer">Sign in first</a> to continue to payment.</div>`
+          :`<div style="display:flex;flex-direction:column;gap:12px">
+            <button class="btn bp" style="width:100%;justify-content:center;padding:14px;font-size:.9375rem" onclick="PAY.withFlutterwave()">
+              <i data-lucide="credit-card" style="width:16px;height:16px"></i>
+              Pay by Card or Bank Transfer
+            </button>
+            <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:14px;font-size:.9375rem" onclick="PAY.withCrypto()">
+              <i data-lucide="bitcoin" style="width:16px;height:16px"></i>
+              Pay with Crypto (USDT)
+            </button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin:18px 0">
+            <div style="flex:1;height:1px;background:var(--bdr)"></div>
+            <span style="font-size:.72rem;color:var(--t3)">or pay manually</span>
+            <div style="flex:1;height:1px;background:var(--bdr)"></div>
+          </div>
+          <details style="cursor:pointer">
+            <summary style="font-size:.8rem;font-weight:500;color:var(--t2);list-style:none;display:flex;align-items:center;gap:6px"><i data-lucide="chevron-down" style="width:13px;height:13px"></i>Manual bank/crypto transfer + reference</summary>
+            <div style="margin-top:14px">
+              <div class="fg"><label>Payment Reference / TX Hash</label><input type="text" id="subref" placeholder="e.g. FLW-TXN-123 or 0x4c5d6e…"/></div>
+              <div class="fg"><label>Method Used</label><select id="submethod"><option value="">Select…</option><option value="bank">Bank Transfer</option><option value="usdt">USDT (TRC-20)</option><option value="btc">Bitcoin (BTC)</option></select></div>
+              <div class="ferr" id="suberr"></div>
+              <button class="btn bo" style="width:100%;justify-content:center;padding:11px" id="subbtn" onclick="A.submitSub()"><i data-lucide="send" style="width:14px;height:14px"></i>Submit Reference (manual review)</button>
+            </div>
+          </details>
+          <p style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:14px;line-height:1.6">Card/bank payments activate instantly. Crypto activates after 1 confirmation (~10 min). Non-refundable after access is granted.</p>`}
+      </div>`}
+    </div>`;
   },
 };
 
 const M = {
-  show(html){
-    document.getElementById('mroot').innerHTML=html;
-    lucide.createIcons();
-  },
-  close(){
-    document.getElementById('mroot').innerHTML='';
-    S.authTab='login'; S.signupType=null;
-  },
+  show(html){ document.getElementById('mroot').innerHTML=html; lucide.createIcons(); },
+  close(){ document.getElementById('mroot').innerHTML=''; S.authTab='login'; S.signupType=null; },
 
   auth(){
     const login=S.authTab!=='signup';
-    M.show(`
-    <div class="mback" onclick="if(event.target===this)M.close()">
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
         <div class="mhdr">
-          <div>
-            <div class="mey">${login?'Welcome back':'Create account'}</div>
-            <h2 class="mtitle">${login?'Sign In':'Join Datum'}</h2>
-          </div>
-          <button class="mclose" onclick="M.close()">
-            <i data-lucide="x" style="width:15px;height:15px"></i>
-          </button>
+          <div><div class="mey">${login?'Welcome back':'Create account'}</div><h2 class="mtitle">${login?'Sign In':'Join Datum'}</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
         </div>
         <div class="mtabs">
           <button class="mtab ${login?'on':''}" onclick="A.authTab('login')">Sign In</button>
@@ -1069,122 +1058,64 @@ const M = {
   },
 
   _loginForm(){
-    return `
-      <div class="fg">
-        <label>Email Address</label>
-        <input type="email" id="lemail" placeholder="you@example.com" autocomplete="email"
-               onkeydown="if(event.key==='Enter')A.login()"/>
-      </div>
-      <div class="fg">
-        <label>Password</label>
-        <input type="password" id="lpwd" placeholder="••••••••" autocomplete="current-password"
-               onkeydown="if(event.key==='Enter')A.login()"/>
-      </div>
+    return`<div class="fg"><label>Email Address</label><input type="email" id="lemail" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')A.login()"/></div>
+      <div class="fg"><label>Password</label><input type="password" id="lpwd" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')A.login()"/></div>
       <div class="ferr" id="lerr"></div>
-      <button class="btn bp" id="lbtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.login()">
-        Sign In
-      </button>
+      <button class="btn bp" id="lbtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.login()">Sign In</button>
       <div class="aswitch">Don't have an account? <a onclick="A.authTab('signup')">Register here</a></div>`;
   },
 
   _signupForm(){
     const sel=S.signupType;
-    return `
-      <div class="fg">
-        <label>Full Name</label>
-        <input type="text" id="sname" placeholder="Fullname" autocomplete="name"/>
-      </div>
-      <div class="fg">
-        <label>Email Address</label>
-        <input type="email" id="semail" placeholder="you@example.com" autocomplete="email"/>
-      </div>
-      <div class="fg">
-        <label>Password</label>
-        <input type="password" id="spwd" placeholder="Min. 8 characters" autocomplete="new-password"
-               onkeydown="if(event.key==='Enter')A.signup()"/>
-      </div>
-      <div class="fg">
-        <label>Account Type</label>
+    return`<div class="fg"><label>Full Name</label><input type="text" id="sname" placeholder="Your full name" autocomplete="name"/></div>
+      <div class="fg"><label>Email Address</label><input type="email" id="semail" placeholder="you@example.com" autocomplete="email"/></div>
+      <div class="fg"><label>Password</label><input type="password" id="spwd" placeholder="Min. 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')A.signup()"/></div>
+      <div class="fg"><label>Account Type</label>
         <div class="utgrid">
-          <div class="utcard ${sel==='A'?'on':''}" onclick="A.setUType('A')">
-            <div class="uticon"><i data-lucide="briefcase" style="width:19px;height:19px"></i></div>
-            <div class="utn">Business</div>
-            <div class="utd">Merchants, Vendors, Artisans, Service providers.</div>
-          </div>
-          <div class="utcard ${sel==='B'?'on':''}" onclick="A.setUType('B')">
-            <div class="uticon"><i data-lucide="user" style="width:19px;height:19px"></i></div>
-            <div class="utn">Individual</div>
-            <div class="utd">Personal traders, P2P buyers/sellers.</div>
-          </div>
+          <div class="utcard ${sel==='A'?'on':''}" onclick="A.setUType('A')"><div class="uticon"><i data-lucide="briefcase" style="width:19px;height:19px"></i></div><div class="utn">Business</div><div class="utd">Merchants, Vendors, Artisans, Service providers.</div></div>
+          <div class="utcard ${sel==='B'?'on':''}" onclick="A.setUType('B')"><div class="uticon"><i data-lucide="user" style="width:19px;height:19px"></i></div><div class="utn">Individual</div><div class="utd">Personal traders, P2P buyers/sellers.</div></div>
         </div>
       </div>
       <div class="ferr" id="serr"></div>
-      <button class="btn bp" id="sbtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.signup()">
-        Create Account
-      </button>
+      <button class="btn bp" id="sbtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.signup()">Create Account</button>
       <div class="aswitch">Already have an account? <a onclick="A.authTab('login')">Sign in</a></div>`;
   },
 
   createOrder(){
     if(!S.user){M.auth();toast('Please sign in to post a listing.');return;}
-    M.show(`
-    <div class="mback" onclick="if(event.target===this)M.close()">
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
-        <div class="mhdr">
-          <div><div class="mey">New Listing</div><h2 class="mtitle">Post an Order</h2></div>
-          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
-        </div>
-        <div class="fg">
-          <label>Title</label>
-          <input type="text" id="otitle" placeholder="e.g. Sell 0.1 ETH at spot rate"/>
-        </div>
-        <div class="fg">
-          <label>Category</label>
-          <select id="ocat">
-            <option value="">Select…</option>
-            <option value="p2p">P2P Crypto Trading</option>
-            <option value="logistics">Logistics / Delivery</option>
-            <option value="goods">Buy / Sell Goods</option>
-            <option value="handyman">Handyman / Service</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Order Type</label>
-          <select id="otype">
-            <option value="sell">Sell</option>
-            <option value="buy">Buy</option>
-            <option value="request">Service Request</option>
-          </select>
-        </div>
+        <div class="mhdr"><div><div class="mey">New Listing</div><h2 class="mtitle">Post an Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
+        <div class="fg"><label>Title</label><input type="text" id="otitle" placeholder="e.g. Sell 0.1 ETH at spot rate"/></div>
+        <div class="fg"><label>Category</label><select id="ocat"><option value="">Select…</option><option value="p2p">P2P Crypto Trading</option><option value="logistics">Logistics / Delivery</option><option value="goods">Buy / Sell Goods</option><option value="handyman">Handyman / Service</option></select></div>
+        <div class="fg"><label>Order Type</label><select id="otype"><option value="sell">Sell</option><option value="buy">Buy</option><option value="request">Service Request</option></select></div>
         <div class="fg">
           <label>Price / Budget</label>
-          <input type="text" id="oprice" placeholder="e.g. ₦850,000 or Negotiable"/>
+          <div class="pfx"><span class="pfx-sym">$</span><input type="text" id="oprice" placeholder="0.00 or Negotiable"/></div>
+          <div style="font-size:.72rem;color:var(--t3);margin-top:5px"><i data-lucide="info" style="width:10px;height:10px;display:inline;vertical-align:-1px"></i> Price in USD. A 2% platform commission applies on completed deals.</div>
         </div>
-        <div class="fg">
-          <label>Description</label>
-          <textarea id="odesc" rows="3" placeholder="Full details of your listing…"></textarea>
-        </div>
+        <div class="fg"><label>Description</label><textarea id="odesc" rows="3" placeholder="Full details of your listing…"></textarea></div>
         <div class="ferr" id="oerr"></div>
-        <button class="btn bp" id="obtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.submitOrder()">
-          <i data-lucide="send" style="width:14px;height:14px"></i> Post Listing
-        </button>
+        <button class="btn bp" id="obtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.submitOrder()"><i data-lucide="send" style="width:14px;height:14px"></i>Post Listing</button>
       </div>
     </div>`);
   },
 
   viewOrder(order){
+    if(!S.subscribed){M.subscribe();return;}
     const sc={open:'tg',negotiating:'to',filled:'tn',closed:'tn'};
     const tc={buy:'tb',sell:'tg',request:'to'};
     const catLabel={p2p:'P2P Crypto',logistics:'Logistics',goods:'Buy/Sell Goods',handyman:'Handyman'}[order.category]||order.category;
     const mine=S.user?.id===order.userId;
     const done=order.status==='filled'||order.status==='closed';
-    M.show(`
-    <div class="mback" onclick="if(event.target===this)M.close()">
+    const rawPx=parseFloat((order.price||'').replace(/[^0-9.]/g,''));
+    const commStr=!isNaN(rawPx)&&rawPx>0?`$${(rawPx*0.02).toFixed(2)} (2% of ${order.price})`:'2% of the agreed transaction value';
+    const safeTitle=order.title.replace(/'/g,'&#39;');
+    const safeName=order.userName.replace(/'/g,'&#39;');
+    const safeComm=commStr.replace(/'/g,'&#39;');
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal modal-lg">
-        <div class="mhdr">
-          <div><div class="mey">Order Details</div><h2 class="mtitle" style="font-size:1.35rem">Listing Preview</h2></div>
-          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
-        </div>
+        <div class="mhdr"><div><div class="mey">Order Details</div><h2 class="mtitle" style="font-size:1.35rem">Listing Preview</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
         <div class="odh">
           <div class="odtags">
             <span class="tag ${sc[order.status]||'tn'}">${order.status}</span>
@@ -1195,54 +1126,77 @@ const M = {
           <div class="odprice">${order.price}</div>
           <div style="font-size:.78rem;color:var(--t3);margin-top:4px">Posted ${ago(order.createdAt)}</div>
         </div>
-        <div style="margin-bottom:18px">
-          <div style="font-weight:600;font-size:.875rem;margin-bottom:9px">Description</div>
-          <div style="font-size:.9rem;color:var(--t2);line-height:1.65">${order.desc||'No description provided.'}</div>
-        </div>
+        <div style="margin-bottom:18px"><div style="font-weight:600;font-size:.875rem;margin-bottom:9px">Description</div><div style="font-size:.9rem;color:var(--t2);line-height:1.65">${order.desc||'No description provided.'}</div></div>
         <div class="odmeta">
           <div class="odmi"><div class="odml">Type</div><div class="odmv" style="text-transform:capitalize">${order.type}</div></div>
           <div class="odmi"><div class="odml">Category</div><div class="odmv">${catLabel}</div></div>
           <div class="odmi"><div class="odml">Status</div><div class="odmv" style="text-transform:capitalize">${order.status}</div></div>
           <div class="odmi"><div class="odml">Posted</div><div class="odmv">${ago(order.createdAt)}</div></div>
         </div>
-        <div class="selcard">
-          <div class="selavat">${order.userInitials}</div>
+        <div class="selcard"><div class="selavat">${order.userInitials}</div><div><div class="selname">${order.userName}</div><div class="selstat">Datum member</div></div></div>
+        ${!done&&!mine?`
+        <div class="comm-box">
+          <i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--gld);flex-shrink:0;margin-top:1px"></i>
           <div>
-            <div class="selname">${order.userName}</div>
-            <div class="selstat">
-              <span class="tag tg" style="margin-right:6px"><i data-lucide="check-circle" style="width:10px;height:10px"></i> Verified</span>
-              Member on Datum
-            </div>
+            <div class="comm-box-t">Platform Commission: ${commStr}</div>
+            <div class="comm-box-d">A 2% commission on the final agreed transaction value is payable to Datum upon deal completion. This is charged to the buyer/requester and must be settled before goods or services are released.</div>
           </div>
         </div>
-        ${!done&&!mine?`
         <div class="cform">
           <div class="cformtitle">Send a Connection Request</div>
-          <div class="fg">
-            <label>Your message to ${order.userName.split(' ')[0]}</label>
-            <textarea id="cmsg" rows="3" placeholder="Introduce yourself. Why are you the right person for this order?"></textarea>
-          </div>
-          <div class="fg">
-            <label>Your contact (phone, WhatsApp, Telegram, or email)</label>
-            <input type="text" id="ccontact" placeholder="e.g. +234 801 234 5678"/>
+          <div class="fg"><label>Your message to ${order.userName.split(' ')[0]}</label><textarea id="cmsg" rows="3" placeholder="Introduce yourself and propose your terms…"></textarea></div>
+          <div class="fg"><label>Your contact (WhatsApp, Telegram, phone, or email)</label><input type="text" id="ccontact" placeholder="e.g. +234 801 234 5678 or @handle"/></div>
+          <div style="font-size:.75rem;color:var(--t3);margin-bottom:14px;line-height:1.5;padding:8px 10px;background:var(--surf);border-radius:var(--rsm)">
+            By sending this request you acknowledge the platform commission of <strong>${commStr}</strong>, payable upon deal completion.
           </div>
           <div class="ferr" id="cerr"></div>
           <div style="display:flex;gap:10px">
-            <button class="btn bc" style="flex:1;justify-content:center" onclick="A.submitConnect('${order.id}','${order.userName}')">
-              <i data-lucide="plug" style="width:14px;height:14px"></i> Send Request
-            </button>
+            <button class="btn bc" id="cbtn" style="flex:1;justify-content:center" onclick="A.submitConnect('${order.id}','${order.userId}','${safeName}','${safeTitle}','${safeComm}')"><i data-lucide="plug" style="width:14px;height:14px"></i>Send Request</button>
             <button class="btn bo" onclick="M.close()">Cancel</button>
           </div>
+        </div>`:''}
+        ${done?`<div style="background:var(--surf);border-radius:var(--rmd);padding:14px;text-align:center;color:var(--t2);font-size:.875rem"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--grn);display:block;margin:0 auto 7px"></i>This order is no longer accepting connections.</div>`:''}
+        ${mine?`<div style="background:#E8EEFB;border-radius:var(--rmd);padding:14px;text-align:center;font-size:.875rem;color:var(--blu)"><i data-lucide="info" style="width:15px;height:15px;display:inline-block;vertical-align:-3px;margin-right:6px"></i>This is your listing. Connection requests appear in your Profile inbox.</div>`:''}
+      </div>
+    </div>`);
+  },
+
+  subscribe(){
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal">
+        <div class="mhdr"><div><div class="mey">Pro Membership</div><h2 class="mtitle">Upgrade Required</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
+        <div style="text-align:center;padding:8px 0 20px">
+          <div style="width:56px;height:56px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff"><i data-lucide="lock" style="width:24px;height:24px"></i></div>
+          <p style="font-family:var(--fd);font-size:1.35rem;margin-bottom:8px">This is a Pro feature</p>
+          <p style="font-size:.875rem;color:var(--t2);margin-bottom:0;line-height:1.6">Upgrade to Pro for $5/month to unlock full marketplace access, the open forum, and 500+ crypto assets.</p>
         </div>
-        `:''}
-        ${done?`<div style="background:var(--surf);border-radius:var(--rmd);padding:14px;text-align:center;color:var(--t2);font-size:.875rem">
-          <i data-lucide="check-circle-2" s          <i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--grn);display:block;margin:0 auto 7px"></i>
-          This order is no longer accepting connections.
-        </div>`:``}
-        ${mine?`<div style="background:#E8EEFB;border-radius:var(--rmd);padding:14px;text-align:center;font-size:.875rem;color:var(--blu)">
-          <i data-lucide="info" style="width:15px;height:15px;display:inline-block;vertical-align:-3px;margin-right:6px"></i>
-          This is your listing — you cannot connect to your own order.
-        </div>`:``}
+        ${S.user
+          ?`<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
+              <button class="btn bp" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withFlutterwave()"><i data-lucide="credit-card" style="width:14px;height:14px"></i>Pay by Card or Bank — $5/month</button>
+              <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withCrypto()"><i data-lucide="bitcoin" style="width:14px;height:14px"></i>Pay with Crypto — $5/month</button>
+            </div>`
+          :`<button class="btn bpur" style="width:100%;justify-content:center;padding:12px;margin-bottom:10px" onclick="M.close();R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $5/month</button>`}
+        <button class="btn bo" style="width:100%;justify-content:center" onclick="M.close()">Maybe Later</button>
+      </div>
+    </div>`);
+  },
+
+  verifyForm(){
+    if(!S.user){M.auth();return;}
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal">
+        <div class="mhdr"><div><div class="mey">Identity Verification</div><h2 class="mtitle">Submit Your ID</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
+        <div style="background:var(--surf);border-radius:var(--rsm);padding:11px 14px;margin-bottom:20px;font-size:.8rem;color:var(--t2);line-height:1.6">
+          <strong style="color:var(--t1);display:block;margin-bottom:3px">Why verify?</strong>
+          Verified accounts get a badge on all listings, build buyer trust, and are prioritised in search results.
+        </div>
+        <div class="fg"><label>Full Legal Name (as on ID)</label><input type="text" id="vidname" placeholder="Exactly as it appears on your ID"/></div>
+        <div class="fg"><label>ID Type</label><select id="vidtype"><option value="">Select type…</option><option value="nin">NIN (National Identity Number)</option><option value="bvn">BVN (Bank Verification Number)</option><option value="passport">International Passport</option><option value="drivers">Driver's Licence</option><option value="voters">Voter's Card</option></select></div>
+        <div class="fg"><label>ID Number</label><input type="text" id="vidnum" placeholder="Enter your ID number"/></div>
+        <div class="fg"><label>Additional Note <span style="color:var(--t3);font-weight:400">(optional)</span></label><textarea id="vidnote" rows="2" placeholder="Any info for the reviewer…"></textarea></div>
+        <div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:11px 14px;margin-bottom:18px;font-size:.78rem;color:#8a6820;line-height:1.5"><strong>Privacy:</strong> Your ID details are only visible to Datum admins and are never shared publicly.</div>
+        <div class="ferr" id="verr"></div>
+        <button class="btn bpur" id="vbtn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitVerify()"><i data-lucide="shield" style="width:14px;height:14px"></i>Submit for Verification</button>
       </div>
     </div>`);
   },
@@ -1250,80 +1204,75 @@ const M = {
 
 const R = {
   go(page){
+    stopAR();
     S.page=page;
-    if(page==='market'){
-      S.mTab='board';S.mFilter='all';
-      loadOrders();
-    }
-    if(page==='crypto'&&S.coinsState==='idle'){
-      loadCoins();
-    }
+    if(page==='market'){S.mTab='board';S.mFilter='all';loadOrders();startAR();}
+    if(page==='crypto'&&S.coinsState==='idle') loadCoins();
     render();
   },
-  acct(){
-    S.user?R.go('profile'):M.auth();
-  },
+  acct(){ S.user?R.go('profile'):M.auth(); },
 };
 
 const A = {
-
   authTab(t){ S.authTab=t; M.auth(); },
   setUType(t){ S.signupType=t; M.auth(); },
 
   async login(){
     const email=document.getElementById('lemail')?.value?.trim();
-    const pwd  =document.getElementById('lpwd')?.value;
-    const err  =document.getElementById('lerr');
-    const btn  =document.getElementById('lbtn');
+    const pwd=document.getElementById('lpwd')?.value;
+    const err=document.getElementById('lerr');
+    const btn=document.getElementById('lbtn');
     if(!email||!pwd){err.textContent='Please fill in all fields.';return;}
-    btn.disabled=true; btn.textContent='Signing in\u2026';
+    btn.disabled=true;btn.textContent='Signing in…';
     try{
       await DB.login(email,pwd);
-      const u=await DB.me();
-      if(!u) throw new Error('No session');
+      const u=await DB.me();if(!u)throw new Error('No session');
       const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
       const p=res.documents[0];
       S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name)};
-      await loadWatchlist();
-      M.close(); R.go('profile');
+      await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections()]);
+      M.close();R.go('profile');
       toast('Welcome back, '+S.user.name.split(' ')[0]+'!','ok');
     }catch(e){
       err.textContent='Login failed: '+(e.message.includes('401')||e.message.includes('invalid')?'Wrong email or password.':e.message);
-      btn.disabled=false; btn.textContent='Sign In';
+      btn.disabled=false;btn.textContent='Sign In';
     }
   },
 
   async signup(){
-    const name =document.getElementById('sname')?.value?.trim();
+    const name=document.getElementById('sname')?.value?.trim();
     const email=document.getElementById('semail')?.value?.trim();
-    const pwd  =document.getElementById('spwd')?.value;
-    const type =S.signupType;
-    const err  =document.getElementById('serr');
-    const btn  =document.getElementById('sbtn');
+    const pwd=document.getElementById('spwd')?.value;
+    const type=S.signupType;
+    const err=document.getElementById('serr');
+    const btn=document.getElementById('sbtn');
     if(!name||!email||!pwd){err.textContent='Please fill in all fields.';return;}
     if(!type){err.textContent='Please select an account type.';return;}
-    btn.disabled=true; btn.textContent='Creating account\u2026';
+    btn.disabled=true;btn.textContent='Creating account…';
     try{
       const u=await DB.register(email,pwd,name);
       await DB.login(email,pwd);
       await DB.create('profiles',{userId:u.$id,name,email,type});
       S.user={id:u.$id,name,email,type,inits:initials(name)};
-      M.close(); R.go('profile');
+      S.subscribed=false;S.subStatus=null;S.verifyStatus=null;S.myConnections=[];
+      M.close();R.go('profile');
       toast('Account created! Welcome, '+name.split(' ')[0]+'.','ok');
     }catch(e){
       err.textContent='Signup failed: '+(e.message.includes('409')?'Email already in use.':e.message);
-      btn.disabled=false; btn.textContent='Create Account';
+      btn.disabled=false;btn.textContent='Create Account';
     }
   },
 
   async logout(){
     await DB.logout();
-    S.user=null; S.watchlist=new Set(); S.wlDocId=null;
-    R.go('land');
+    S.user=null;S.watchlist=new Set();S.wlDocId=null;
+    S.subscribed=false;S.subStatus=null;S.verifyStatus=null;S.myConnections=null;
+    stopAR();R.go('land');
     toast('You have been signed out.');
   },
 
   setMTab(t){
+    if(t==='forum'&&!S.subscribed){M.subscribe();return;}
     S.mTab=t;
     if(t==='board') loadOrders();
     if(t==='forum') loadChat();
@@ -1332,65 +1281,78 @@ const A = {
   setFilter(f){ S.mFilter=f; render(); },
 
   viewOrder(id){
+    if(!S.subscribed){M.subscribe();return;}
     const o=(S.orders||[]).find(x=>x.id===id);
     if(!o) return;
-    S.viewedOrder=o;
-    M.viewOrder(o);
+    S.viewedOrder=o; M.viewOrder(o);
   },
 
   connectOrder(id){
-    if(!S.user){M.auth();toast('Please sign in to connect with sellers.');return;}
-    A.viewOrder(id);
+    if(!S.user){M.auth();toast('Please sign in to connect.');return;}
+    if(!S.subscribed){M.subscribe();return;}
+    const o=(S.orders||[]).find(x=>x.id===id);
+    if(!o) return;
+    S.viewedOrder=o; M.viewOrder(o);
     setTimeout(()=>{
       const cf=document.querySelector('.cform');
-      if(cf){cf.scrollIntoView({behavior:'smooth',block:'start'});}
-      const ta=document.getElementById('cmsg');
-      if(ta) ta.focus();
-    },120);
+      if(cf)cf.scrollIntoView({behavior:'smooth',block:'start'});
+      document.getElementById('cmsg')?.focus();
+    },150);
   },
 
-  submitConnect(orderId, sellerName){
-    const msg    =document.getElementById('cmsg')?.value?.trim();
+  async submitConnect(orderId,toUserId,toName,orderTitle,commission){
+    if(!S.user) return;
+    const msg=document.getElementById('cmsg')?.value?.trim();
     const contact=document.getElementById('ccontact')?.value?.trim();
-    const err    =document.getElementById('cerr');
+    const err=document.getElementById('cerr');
+    const btn=document.getElementById('cbtn');
     if(!msg){err.textContent='Please write a message.';return;}
     if(!contact){err.textContent='Please provide your contact details.';return;}
-    M.close();
-    toast('Connection request sent to '+sellerName+'!','ok');
+    btn.disabled=true;btn.textContent='Sending…';
+    try{
+      await DB.create('connections',{
+        orderId, orderTitle,
+        fromUserId:S.user.id, fromName:S.user.name, fromInitials:S.user.inits,
+        toUserId, toName,
+        message:msg, contact, commission, status:'pending',
+      });
+      M.close();
+      toast('Connection request sent to '+toName.split(' ')[0]+'! They will see it in their inbox.','ok');
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Send Request';
+    }
   },
 
   async submitOrder(){
     const title=document.getElementById('otitle')?.value?.trim();
-    const cat  =document.getElementById('ocat')?.value;
-    const type =document.getElementById('otype')?.value;
-    const price=document.getElementById('oprice')?.value?.trim();
-    const desc =document.getElementById('odesc')?.value?.trim();
-    const err  =document.getElementById('oerr');
-    const btn  =document.getElementById('obtn');
+    const cat=document.getElementById('ocat')?.value;
+    const type=document.getElementById('otype')?.value;
+    const rawP=document.getElementById('oprice')?.value?.trim();
+    const desc=document.getElementById('odesc')?.value?.trim();
+    const err=document.getElementById('oerr');
+    const btn=document.getElementById('obtn');
     if(!title){err.textContent='Please add a title.';return;}
-    if(!cat)  {err.textContent='Please select a category.';return;}
-    if(!price){err.textContent='Please add a price or budget.';return;}
-    btn.disabled=true; btn.textContent='Posting\u2026';
+    if(!cat){err.textContent='Please select a category.';return;}
+    if(!rawP){err.textContent='Please add a price or budget.';return;}
+    const lower=rawP.toLowerCase();
+    const price=lower==='negotiable'?'Negotiable':(rawP.startsWith('$')?rawP:'$'+rawP);
+    btn.disabled=true;btn.textContent='Posting…';
     const inits2=initials(S.user.name);
     try{
       const doc=await DB.create('orders',{
-        userId:S.user.id,
-        userName:S.user.name,
-        userInitials:inits2,
-        category:cat,type,title,
-        price:price||'Negotiable',
-        desc:desc||'',
-        status:'open',
+        userId:S.user.id,userName:S.user.name,userInitials:inits2,
+        category:cat,type,title,price,desc:desc||'',status:'open',
       });
-      if(!S.orders) S.orders=[];
+      if(!S.orders)S.orders=[];
       S.orders.unshift({id:doc.$id,userId:S.user.id,userName:S.user.name,
-        userInitials:inits2,category:cat,type,title,price:price||'Negotiable',
+        userInitials:inits2,category:cat,type,title,price,
         desc:desc||'',status:'open',createdAt:doc.$createdAt||new Date().toISOString()});
-      M.close(); render();
+      M.close();render();
       toast('Listing posted!','ok');
     }catch(e){
       err.textContent='Failed: '+e.message;
-      btn.disabled=false; btn.textContent='Post Listing';
+      btn.disabled=false;btn.textContent='Post Listing';
     }
   },
 
@@ -1400,14 +1362,56 @@ const A = {
     if(!txt||!S.user) return;
     inp.value='';
     const now=new Date().toISOString();
-    const msg={id:'l'+Date.now(),userId:S.user.id,userName:S.user.name,
-               inits:S.user.inits,text:txt,own:true,ts:now};
-    if(!S.msgs) S.msgs=[];
-    S.msgs.push(msg);
+    if(!S.msgs)S.msgs=[];
+    S.msgs.push({id:'l'+Date.now(),userId:S.user.id,userName:S.user.name,inits:S.user.inits,text:txt,own:true,ts:now});
     render();
-    DB.create('chat',{userId:S.user.id,userName:S.user.name,
-      initials:S.user.inits,text:txt})
-      .catch(e=>console.warn('chat persist:',e.message));
+    DB.create('chat',{userId:S.user.id,userName:S.user.name,initials:S.user.inits,text:txt})
+      .catch(e=>console.warn('chat:',e.message));
+  },
+
+  async submitSub(){
+    const ref=document.getElementById('subref')?.value?.trim();
+    const method=document.getElementById('submethod')?.value;
+    const err=document.getElementById('suberr');
+    const btn=document.getElementById('subbtn');
+    if(!ref){err.textContent='Please enter your payment reference.';return;}
+    if(!method){err.textContent='Please select your payment method.';return;}
+    btn.disabled=true;btn.textContent='Submitting…';
+    try{
+      await DB.create('subscriptions',{userId:S.user.id,status:'pending',plan:'monthly',amount:'5',reference:ref,paymentMethod:method});
+      S.subStatus='pending';
+      toast('Reference submitted! Access granted within 24 hours.','ok');
+      render();
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Submit Payment Reference';
+    }
+  },
+
+  async submitVerify(){
+    const name=document.getElementById('vidname')?.value?.trim();
+    const idType=document.getElementById('vidtype')?.value;
+    const idNum=document.getElementById('vidnum')?.value?.trim();
+    const note=document.getElementById('vidnote')?.value?.trim();
+    const err=document.getElementById('verr');
+    const btn=document.getElementById('vbtn');
+    if(!name){err.textContent='Please enter your full name.';return;}
+    if(!idType){err.textContent='Please select an ID type.';return;}
+    if(!idNum){err.textContent='Please enter your ID number.';return;}
+    btn.disabled=true;btn.textContent='Submitting…';
+    try{
+      await DB.create('verifications',{userId:S.user.id,fullName:name,idType,idNumber:idNum,note:note||'',status:'pending'});
+      S.verifyStatus='pending';
+      M.close();render();
+      toast('Verification submitted! Review within 24–48 hours.','ok');
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Submit for Verification';
+    }
+  },
+
+  async reloadConnections(){
+    await loadMyConnections();render();toast('Inbox refreshed.');
   },
 
   setCryptoSub(s){ S.cryptoSub=s; render(); },
@@ -1418,33 +1422,119 @@ const A = {
     const coins=q?S.coins.filter(c=>c.name.toLowerCase().includes(q)||c.sym.toLowerCase().includes(q)):S.coins;
     const pages=Math.max(1,Math.ceil(coins.length/S.cps));
     if(p<1||p>pages) return;
-    S.cpage=p; render();
+    S.cpage=p;render();
   },
-  openCoin(id){ S.selCoin=id; S.cryptoSub='deepdive'; S.interval='ytd'; render(); },
+  openCoin(id){ S.selCoin=id;S.cryptoSub='deepdive';S.interval='ytd';render(); },
   toggleWatch(id){
     S.watchlist.has(id)?S.watchlist.delete(id):S.watchlist.add(id);
     saveWatchlist();
-    if(S.cryptoSub==='deepdive'||S.cryptoSub==='watchlist'){ render(); return; }
+    if(S.cryptoSub==='deepdive'||S.cryptoSub==='watchlist'){render();return;}
     document.querySelectorAll('.wbtn').forEach(b=>{
       if((b.getAttribute('onclick')||'').includes("'"+id+"'")){
         const on=S.watchlist.has(id);
         b.className='wbtn'+(on?' on':'');
         const ic=b.querySelector('i');
-        if(ic) ic.setAttribute('style','width:15px;height:15px;'+(on?'fill:currentColor':''));
+        if(ic)ic.setAttribute('style','width:15px;height:15px;'+(on?'fill:currentColor':''));
       }
     });
     lucide.createIcons();
   },
 };
 
-document.addEventListener('DOMContentLoaded', async ()=>{
+const PAY = {
+
+  withFlutterwave(){
+    if(!S.user){ M.auth(); return; }
+    if(!_hasFwKey){
+      toast('Payment not configured yet — config.js missing.','err');
+      console.warn('Set FW_PUBLIC_KEY in config.js');
+      return;
+    }
+    const ref = 'TMC-' + S.user.id.slice(0,8) + '-' + Date.now();
+    FlutterwaveCheckout({
+      public_key   : TMC.FW_PUBLIC_KEY,
+      tx_ref       : ref,
+      amount       : 5,
+      currency     : 'USD',
+      payment_options: 'card, banktransfer, ussd',
+      customer: {
+        email: S.user.email,
+        name : S.user.name,
+      },
+      customizations: {
+        title      : 'Toomuchcoin Pro',
+        description: '$5/month — Full platform access',
+        logo       : '',
+      },
+      callback: async function(data){
+        if(data.status === 'successful' || data.status === 'completed'){
+          try{
+            await DB.create('subscriptions',{
+              userId       : S.user.id,
+              status       : 'active',
+              plan         : 'monthly',
+              amount       : '5',
+              reference    : data.transaction_id + '',
+              paymentMethod: 'flutterwave',
+            });
+            S.subStatus  = 'active';
+            S.subscribed = true;
+            M.close();
+            render();
+            toast('Payment successful! Pro access activated.','ok');
+          }catch(e){ toast('Payment received but activation failed — contact support.','err'); }
+        } else {
+          toast('Payment was not completed.','err');
+        }
+      },
+      onclose: function(){
+      },
+    });
+  },
+
+  async withCrypto(){
+    if(!S.user){ M.auth(); return; }
+    if(!_hasFnId){
+      toast('Crypto payment not configured yet.','err');
+      console.warn('Set APPWRITE_FN_ID in config.js');
+      return;
+    }
+    const btn = document.getElementById('cryptoPayBtn');
+    if(btn){ btn.disabled=true; btn.textContent='Creating invoice…'; }
+    try{
+      const ref = 'TMC-CRYPTO-' + S.user.id.slice(0,8) + '-' + Date.now();
+      const result = await _db.createExecution(
+        TMC.APPWRITE_FN_ID,
+        JSON.stringify({ userId: S.user.id, email: S.user.email, name: S.user.name, ref }),
+        false
+      );
+      const body = JSON.parse(result.responseBody || '{}');
+      if(body.error) throw new Error(body.error);
+      if(body.checkout_url){
+        await DB.create('subscriptions',{
+          userId:'pending_'+S.user.id, status:'pending', plan:'monthly',
+          amount:'5', reference:ref, paymentMethod:'ivorypay',
+          userId: S.user.id,
+        });
+        S.subStatus = 'pending';
+        render();
+        window.open(body.checkout_url, '_blank');
+        toast('Crypto checkout opened in new tab. Access granted after confirmation.','ok');
+      }
+    }catch(e){
+      toast('Could not create crypto invoice: '+e.message,'err');
+      if(btn){ btn.disabled=false; btn.textContent='Pay with Crypto (USDT)'; }
+    }
+  },
+};
+
+document.addEventListener('DOMContentLoaded', async()=>{
   const u=await DB.me();
   if(u){
     const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
     const p=res.documents[0];
-    S.user={id:u.$id,name:p?.name||u.name,email:u.email,
-            type:p?.type||'B',inits:initials(p?.name||u.name)};
-    await loadWatchlist();
+    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name)};
+    await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections()]);
   }
   render();
   loadCoins();
