@@ -155,7 +155,27 @@
     .pgsub{font-size:.9rem;color:var(--t2)}
     .tnav{display:flex;gap:4px;background:var(--surf);border-radius:var(--rmd);padding:4px;margin-bottom:26px}
     .tbtn{flex:1;padding:9px 10px;border-radius:8px;font-size:.875rem;font-weight:500;border:none;background:transparent;color:var(--t2);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;gap:5px}
-    @media(min-width:769px){.csubnav .tbtn{font-size:.78rem;padding:9px 8px;gap:4px}.csubnav .tbtn i{width:12px!important;height:12px!important;flex-shrink:0}}
+    @media (min-width: 769px) {
+  .csubnav .tbtn {
+    font-size: 0.78rem;
+    padding: 9px 12px; 
+    gap: 6px;          
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap; 
+  }
+
+  .csubnav .tbtn span {
+    white-space: nowrap; 
+  }
+
+  .csubnav .tbtn i {
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0;      
+  }
+}
     .tbtn.on{background:var(--white);color:var(--t1);box-shadow:var(--s1)}
     .fbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:22px}
     .flbl{font-size:.8125rem;font-weight:500;color:var(--t2);margin-right:4px}
@@ -253,6 +273,18 @@
     .al-note{background:var(--surf);border-radius:var(--rsm);padding:13px 16px;font-size:.72rem;color:var(--t3);line-height:1.7;margin-top:16px}
     .al-note strong{color:var(--t2)}
     @media(max-width:768px){.al-hero{padding:18px 16px}.al-table{font-size:.74rem}.al-table td,.al-table thead th{padding:9px 9px}}
+
+    .ocard.oresolved{opacity:.6;border-color:#B3DFCA;background:#f8fffa;order:1}
+    .ocard.oresolved:hover{opacity:.75}
+    .ogrid{display:flex;flex-direction:column}
+    .star-row{display:flex;gap:2px;margin-bottom:8px}
+    .star-btn{font-size:1.3rem;background:none;border:none;cursor:pointer;color:var(--bdr2);padding:0;line-height:1;transition:color .15s}
+    .star-btn.on{color:var(--gld)}
+    .resolved-banner{background:#E6F5EE;border:1px solid #B3DFCA;border-radius:var(--rsm);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:18px}
+    .review-card{border:1px solid var(--bdr);border-radius:var(--rsm);padding:12px 14px;margin-bottom:8px}
+    .review-stars{color:var(--gld);font-size:.9rem;margin-bottom:4px}
+    .review-text{font-size:.8125rem;color:var(--t2);line-height:1.5;margin-bottom:5px}
+    .review-by{font-size:.72rem;color:var(--t3)}
 
     .fab{position:fixed;bottom:32px;right:32px;background:var(--t1);color:var(--white);border:none;border-radius:100px;padding:13px 22px;font-family:var(--fb);font-size:.875rem;font-weight:500;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--s3);transition:var(--ease);z-index:100}
     .fab:hover{transform:translateY(-2px);box-shadow:0 20px 60px rgba(26,25,22,.22)}
@@ -400,7 +432,7 @@ const _hasFnId   = !!(TMC.APPWRITE_FN_ID && !TMC.APPWRITE_FN_ID.includes('your_'
 const AW_ENDPOINT   = 'https://cloud.appwrite.io/v1';
 const AW_PROJECT_ID = '6a163159003bd203c63f';
 const AW_DB_ID      = '6a1631ee00269fc986b8';
-const ADMIN_ID = '6a1978e8003645647a75';
+const ADMIN_ID = '6a196cf100050ff2b3ef';
 
 const AW_COL = {
   profiles     : 'profiles',
@@ -409,7 +441,8 @@ const AW_COL = {
   watchlist    : 'watchlist',
   connections  : 'connections',    
   verifications: 'verifications',  
-  subscription: 'subscription',  
+  subscription: 'subscription',
+  reviews      : 'reviews',  
 };
 
 const { Client, Account, Databases, Query, ID } = Appwrite;
@@ -442,6 +475,7 @@ const S = {
   verifyStatus:null, lastRefresh:null,
   alPrices:{}, alLoading:false,
   sentConnections:null,
+  viewedOrderReviews:[], viewedOrderConnection:null, _reviewRating:0,
 };
 
 let _rt = null;
@@ -822,16 +856,35 @@ const P = {
                 <span class="tag ${stMap[c.status]||'tn'}" style="white-space:nowrap">${stLabel[c.status]||c.status}</span>
               </div>
               <div class="cxmsg">"${c.message}"</div>
-              <div class="cxcontact">
-                <i data-lucide="phone" style="width:12px;height:12px;color:var(--t3)"></i>
-                <strong>${c.contact}</strong>
-                <span style="color:var(--t3);font-size:.72rem;font-weight:400">${c.commissionAmt?'Commission due: '+c.commissionAmt:'Est: '+c.commission}</span>
-                ${c.buyerConfirmed?`<span class="tag tg" style="font-size:.68rem;padding:2px 7px"><i data-lucide="check" style="width:9px;height:9px"></i>Buyer confirmed</span>`:''}
-              </div>
-              ${c.status==='pending'?`<div style="display:flex;gap:8px;margin-top:10px">
-                <button class="btn bc bsm" style="flex:1;justify-content:center" onclick="A.acceptConn('${c.id}')"><i data-lucide="check" style="width:12px;height:12px"></i>Accept</button>
-                <button class="btn bo bsm" onclick="A.declineConn('${c.id}')"><i data-lucide="x" style="width:12px;height:12px"></i>Decline</button>
-              </div>`:''}
+              ${c.status==='pending'
+                ?`<div class="cxcontact" style="gap:5px"><i data-lucide="lock" style="width:12px;height:12px;color:var(--t3)"></i><span style="font-size:.78rem;color:var(--t3);font-style:italic">Contact details visible only after you accept</span></div>`
+                :`<div class="cxcontact">
+                  <i data-lucide="phone" style="width:12px;height:12px;color:var(--t3)"></i>
+                  <strong>${c.contact}</strong>
+                  ${c.commissionAmt?`<span style="color:var(--t3);font-size:.72rem;font-weight:400">Commission due: ${c.commissionAmt}</span>`:`<span style="color:var(--t3);font-size:.72rem;font-weight:400">Est. commission: ${c.commission}</span>`}
+                  ${c.buyerConfirmed?`<span class="tag tg" style="font-size:.68rem;padding:2px 7px"><i data-lucide="check" style="width:9px;height:9px"></i>Buyer confirmed</span>`:''}
+                </div>`}
+              ${c.status==='pending'?`<div style="margin-top:10px">
+                <div style="display:flex;gap:8px">
+                  <button class="btn bc bsm" style="flex:1;justify-content:center" onclick="A.acceptConn('${c.id}')"><i data-lucide="check" style="width:12px;height:12px"></i>Accept</button>
+                  <button class="btn bo bsm" onclick="A.showDeclineForm('${c.id}')"><i data-lucide="x" style="width:12px;height:12px"></i>Decline</button>
+                </div>
+                <div id="decline-form-${c.id}" style="display:none;margin-top:10px;background:var(--surf);border-radius:var(--rsm);padding:12px">
+                  <label style="font-size:.78rem;font-weight:600;color:var(--t2);display:block;margin-bottom:6px">Why are you declining this request?</label>
+                  <select id="decline-reason-${c.id}" style="margin-bottom:10px">
+                    <option value="">Select a reason…</option>
+                    <option value="not_good_fit">Not a good fit for this listing</option>
+                    <option value="price_too_low">Offered price is too low</option>
+                    <option value="already_connected">Already connected with another buyer</option>
+                    <option value="not_serious">Buyer doesn't seem serious</option>
+                    <option value="spam">Spam or irrelevant request</option>
+                    <option value="other">Other reason</option>
+                  </select>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn bsm" id="decline-btn-${c.id}" onclick="A.submitDecline('${c.id}')" style="background:var(--red);color:#fff;border:none;flex:1;justify-content:center"><i data-lucide="x" style="width:12px;height:12px"></i>Confirm Decline</button>
+                    <button class="btn bo bsm" onclick="A.showDeclineForm('${c.id}')">Cancel</button>
+                  </div>
+                </div>`:''}
               ${c.status==='accepted'?`<div style="margin-top:10px">
                 <div style="font-size:.78rem;color:var(--grn);margin-bottom:8px;display:flex;align-items:center;gap:5px"><i data-lucide="check-circle" style="width:12px;height:12px"></i>Accepted — deal happening off-platform. Mark complete when done.</div>
                 <button class="btn bp bsm" onclick="A.showDealForm('${c.id}')"><i data-lucide="flag" style="width:12px;height:12px"></i>Mark Deal Complete</button>
@@ -899,7 +952,20 @@ const P = {
                 <span><i data-lucide="info" style="width:12px;height:12px;display:inline;vertical-align:-1px;margin-right:4px"></i>Seller says this deal is complete. Can you confirm?</span>
                 <button class="btn bc bsm" onclick="A.confirmDeal('${c.id}')">Confirm Deal</button>
               </div>`:''}
-              ${c.buyerConfirmed?`<div style="margin-top:6px;font-size:.75rem;color:var(--grn);display:flex;align-items:center;gap:4px"><i data-lucide="check" style="width:11px;height:11px"></i>You confirmed this deal</div>`:''}
+              ${c.buyerConfirmed&&!c.reviewed?`
+                <div style="margin-top:10px;background:var(--surf);border-radius:var(--rsm);padding:12px">
+                  <div style="font-weight:600;font-size:.8125rem;margin-bottom:8px">Leave a review for ${c.toName.split(' ')[0]}</div>
+                  <div class="star-row">
+                    ${[1,2,3,4,5].map(n=>`<button class="star-btn ${(S._reviewRating||0)>=n?'on':''}" onclick="A.setReviewRating(${n})">★</button>`).join('')}
+                    ${S._reviewRating?`<span style="font-size:.78rem;color:var(--t2);margin-left:6px;align-self:center">${['','Poor','Fair','Good','Great','Excellent'][S._reviewRating]}</span>`:''}
+                  </div>
+                  <textarea id="review-comment-${c.id}" rows="2" placeholder="Optional: describe your experience with this seller…" style="margin-bottom:8px"></textarea>
+                  <button class="btn bc bsm" id="review-btn-${c.id}" onclick="A.submitReview('${c.id}','${c.orderId}','${c.toUserId}','${c.toName.replace(/'/g,"\\'")}')">
+                    <i data-lucide="star" style="width:12px;height:12px"></i>Submit Review
+                  </button>
+                </div>`
+              :c.buyerConfirmed&&c.reviewed?`<div style="margin-top:6px;font-size:.75rem;color:var(--grn);display:flex;align-items:center;gap:4px"><i data-lucide="check" style="width:11px;height:11px"></i>Deal confirmed & review submitted</div>`
+              :''}
             </div>`;
           }).join('')}
       </div>
@@ -986,7 +1052,11 @@ const P = {
     const cats=[{id:'all',l:'All Listings'},{id:'p2p',l:'P2P Crypto'},{id:'logistics',l:'Logistics'},{id:'goods',l:'Buy / Sell Goods'},{id:'handyman',l:'Handyman'}];
     if(S.ordersLoading)return`<div class="oloading"><div class="spin"></div><br>Loading listings…</div>`;
     const all=S.orders||[];
-    const list=S.mFilter==='all'?all:all.filter(o=>o.category===S.mFilter);
+    const listRaw=S.mFilter==='all'?all:all.filter(o=>o.category===S.mFilter);
+    const list=[
+      ...listRaw.filter(o=>o.status!=='filled'&&o.status!=='closed'),
+      ...listRaw.filter(o=>o.status==='filled'||o.status==='closed'),
+    ];
     const sc={open:'tg',negotiating:'to',filled:'tn',closed:'tn'};
     const tc={buy:'tb',sell:'tg',request:'to'};
     return`
@@ -1001,7 +1071,7 @@ const P = {
         </div>`:`
         <div class="ogrid">
           ${list.map(o=>`
-          <div class="ocard">
+          <div class="ocard ${(o.status==='filled'||o.status==='closed')?'oresolved':''}">
             <div class="oavat">${o.userInitials}</div>
             <div class="obody">
               <div class="otop">
@@ -1016,7 +1086,7 @@ const P = {
                 <span style="font-size:.72rem;color:var(--t2)">by ${o.userName}</span>
                 <div class="oacts">
                   ${o.status!=='filled'&&o.status!=='closed'?`<button class="btn bc bsm" onclick="A.connectOrder('${o.id}')"><i data-lucide="${S.subscribed?'plug':'lock'}" style="width:12px;height:12px"></i>Connect</button>`:''}
-                  <button class="btn bo bsm" onclick="A.viewOrder('${o.id}')"><i data-lucide="${S.subscribed?'eye':'lock'}" style="width:12px;height:12px"></i>View</button>
+                  <button class="btn bo bsm" onclick="A.viewOrder('${o.id}')"><i data-lucide="${(o.status==='filled'||o.status==='closed')?'award':'eye'}" style="width:12px;height:12px"></i>${(o.status==='filled'||o.status==='closed')?'View Resolution':'View'}</button>
                 </div>
               </div>
             </div>
@@ -1189,6 +1259,24 @@ const P = {
     const monthLabel=new Date().toLocaleString('default',{month:'long',year:'numeric'});
     const joinedYear=S.user?.joinedAt?new Date(S.user.joinedAt).getFullYear():null;
 
+    let localBaselines = {};
+    try {
+      localBaselines = JSON.parse(localStorage.getItem('datum_user_baselines')) || {};
+    } catch(e) { localBaselines = {}; }
+
+    if (hasPrices) {
+      let updatedBaselines = false;
+      Object.keys(lp).forEach(id => {
+        if (lp[id]?.price != null && !localBaselines[id]) {
+          localBaselines[id] = lp[id].price;
+          updatedBaselines = true;
+        }
+      });
+      if (updatedBaselines) {
+        localStorage.setItem('datum_user_baselines', JSON.stringify(localBaselines));
+      }
+    }
+
     const fmtAP=(p)=>{
       if(p==null||isNaN(p))return'—';
       if(p>=10000)return'$'+Math.round(p).toLocaleString('en-US');
@@ -1210,53 +1298,61 @@ const P = {
     };
 
     const HOLD=[
-      {id:'gold',  n:1, name:'Gold',          sym:'XAU',  bg:'#B8892A',fg:'#fff', fp:'$4,492.70',  ytd:4.73,   y6:2257.60, y5:88.50,   y10:138.20,   sj:898440.00},
-      {id:'nvda',  n:2, name:'Nvidia',         sym:'NVDA', bg:'#76B900',fg:'#fff', fp:'$211.14',    ytd:11.80,  y6:2277.70, y5:1820.00, y10:9540.00,  sj:42128.00},
-      {id:'spx',   n:3, name:"S&P 500",        sym:'SPX',  bg:'#2B5BE0',fg:'#fff', fp:'$7,580.06',  ytd:10.52,  y6:148.99,  y5:83.40,   y10:183.00,   sj:1515912.00},
-      {id:'btc',   n:4, name:'Bitcoin',        sym:'BTC',  bg:'#F7931A',fg:'#fff', fp:'$73,501.13', ytd:-18.27, y6:921.57,  y5:950.00,  y10:15000.00, sj:14700126.00},
-      {id:'dxy',   n:5, name:'Dollar Index',   sym:'DXY',  bg:'#26A17B',fg:'#fff', fp:'$1,371.20',  ytd:-4.37,  y6:281.95,  y5:130.00,  y10:205.00,   sj:274140.00},
+      {id:'gold',  n:1, name:'Gold',          sym:'XAU',  bg:'#B8892A',fg:'#fff', fp:'$4,492.70',   ytd:4.73,   y6:2257.60, y5:88.50,   y10:138.20,   sj:0},
+      {id:'nvda',  n:2, name:'Nvidia',         sym:'NVDA', bg:'#76B900',fg:'#fff', fp:'$211.14',    ytd:11.80,  y6:2277.70, y5:1820.00, y10:9540.00,  sj:0},
+      {id:'spx',   n:3, name:"S&P 500",        sym:'SPX',  bg:'#2B5BE0',fg:'#fff', fp:'$7,580.06',   ytd:10.52,  y6:148.99,  y5:83.40,   y10:183.00,   sj:0},
+      {id:'btc',   n:4, name:'Bitcoin',        sym:'BTC',  bg:'#F7931A',fg:'#fff', fp:'$73,893.85',  ytd:-18.27, y6:921.57,  y5:950.00,  y10:15000.00, sj:0},
+      {id:'dxy',   n:5, name:'Dollar Index',   sym:'DXY',  bg:'#26A17B',fg:'#fff', fp:'$98.942',   ytd:-4.37,  y6:281.95,  y5:130.00,  y10:205.00,   sj:0},
     ];
 
-    // Watching: continent-based, one section per continent
     const CONTINENTS=[
       {
         emoji:'🌍', name:'Africa',
         desc:'Top picks from African markets',
-        assets:[], // Coming soon
+        assets:[],
       },
       {
         emoji:'🌏', name:'Asia',
         desc:'Top picks from Asian markets',
         assets:[
-          {id:'tet', n:'#', name:'$TET', sym:'TET', bg:'#26A17B',fg:'#fff', fp:'$0.43', ytd:-92.59, y6:-85.70, y5:-60.00, y10:-14.22, sj:-14.22},
+          {id:'tet', n:'#', name:'$TET', sym:'TET', bg:'#26A17B',fg:'#fff', fp:'$0.43', ytd:-92.59, y6:-85.70, y5:-60.00, y10:-14.22, sj:0},
         ],
       },
       {
         emoji:'🌎', name:'Americas',
         desc:'Top picks from the Americas',
         assets:[
-          {id:'mstr',   n:'#', name:'MicroStrategy',  sym:'MSTR', bg:'#F7931A',fg:'#fff', fp:'$159.09',    ytd:1.23,   y6:1177.83, y5:1500.00, y10:5200.00,  sj:31718.00},
-          {id:'tsla',   n:'#', name:'Tesla',           sym:'TSLA', bg:'#E84142',fg:'#fff', fp:'$435.79',    ytd:-0.52,  y6:682.81,  y5:310.00,  y10:1250.00,  sj:87058.00},
-          {id:'nasdaq', n:'#', name:'Nasdaq Comp.',    sym:'NDX',  bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62', ytd:16.08,  y6:184.23,  y5:112.00,  y10:235.00,   sj:5394424.00},
+          {id:'mstr',   n:'#', name:'MicroStrategy',  sym:'MSTR', bg:'#F7931A',fg:'#fff', fp:'$159.09',    ytd:1.23,   y6:1177.83, y5:1500.00, y10:5200.00,  sj:0},
+          {id:'tsla',   n:'#', name:'Tesla',           sym:'TSLA', bg:'#E84142',fg:'#fff', fp:'$435.79',    ytd:-0.52,  y6:682.81,  y5:310.00,  y10:1250.00,  sj:0},
+          {id:'nasdaq', n:'#', name:'Nasdaq Comp.',    sym:'NDX',  bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62', ytd:16.08,  y6:184.23,  y5:112.00,  y10:235.00,   sj:0},
         ],
       },
       {
         emoji:'🌍', name:'Europe',
         desc:'Top picks from European markets',
         assets:[
-          {id:'eth', n:'#', name:'Ethereum', sym:'ETH', bg:'#627EEA',fg:'#fff', fp:'$2,013.93', ytd:-35.05, y6:1453.60, y5:420.00, y10:8200.00, sj:402685.60},
+          {id:'eth', n:'#', name:'Ethereum', sym:'ETH', bg:'#627EEA',fg:'#fff', fp:'$2,021.36', ytd:-35.05, y6:1453.60, y5:420.00, y10:8200.00, sj:0},
         ],
       },
       {
         emoji:'🌏', name:'Oceania',
         desc:'Top picks from Oceania & Pacific',
-        assets:[], // Coming soon
+        assets:[],
       },
     ];
 
     const row=(a)=>{
       const d=lp[a.id];
       const priceStr=d?.price!=null?fmtAP(d.price):loading?`<span style="display:inline-block;width:14px;height:14px;border:1.5px solid var(--bdr);border-top-color:var(--t3);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle"></span>`:a.fp;
+      
+      const currentPrice = d?.price != null ? d.price : parseFloat(a.fp.replace(/[^0-9.-]+/g,""));
+      const userBaselinePrice = localBaselines[a.id];
+      
+      let computedSinceJoined = 0.00; 
+      if (userBaselinePrice && !isNaN(currentPrice)) {
+        computedSinceJoined = ((currentPrice - userBaselinePrice) / userBaselinePrice) * 100;
+      }
+
       const get=(key,fb)=>d?.[key]!=null&&!isNaN(d[key])?d[key]:fb;
       return`<tr>
         <td><div class="al-num">${a.n}</div></td>
@@ -1266,7 +1362,7 @@ const P = {
         <td class="r">${pf(get('y6',a.y6))}</td>
         <td class="r">${pf(get('y5',a.y5))}</td>
         <td class="r">${pf(get('y10',a.y10))}</td>
-        <td class="r">${pf(get('sinceJoined',a.sj))}</td>
+        <td class="r">${pf(computedSinceJoined)}</td>
       </tr>`;
     };
 
@@ -1275,7 +1371,7 @@ const P = {
       <th class="r">Price</th><th class="r">YTD</th>
       <th class="r">2020 (6Y)</th><th class="r">5 Year</th>
       <th class="r">10 Year</th>
-      <th class="r" style="color:var(--pur)">${joinedYear?`Since ${joinedYear}`:'Since Joined'}</th>
+      <th class="r" style="color:var(--pur)">${joinedYear ? `Since ${joinedYear}` : 'Since Joined'}</th>
     </tr></thead>`;
 
     return`
@@ -1485,9 +1581,57 @@ const M = {
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal modal-lg">
         <div class="mhdr"><div><div class="mey">Order Details</div><h2 class="mtitle" style="font-size:1.35rem">Listing Preview</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
+        ${(order.status==='filled'||order.status==='closed')?`
+        <div class="resolved-banner">
+          <i data-lucide="award" style="width:20px;height:20px;color:var(--grn);flex-shrink:0"></i>
+          <div>
+            <div style="font-weight:600;font-size:.875rem;color:var(--grn)">This listing has been resolved</div>
+            <div style="font-size:.78rem;color:var(--t2);margin-top:2px">Deal completed. Connect is no longer available.</div>
+          </div>
+        </div>
+
+        ${S.viewedOrderConnection?`
+        <div style="background:var(--surf);border-radius:var(--rmd);padding:14px 16px;margin-bottom:16px">
+          <div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:10px">Deal Summary</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px;flex:1">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0">${order.userInitials}</div>
+              <div><div style="font-weight:600;font-size:.875rem">${order.userName}</div><div style="font-size:.72rem;color:var(--t3)">Seller</div></div>
+            </div>
+            <i data-lucide="arrow-right" style="width:14px;height:14px;color:var(--t3);flex-shrink:0"></i>
+            <div style="display:flex;align-items:center;gap:8px;flex:1">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--grn);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0">${S.viewedOrderConnection.fromInitials}</div>
+              <div><div style="font-weight:600;font-size:.875rem">${S.viewedOrderConnection.fromName}</div><div style="font-size:.72rem;color:var(--t3)">Buyer</div></div>
+            </div>
+          </div>
+          ${S.viewedOrderConnection.finalPrice?`<div style="font-size:.8125rem;color:var(--t2)">Final agreed price: <strong style="color:var(--t1)">$${Number(S.viewedOrderConnection.finalPrice).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>${S.viewedOrderConnection.commissionAmt?` &nbsp;•&nbsp; Platform commission: <strong>${S.viewedOrderConnection.commissionAmt}</strong>`:''}</div>`:''}
+        </div>`
+        :`<div style="background:var(--surf);border-radius:var(--rsm);padding:12px 14px;margin-bottom:16px;font-size:.8rem;color:var(--t3);text-align:center">Deal details not available.</div>`}
+
+        <div style="margin-bottom:18px">
+          <div style="font-weight:600;font-size:.875rem;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <i data-lucide="star" style="width:14px;height:14px;color:var(--gld)"></i>
+            Reviews ${S.viewedOrderReviews?.length?`<span class="tag tn">${S.viewedOrderReviews.length}</span>`:''}
+          </div>
+          ${S.viewedOrderReviews?.length
+            ?S.viewedOrderReviews.map(r=>`
+            <div class="review-card">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <div style="width:26px;height:26px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--t2)">${r.reviewerInitials||'?'}</div>
+                <div>
+                  <div class="review-stars">${'★'.repeat(r.rating||0)}${'☆'.repeat(5-(r.rating||0))}</div>
+                  <div class="review-by">${r.reviewerName} &nbsp;•&nbsp; ${ago(r.createdAt)}</div>
+                </div>
+              </div>
+              ${r.comment?`<div class="review-text">"${r.comment}"</div>`:''}
+            </div>`).join('')
+            :`<div style="font-size:.8rem;color:var(--t3);padding:14px;text-align:center;background:var(--surf);border-radius:var(--rsm)">No reviews yet for this listing.</div>`
+          }
+        </div>
+        `:''}
         <div class="odh">
           <div class="odtags">
-            <span class="tag ${sc[order.status]||'tn'}">${order.status}</span>
+            <span class="tag ${sc[order.status]||'tn'}">${order.status==='filled'?'Resolved':order.status}</span>
             <span class="tag ${tc[order.type]||'tn'}">${order.type}</span>
             <span class="tag tn">${catLabel}</span>
           </div>
@@ -1649,11 +1793,53 @@ const A = {
   },
   setFilter(f){ S.mFilter=f; render(); },
 
-  viewOrder(id){
+  async viewOrder(id){
     if(!S.subscribed){M.subscribe();return;}
     const o=(S.orders||[]).find(x=>x.id===id);
     if(!o) return;
-    S.viewedOrder=o; M.viewOrder(o);
+    S.viewedOrder=o;
+    S.viewedOrderReviews=[];
+    S.viewedOrderConnection=null;
+
+    const isResolved=o.status==='filled'||o.status==='closed';
+    if(isResolved){
+      try{
+        // fetch the connection that completed this order
+        const cRes=await DB.list('connections',[
+          Query.equal('orderId',[id]),
+          Query.limit(10),
+        ]);
+        const matched=cRes.documents.find(d=>
+          d.status==='deal_done'||d.status==='comm_pending'||d.status==='comm_paid'
+        );
+        if(matched){
+          S.viewedOrderConnection={
+            fromName      : matched.fromName||'a buyer',
+            fromInitials  : matched.fromInitials||'?',
+            finalPrice    : matched.finalPrice,
+            commissionAmt : matched.commissionAmt,
+            status        : matched.status,
+          };
+        }
+      }catch(e){console.warn('viewOrder conn fetch:',e);}
+
+      try{
+        const rRes=await DB.list('reviews',[
+          Query.equal('orderId',[id]),
+          Query.orderDesc('$createdAt'),
+          Query.limit(10),
+        ]);
+        S.viewedOrderReviews=rRes.documents.map(d=>({
+          id:d.$id,
+          reviewerName    : d.reviewerName,
+          reviewerInitials: d.reviewerInitials,
+          rating          : d.rating,
+          comment         : d.comment,
+          createdAt       : d.$createdAt,
+        }));
+      }catch(e){console.warn('viewOrder review fetch:',e);}
+    }
+    M.viewOrder(o);
   },
 
   connectOrder(id){
@@ -1792,9 +1978,50 @@ const A = {
     try{await DB.update('connections',id,{status:'accepted'});await loadMyConnections();render();toast('Connection accepted!','ok');}
     catch(e){toast('Failed: '+e.message,'err');}
   },
-  async declineConn(id){
-    try{await DB.update('connections',id,{status:'declined'});await loadMyConnections();render();toast('Connection declined.');}
-    catch(e){toast('Failed: '+e.message,'err');}
+  async declineConn(id){ /* replaced by showDeclineForm flow */ },
+  showDeclineForm(id){
+    const el=document.getElementById('decline-form-'+id);
+    if(el) el.style.display=el.style.display==='none'?'block':'none';
+  },
+  async submitDecline(id){
+    const sel=document.getElementById('decline-reason-'+id);
+    const reason=sel?.value;
+    if(!reason){toast('Please select a reason.','err');return;}
+    const btn=document.getElementById('decline-btn-'+id);
+    if(btn){btn.disabled=true;btn.textContent='Declining…';}
+    try{
+      await DB.update('connections',id,{status:'declined',declineReason:reason});
+      await loadMyConnections();render();
+      toast('Connection declined.');
+    }catch(e){
+      toast('Failed: '+e.message,'err');
+      if(btn){btn.disabled=false;btn.textContent='Confirm Decline';}
+    }
+  },
+  setReviewRating(n){ S._reviewRating=n; render(); },
+  async submitReview(connId,orderId,sellerId,sellerName){
+    const rating=S._reviewRating;
+    const comment=document.getElementById('review-comment-'+connId)?.value?.trim();
+    if(!rating){toast('Please select a star rating.','err');return;}
+    const btn=document.getElementById('review-btn-'+connId);
+    if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+    try{
+      await DB.create('reviews',{
+        orderId,connectionId:connId,
+        reviewerId:S.user.id,reviewerName:S.user.name,reviewerInitials:S.user.inits,
+        sellerId,sellerName,rating,comment:comment||'',
+      });
+      if(S.sentConnections){
+        const c=S.sentConnections.find(x=>x.id===connId);
+        if(c) c.reviewed=true;
+      }
+      S._reviewRating=0;
+      render();
+      toast('Review submitted! Thank you.','ok');
+    }catch(e){
+      toast('Failed: '+e.message,'err');
+      if(btn){btn.disabled=false;btn.textContent='Submit Review';}
+    }
   },
   showDealForm(id){
     const el=document.getElementById('deal-form-'+id);
@@ -1802,17 +2029,44 @@ const A = {
   },
   async submitDealDone(id){
     const inp=document.getElementById('deal-price-'+id);
-    const fp=parseFloat((inp?.value||'').replace(/[^0-9.]/g,''));
+    const rawVal=inp?.value||'';
+    const fp=parseFloat(rawVal.replace(/[^0-9.]/g,''));
     if(!fp||isNaN(fp)||fp<=0){toast('Please enter the final agreed price.','err');return;}
     const comm=(fp*0.02).toFixed(2);
     const btn=document.getElementById('deal-btn-'+id);
     if(btn){btn.disabled=true;btn.textContent='Saving…';}
+
+    // Pull connection from local state BEFORE any await
+    const allConns=S.myConnections||[];
+    const conn=allConns.find(x=>x.id===id);
+    const orderId=conn?.orderId||null;
+    const buyerNameVal=conn?.fromName||'';
+
     try{
-      await DB.update('connections',id,{status:'deal_done',finalPrice:fp,commissionAmt:'$'+comm});
-      await loadMyConnections();render();
+      // Step 1: update the connection
+      await DB.update('connections',id,{
+        status     : 'deal_done',
+        finalPrice : fp,
+        commissionAmt: '$'+comm,
+        buyerName  : buyerNameVal,
+      });
+
+      // Step 2: update the order to filled
+      if(orderId){
+        await DB.update('orders',orderId,{status:'filled'});
+        // reflect immediately in local state (if market was already loaded)
+        if(S.orders){
+          const ord=S.orders.find(x=>x.id===orderId);
+          if(ord) ord.status='filled';
+        }
+      }
+
+      await loadMyConnections();
+      render();
       toast('Deal marked complete. Commission due: $'+comm,'ok');
     }catch(e){
-      toast('Failed: '+e.message,'err');
+      console.error('submitDealDone error:',e);
+      toast('Error: '+e.message,'err');
       if(btn){btn.disabled=false;btn.textContent='Confirm';}
     }
   },
