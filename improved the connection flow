@@ -400,6 +400,8 @@ const _hasFnId   = !!(TMC.APPWRITE_FN_ID && !TMC.APPWRITE_FN_ID.includes('your_'
 const AW_ENDPOINT   = 'https://cloud.appwrite.io/v1';
 const AW_PROJECT_ID = '6a163159003bd203c63f';
 const AW_DB_ID      = '6a1631ee00269fc986b8';
+const ADMIN_ID = '6a182772002a6de2d95e';
+
 const AW_COL = {
   profiles     : 'profiles',
   orders       : 'orders',
@@ -439,6 +441,7 @@ const S = {
   subscribed:false, subStatus:null,
   verifyStatus:null, lastRefresh:null,
   alPrices:{}, alLoading:false,
+  sentConnections:null,
 };
 
 let _rt = null;
@@ -571,14 +574,29 @@ async function loadVerifyStatus(){
   const r=await DB.list('verifications',[Query.equal('userId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(1)]);
   S.verifyStatus=r.documents[0]?.status||null;
 }
+async function loadSentConnections(){
+  if(!S.user) return;
+  const r=await DB.list('connections',[Query.equal('fromUserId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(50)]);
+  S.sentConnections=r.documents.map(d=>({
+    id:d.$id,orderId:d.orderId,orderTitle:d.orderTitle,
+    toUserId:d.toUserId,toName:d.toName,
+    message:d.message,contact:d.contact,commission:d.commission,
+    status:d.status||'pending',finalPrice:d.finalPrice,
+    commissionAmt:d.commissionAmt,buyerConfirmed:d.buyerConfirmed||false,
+    createdAt:d.$createdAt,
+  }));
+}
+
 async function loadMyConnections(){
-  if(!S.user)return;
+  if(!S.user) return;
   const r=await DB.list('connections',[Query.equal('toUserId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(50)]);
   S.myConnections=r.documents.map(d=>({
     id:d.$id,orderId:d.orderId,orderTitle:d.orderTitle,
     fromUserId:d.fromUserId,fromName:d.fromName,fromInitials:d.fromInitials,
     message:d.message,contact:d.contact,commission:d.commission,
-    status:d.status||'pending',createdAt:d.$createdAt,
+    status:d.status||'pending',finalPrice:d.finalPrice,
+    commissionAmt:d.commissionAmt,commissionRef:d.commissionRef,
+    buyerConfirmed:d.buyerConfirmed||false,createdAt:d.$createdAt,
   }));
 }
 
@@ -614,13 +632,14 @@ async function loadAlData(){
         return best;
       };
       const pct=(old)=>old&&old>0?((cur-old)/old*100):null;
+      const joinTs=S.user?.joinedAt?new Date(S.user.joinedAt).getTime()/1000:null;
       S.alPrices[id]={
-        price : cur,
-        ytd   : pct(nearest(new Date(new Date().getFullYear(),0,1).getTime()/1000)),
-        y6    : pct(nearest(new Date(2020,0,1).getTime()/1000)),
-        y5    : pct(nearest(now-5*365.25*24*3600)),
-        y10   : pct(nearest(now-10*365.25*24*3600)),
-        max   : pct(valid[0].p),
+        price      : result.meta?.regularMarketPrice || current,
+        ytd        : pct(nearest(new Date(new Date().getFullYear(),0,1).getTime()/1000)),
+        y6         : pct(nearest(new Date(2020,0,1).getTime()/1000)),
+        y5         : pct(nearest(now-5*365.25*24*3600)),
+        y10        : pct(nearest(now-10*365.25*24*3600)),
+        sinceJoined: joinTs?pct(nearest(joinTs)):pct(valid[0].p),
       };
     }catch(e){console.warn('AL:',id,e.message);}
   }));
@@ -629,6 +648,9 @@ async function loadAlData(){
   const cgEth=S.coins.find(c=>c.id==='ethereum');
   if(cgBtc&&S.alPrices.btc) S.alPrices.btc.price=cgBtc.price;
   if(cgEth&&S.alPrices.eth) S.alPrices.eth.price=cgEth.price;
+  const joinTs2=S.user?.joinedAt?new Date(S.user.joinedAt).getTime()/1000:null;
+  if(S.alPrices.btc&&!S.alPrices.btc.sinceJoined) S.alPrices.btc.sinceJoined=joinTs2?null:-18.27;
+  if(S.alPrices.eth&&!S.alPrices.eth.sinceJoined) S.alPrices.eth.sinceJoined=joinTs2?null:-35.05;
 
   S.alLoading=false; render();
 }
@@ -777,26 +799,146 @@ const P = {
         <div class="psect">Connection Requests Inbox
           <button class="btn bg bsm" onclick="A.reloadConnections()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i>Refresh</button>
         </div>
-        ${cons.length===0
-          ?`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:16px 0">No connection requests yet. Post a listing to receive them here.</p>`
-          :cons.map(c=>`
-          <div class="cxcard">
-            <div class="cxhead">
-              <div class="cxavat">${c.fromInitials}</div>
-              <div style="flex:1;min-width:0">
-                <div class="cxname">${c.fromName}</div>
-                <div class="cxorder">Re: <em>${c.orderTitle||'your listing'}</em> &nbsp;•&nbsp; ${ago(c.createdAt)}</div>
+        ${(()=>{
+          const unpaidCons=cons.filter(c=>c.status==='deal_done');
+          const totalOwed=unpaidCons.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
+          const stMap={pending:'to',accepted:'tg',deal_done:'tb',comm_pending:'tgd',comm_paid:'tg',declined:'tn',disputed:'tr'};
+          const stLabel={pending:'Pending',accepted:'Accepted',deal_done:'Commission Due',comm_pending:'Payment Submitted',comm_paid:'✓ Resolved',declined:'Declined',disputed:'Disputed'};
+          return`
+          ${totalOwed>0?`<div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--gld);flex-shrink:0"></i>
+            <div><div style="font-weight:600;font-size:.875rem;color:var(--gld)">Outstanding Commission: $${totalOwed.toFixed(2)}</div><div style="font-size:.78rem;color:#8a6820">You have ${unpaidCons.length} deal(s) awaiting commission payment. Please settle to maintain your seller standing.</div></div>
+          </div>`:''}
+          ${cons.length===0
+            ?`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:16px 0">No connection requests yet. Post a listing to receive them here.</p>`
+            :cons.map(c=>`
+            <div class="cxcard">
+              <div class="cxhead">
+                <div class="cxavat">${c.fromInitials}</div>
+                <div style="flex:1;min-width:0">
+                  <div class="cxname">${c.fromName}</div>
+                  <div class="cxorder">Re: <em>${c.orderTitle||'your listing'}</em> &nbsp;•&nbsp; ${ago(c.createdAt)}</div>
+                </div>
+                <span class="tag ${stMap[c.status]||'tn'}" style="white-space:nowrap">${stLabel[c.status]||c.status}</span>
               </div>
-              <span class="tag ${c.status==='pending'?'to':c.status==='accepted'?'tg':'tn'}">${c.status}</span>
-            </div>
-            <div class="cxmsg">"${c.message}"</div>
-            <div class="cxcontact">
-              <i data-lucide="phone" style="width:12px;height:12px;color:var(--t3)"></i>
-              <strong>${c.contact}</strong>
-              <span style="color:var(--t3);font-size:.72rem;font-weight:400">Commission: ${c.commission}</span>
-            </div>
-          </div>`).join('')}
+              <div class="cxmsg">"${c.message}"</div>
+              <div class="cxcontact">
+                <i data-lucide="phone" style="width:12px;height:12px;color:var(--t3)"></i>
+                <strong>${c.contact}</strong>
+                <span style="color:var(--t3);font-size:.72rem;font-weight:400">${c.commissionAmt?'Commission due: '+c.commissionAmt:'Est: '+c.commission}</span>
+                ${c.buyerConfirmed?`<span class="tag tg" style="font-size:.68rem;padding:2px 7px"><i data-lucide="check" style="width:9px;height:9px"></i>Buyer confirmed</span>`:''}
+              </div>
+              ${c.status==='pending'?`<div style="display:flex;gap:8px;margin-top:10px">
+                <button class="btn bc bsm" style="flex:1;justify-content:center" onclick="A.acceptConn('${c.id}')"><i data-lucide="check" style="width:12px;height:12px"></i>Accept</button>
+                <button class="btn bo bsm" onclick="A.declineConn('${c.id}')"><i data-lucide="x" style="width:12px;height:12px"></i>Decline</button>
+              </div>`:''}
+              ${c.status==='accepted'?`<div style="margin-top:10px">
+                <div style="font-size:.78rem;color:var(--grn);margin-bottom:8px;display:flex;align-items:center;gap:5px"><i data-lucide="check-circle" style="width:12px;height:12px"></i>Accepted — deal happening off-platform. Mark complete when done.</div>
+                <button class="btn bp bsm" onclick="A.showDealForm('${c.id}')"><i data-lucide="flag" style="width:12px;height:12px"></i>Mark Deal Complete</button>
+                <div id="deal-form-${c.id}" style="display:none;margin-top:10px;background:var(--surf);border-radius:var(--rsm);padding:12px">
+                  <label style="font-size:.78rem;font-weight:500;color:var(--t2);display:block;margin-bottom:5px">Final agreed price (USD)</label>
+                  <div style="display:flex;gap:8px">
+                    <div class="pfx" style="flex:1"><span class="pfx-sym">$</span><input type="number" id="deal-price-${c.id}" placeholder="0.00" min="0" step="0.01"/></div>
+                    <button class="btn bc bsm" id="deal-btn-${c.id}" onclick="A.submitDealDone('${c.id}')">Confirm</button>
+                  </div>
+                  <div style="font-size:.72rem;color:var(--t3);margin-top:5px">Platform commission = 2% of this amount</div>
+                </div>
+              </div>`:''}
+              ${c.status==='deal_done'?`<div style="margin-top:10px">
+                <div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:14px;margin-bottom:10px">
+                  <div style="font-weight:700;font-size:.9rem;color:var(--gld);margin-bottom:5px">Commission Due: ${c.commissionAmt}</div>
+                  <div style="font-size:.78rem;color:#8a6820;line-height:1.5;margin-bottom:10px">Please pay this amount to one of the platform accounts below, then click "I Have Paid" to submit your reference.</div>
+                  <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px;margin-bottom:6px">
+                    <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">Bank Transfer</strong>
+                    <span style="font-size:.8rem">Toomuchcoin Ltd &nbsp;·&nbsp; Acct: <strong>0123456789</strong> &nbsp;·&nbsp; Routing: 021000021</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px">
+                    <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">USDT TRC-20</strong>
+                    <span style="font-size:.78rem;word-break:break-all">TRoomuchcoin1x2y3z4aBcDeFgHiJkLmNoPqRsTuV</span>
+                  </div>
+                </div>
+                <button class="btn bc bsm" onclick="A.showCommForm('${c.id}')"><i data-lucide="check-circle" style="width:12px;height:12px"></i>I Have Paid</button>
+                <div id="comm-form-${c.id}" style="display:none;margin-top:8px;background:var(--surf);border-radius:var(--rsm);padding:12px">
+                  <label style="font-size:.78rem;font-weight:500;color:var(--t2);display:block;margin-bottom:5px">Payment Reference / TX Hash</label>
+                  <div style="display:flex;gap:8px">
+                    <input type="text" id="comm-ref-${c.id}" placeholder="e.g. TXN-123456 or 0x4c5d…"/>
+                    <button class="btn bc bsm" id="comm-btn-${c.id}" onclick="A.submitCommission('${c.id}')">Submit</button>
+                  </div>
+                </div>
+              </div>`:''}
+              ${c.status==='comm_pending'?`<div style="margin-top:8px;background:#FBF4E6;border-radius:var(--rsm);padding:10px;font-size:.8rem;color:var(--gld);display:flex;align-items:center;gap:6px"><i data-lucide="clock" style="width:13px;height:13px"></i>Commission payment submitted — awaiting admin verification (within 24h). Ref: <strong>${c.commissionRef||'—'}</strong></div>`:''}
+              ${c.status==='comm_paid'?`<div style="margin-top:8px;background:#E6F5EE;border-radius:var(--rsm);padding:10px;font-size:.8rem;color:var(--grn);display:flex;align-items:center;gap:6px"><i data-lucide="check-circle" style="width:13px;height:13px"></i>Commission verified and paid. Deal fully resolved. Thank you!</div>`:''}
+              ${c.status==='declined'?`<div style="margin-top:8px;font-size:.78rem;color:var(--t3)">You declined this connection request.</div>`:''}
+            </div>`).join('')}`;
+        })()}
       </div>
+
+      <!-- Buyer: My Sent Requests -->
+      <div class="psec">
+        <div class="psect">My Sent Requests
+          <span style="font-size:.78rem;font-weight:400;color:var(--t3)">${(S.sentConnections||[]).length} total</span>
+        </div>
+        ${(S.sentConnections||[]).length===0
+          ?`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:16px 0">You haven't sent any connection requests yet.</p>`
+          :(S.sentConnections||[]).map(c=>{
+            const stMap={pending:'to',accepted:'tg',deal_done:'tb',comm_pending:'tgd',comm_paid:'tg',declined:'tn'};
+            const stLabel={pending:'Awaiting Response',accepted:'Accepted',deal_done:'Deal Complete',comm_pending:'Commission Pending',comm_paid:'✓ Resolved',declined:'Declined'};
+            return`<div class="cxcard">
+              <div class="cxhead">
+                <div style="flex:1;min-width:0">
+                  <div class="cxname">${c.toName}</div>
+                  <div class="cxorder">Re: <em>${c.orderTitle||'listing'}</em> &nbsp;•&nbsp; ${ago(c.createdAt)}</div>
+                </div>
+                <span class="tag ${stMap[c.status]||'tn'}" style="white-space:nowrap">${stLabel[c.status]||c.status}</span>
+              </div>
+              ${c.status==='accepted'&&!c.buyerConfirmed?`<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-size:.8rem;color:var(--t2)">Did you complete this deal?</span>
+                <button class="btn bc bsm" onclick="A.confirmDeal('${c.id}')"><i data-lucide="check" style="width:12px;height:12px"></i>Yes, confirm deal</button>
+              </div>`:''}
+              ${c.status==='deal_done'&&!c.buyerConfirmed?`<div style="margin-top:8px;background:var(--surf);border-radius:var(--rsm);padding:10px;font-size:.8rem;color:var(--t2);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                <span><i data-lucide="info" style="width:12px;height:12px;display:inline;vertical-align:-1px;margin-right:4px"></i>Seller says this deal is complete. Can you confirm?</span>
+                <button class="btn bc bsm" onclick="A.confirmDeal('${c.id}')">Confirm Deal</button>
+              </div>`:''}
+              ${c.buyerConfirmed?`<div style="margin-top:6px;font-size:.75rem;color:var(--grn);display:flex;align-items:center;gap:4px"><i data-lucide="check" style="width:11px;height:11px"></i>You confirmed this deal</div>`:''}
+            </div>`;
+          }).join('')}
+      </div>
+
+      <!-- Admin Panel (only visible to admin) -->
+      ${u.id===ADMIN_ID?`
+      <div class="psec" style="border-color:var(--gld)">
+        <div class="psect" style="color:var(--gld)">
+          <span style="display:flex;align-items:center;gap:7px"><i data-lucide="shield" style="width:15px;height:15px"></i>Admin — Commission Dashboard</span>
+          <button class="btn bg bsm" onclick="A.adminLoadAll()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i>Load All</button>
+        </div>
+        ${(()=>{
+          const all=S._adminConns||[];
+          if(!all.length) return`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:12px 0">Click "Load All" to fetch commission data.</p>`;
+          const pending=all.filter(c=>c.status==='deal_done'||c.status==='comm_pending');
+          const totalPending=pending.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
+          const paid=all.filter(c=>c.status==='comm_paid');
+          const totalPaid=paid.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
+          return`
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <div class="psc"><div class="psv" style="font-size:1.2rem;color:var(--red)">$${totalPending.toFixed(2)}</div><div class="psl">Outstanding</div></div>
+            <div class="psc"><div class="psv" style="font-size:1.2rem;color:var(--grn)">$${totalPaid.toFixed(2)}</div><div class="psl">Collected</div></div>
+          </div>
+          ${pending.map(c=>`<div class="cxcard" style="border-color:${c.status==='comm_pending'?'var(--gld)':'var(--bdr)'}">
+            <div class="cxhead">
+              <div style="flex:1;min-width:0">
+                <div class="cxname" style="font-size:.8rem">${c.fromName} → ${c.toName}</div>
+                <div class="cxorder">${c.orderTitle||'Deal'} &nbsp;•&nbsp; ${ago(c.createdAt)}</div>
+              </div>
+              <span class="tag ${c.status==='comm_pending'?'tgd':'to'}">${c.status==='comm_pending'?'Verify Now':'Awaiting Payment'}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:8px">
+              <div style="font-size:.875rem;font-weight:600;color:var(--t1)">${c.commissionAmt||'—'}</div>
+              ${c.commissionRef?`<div style="font-size:.75rem;color:var(--t2)">Ref: <strong>${c.commissionRef}</strong></div>`:''}
+              ${c.status==='comm_pending'?`<button class="btn bc bsm" onclick="A.adminVerifyComm('${c.id}')"><i data-lucide="check" style="width:12px;height:12px"></i>Mark Paid</button>`:''}
+            </div>
+          </div>`).join('')}`;
+        })()}
+      </div>`:''}
 
       <div class="psec">
         <div class="psect">Account Details</div>
@@ -935,7 +1077,7 @@ const P = {
         <button class="tbtn ${sub==='watchlist'?'on':''}" onclick="A.setCryptoSub('watchlist')"><i data-lucide="star" style="width:13px;height:13px"></i><span>Watchlist</span></button>
         <button class="tbtn ${sub==='assetlist'?'on':''}" onclick="A.setCryptoSub('assetlist')">
           <i data-lucide="layout-grid" style="width:13px;height:13px"></i>
-          <span>Our AssetList</span>
+          <span>Datum List</span>
           ${!S.subscribed?`<i data-lucide="lock" style="width:10px;height:10px;color:var(--pur);opacity:.75"></i>`:''}
         </button>
         <button class="tbtn ${sub==='portfolio'?'on':''}" onclick="A.setCryptoSub('portfolio')"><i data-lucide="pie-chart" style="width:13px;height:13px"></i><span>Portfolio</span></button>
@@ -1036,27 +1178,27 @@ const P = {
   _assetList(){
     if(!S.subscribed){return`<div class="gate-banner">
       <div class="gate-icon"><i data-lucide="layout-grid" style="width:24px;height:24px"></i></div>
-      <h3 class="gate-t">Our Asset List is a Pro Feature</h3>
-      <p class="gate-d">Access our curated tracker — handpicked assets with live prices and historical returns across YTD, 6-year, 5-year, 10-year and all-time periods.</p>
+      <h3 class="gate-t">Datum List is a Pro Feature</h3>
+      <p class="gate-d">Access our curated tracker — handpicked assets with live prices and returns across YTD, 6-year, 5-year, and your personal return since joining Datum.</p>
       <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $5/month</button>
     </div>`;}
 
-    const lp=S.alPrices; const loading=S.alLoading;
+    const lp=S.alPrices;const loading=S.alLoading;
     const hasPrices=Object.keys(lp).length>0;
-    const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const nowT=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const monthLabel=new Date().toLocaleString('default',{month:'long',year:'numeric'});
+    const joinedYear=S.user?.joinedAt?new Date(S.user.joinedAt).getFullYear():null;
 
     const fmtAP=(p)=>{
-      if(p==null||isNaN(p)) return'—';
-      if(p>=10000) return'$'+Math.round(p).toLocaleString('en-US');
-      if(p>=1) return'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      if(p==null||isNaN(p))return'—';
+      if(p>=10000)return'$'+Math.round(p).toLocaleString('en-US');
+      if(p>=1)return'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
       return'$'+p.toFixed(4);
     };
-
     const pf=(v)=>{
-      if(v==null||isNaN(v)) return`<span style="color:var(--t3);font-size:.75rem">—</span>`;
+      if(v==null||isNaN(v))return`<span style="color:var(--t3);font-size:.75rem">—</span>`;
       return`<span class="perf ${v>=0?'pp':'pn'}">${v>=0?'+':''}${Number(v).toFixed(2)}%</span>`;
     };
-
     const logo=(id,bg,fg,sym)=>{
       if(id==='btc'){const c=S.coins.find(x=>x.id==='bitcoin');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
       if(id==='eth'){const c=S.coins.find(x=>x.id==='ethereum');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
@@ -1068,18 +1210,48 @@ const P = {
     };
 
     const HOLD=[
-      {id:'gold',  n:1,  name:'Gold',           sym:'XAU', bg:'#B8892A',fg:'#fff', fp:'$4,492.70', ytd:4.73,   y6:2257.60, y5:88.50,   y10:138.20,   max:898440.00},
-      {id:'nvda',  n:2,  name:'Nvidia',         sym:'NVDA',bg:'#76B900',fg:'#fff', fp:'$211.14',   ytd:11.80,  y6:2277.70, y5:1820.00, y10:9540.00,  max:42128.00},
-      {id:'spx',   n:3,  name:'S&P 500',        sym:'SPX', bg:'#2B5BE0',fg:'#fff', fp:'$7,580.06', ytd:10.52,  y6:148.99,  y5:83.40,   y10:183.00,   max:1515912.00},
-      {id:'btc',   n:4,  name:'Bitcoin',        sym:'BTC', bg:'#F7931A',fg:'#fff', fp:'$73,501.13',ytd:-18.27, y6:921.57,  y5:950.00,  y10:15000.00, max:14700126.00},
-      {id:'dxy',   n:5,  name:'Dollar Index',   sym:'DXY', bg:'#26A17B',fg:'#fff', fp:'$1,371.20', ytd:-4.37,  y6:281.95,  y5:130.00,  y10:205.00,   max:274140.00},
+      {id:'gold',  n:1, name:'Gold',          sym:'XAU',  bg:'#B8892A',fg:'#fff', fp:'$4,492.70',  ytd:4.73,   y6:2257.60, y5:88.50,   y10:138.20,   sj:898440.00},
+      {id:'nvda',  n:2, name:'Nvidia',         sym:'NVDA', bg:'#76B900',fg:'#fff', fp:'$211.14',    ytd:11.80,  y6:2277.70, y5:1820.00, y10:9540.00,  sj:42128.00},
+      {id:'spx',   n:3, name:"S&P 500",        sym:'SPX',  bg:'#2B5BE0',fg:'#fff', fp:'$7,580.06',  ytd:10.52,  y6:148.99,  y5:83.40,   y10:183.00,   sj:1515912.00},
+      {id:'btc',   n:4, name:'Bitcoin',        sym:'BTC',  bg:'#F7931A',fg:'#fff', fp:'$73,501.13', ytd:-18.27, y6:921.57,  y5:950.00,  y10:15000.00, sj:14700126.00},
+      {id:'dxy',   n:5, name:'Dollar Index',   sym:'DXY',  bg:'#26A17B',fg:'#fff', fp:'$1,371.20',  ytd:-4.37,  y6:281.95,  y5:130.00,  y10:205.00,   sj:274140.00},
     ];
-    const WATCH=[
-      {id:'eth',   n:'#',name:'Ethereum',       sym:'ETH', bg:'#627EEA',fg:'#fff', fp:'$2,013.93', ytd:-35.05, y6:1453.60, y5:420.00,  y10:8200.00,  max:402685.60},
-      {id:'tet',   n:'#',name:'$TET',           sym:'TET', bg:'#555',   fg:'#fff', fp:'$0.43',     ytd:-92.59, y6:-85.70,  y5:-60.00,  y10:-14.22,   max:-14.22},
-      {id:'mstr',  n:'#',name:'MicroStrategy',  sym:'MSTR',bg:'#F7931A',fg:'#fff', fp:'$159.09',   ytd:1.23,   y6:1177.83, y5:1500.00, y10:5200.00,  max:31718.00},
-      {id:'tsla',  n:'#',name:'Tesla',          sym:'TSLA',bg:'#E84142',fg:'#fff', fp:'$435.79',   ytd:-0.52,  y6:682.81,  y5:310.00,  y10:1250.00,  max:87058.00},
-      {id:'nasdaq',n:'#',name:'Nasdaq Comp.',   sym:'NDX', bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62',ytd:16.08,  y6:184.23,  y5:112.00,  y10:235.00,   max:5394424.00},
+
+    // Watching: continent-based, one section per continent
+    const CONTINENTS=[
+      {
+        emoji:'🌍', name:'Africa',
+        desc:'Top picks from African markets',
+        assets:[], // Coming soon
+      },
+      {
+        emoji:'🌏', name:'Asia',
+        desc:'Top picks from Asian markets',
+        assets:[
+          {id:'tet', n:'#', name:'$TET', sym:'TET', bg:'#26A17B',fg:'#fff', fp:'$0.43', ytd:-92.59, y6:-85.70, y5:-60.00, y10:-14.22, sj:-14.22},
+        ],
+      },
+      {
+        emoji:'🌎', name:'Americas',
+        desc:'Top picks from the Americas',
+        assets:[
+          {id:'mstr',   n:'#', name:'MicroStrategy',  sym:'MSTR', bg:'#F7931A',fg:'#fff', fp:'$159.09',    ytd:1.23,   y6:1177.83, y5:1500.00, y10:5200.00,  sj:31718.00},
+          {id:'tsla',   n:'#', name:'Tesla',           sym:'TSLA', bg:'#E84142',fg:'#fff', fp:'$435.79',    ytd:-0.52,  y6:682.81,  y5:310.00,  y10:1250.00,  sj:87058.00},
+          {id:'nasdaq', n:'#', name:'Nasdaq Comp.',    sym:'NDX',  bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62', ytd:16.08,  y6:184.23,  y5:112.00,  y10:235.00,   sj:5394424.00},
+        ],
+      },
+      {
+        emoji:'🌍', name:'Europe',
+        desc:'Top picks from European markets',
+        assets:[
+          {id:'eth', n:'#', name:'Ethereum', sym:'ETH', bg:'#627EEA',fg:'#fff', fp:'$2,013.93', ytd:-35.05, y6:1453.60, y5:420.00, y10:8200.00, sj:402685.60},
+        ],
+      },
+      {
+        emoji:'🌏', name:'Oceania',
+        desc:'Top picks from Oceania & Pacific',
+        assets:[], // Coming soon
+      },
     ];
 
     const row=(a)=>{
@@ -1094,7 +1266,7 @@ const P = {
         <td class="r">${pf(get('y6',a.y6))}</td>
         <td class="r">${pf(get('y5',a.y5))}</td>
         <td class="r">${pf(get('y10',a.y10))}</td>
-        <td class="r">${pf(get('max',a.max))}</td>
+        <td class="r">${pf(get('sinceJoined',a.sj))}</td>
       </tr>`;
     };
 
@@ -1102,14 +1274,15 @@ const P = {
       <th style="width:28px">#</th><th>Asset</th>
       <th class="r">Price</th><th class="r">YTD</th>
       <th class="r">2020 (6Y)</th><th class="r">5 Year</th>
-      <th class="r">10 Year</th><th class="r">Max</th>
+      <th class="r">10 Year</th>
+      <th class="r" style="color:var(--pur)">${joinedYear?`Since ${joinedYear}`:'Since Joined'}</th>
     </tr></thead>`;
 
     return`
       <div class="al-hero">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
           <div>
-            <div class="al-title">Our Asset List</div>
+            <div class="al-title">Datum List</div>
             <div class="al-subtitle">Handpicked assets tracking long-term wealth creation across traditional and digital markets — updated live.</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
@@ -1121,28 +1294,39 @@ const P = {
         </div>
         <div class="al-updated">
           <i data-lucide="${hasPrices?'check-circle':'clock'}" style="width:10px;height:10px"></i>
-          ${hasPrices?`Live prices · Updated ${now}`:loading?'Fetching live prices from market data…':'Click Refresh to load live prices'}
+          ${hasPrices?`Live prices · Updated ${nowT}`:loading?'Fetching live prices…':'Click Refresh to load live prices'}
         </div>
       </div>
 
       <div class="al-section-hdr">
         <span class="al-section-label">Holdings</span>
         <div class="al-section-line"></div>
-        <span style="font-size:.72rem;color:var(--t3)">5 assets</span>
+        <span style="font-size:.72rem;color:var(--t3)">${HOLD.length} assets</span>
       </div>
       <div class="al-wrap"><table class="al-table">${th}<tbody>${HOLD.map(row).join('')}</tbody></table></div>
 
-      <div class="al-section-hdr" style="margin-top:24px">
-        <span class="al-section-label">Watching</span>
+      <div class="al-section-hdr" style="margin-top:28px">
+        <span class="al-section-label" style="color:var(--pur)">Watching for ${monthLabel}</span>
         <div class="al-section-line"></div>
-        <span style="font-size:.72rem;color:var(--t3)">5 assets</span>
+        <span style="font-size:.72rem;color:var(--t3)">by continent</span>
       </div>
-      <div class="al-wrap"><table class="al-table">${th}<tbody>${WATCH.map(row).join('')}</tbody></table></div>
 
-      <div class="al-note">
-        <strong>Live data</strong> via Yahoo Finance &amp; CoinGecko. &nbsp;|&nbsp;
-        <strong>Columns:</strong> YTD = year-to-date · 2020 (6Y) = since Jan 2020 · 5Y/10Y = multi-year cumulative · Max = all-time from earliest data. &nbsp;|&nbsp;
-        Not financial advice.
+      ${CONTINENTS.map(cont=>`
+        <div style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:1rem">${cont.emoji}</span>
+            <span style="font-weight:600;font-size:.8125rem">${cont.name}</span>
+            <span style="font-size:.72rem;color:var(--t3)">${cont.desc}</span>
+          </div>
+          ${cont.assets.length===0
+            ?`<div style="border:1.5px dashed var(--bdr);border-radius:var(--rsm);padding:14px 16px;font-size:.8rem;color:var(--t3);text-align:center">No picks yet for ${cont.name} — coming soon.</div>`
+            :`<div class="al-wrap"><table class="al-table">${th}<tbody>${cont.assets.map(row).join('')}</tbody></table></div>`
+          }
+        </div>`).join('')}
+
+      <div class="al-note" style="margin-top:8px">
+        <strong>Live data</strong> via Yahoo Finance &amp; CoinGecko. Stock logos via FMP. &nbsp;|&nbsp;
+        <strong>Columns:</strong> YTD = year-to-date · 2020 (6Y) = since Jan 2020 · 5Y/10Y = multi-year cumulative · &nbsp;|&nbsp; Not financial advice.
       </div>`;
   },
 
@@ -1414,8 +1598,8 @@ const A = {
       const u=await DB.me();if(!u)throw new Error('No session');
       const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
       const p=res.documents[0];
-      S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name)};
-      await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections()]);
+      S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt};
+      await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections()]);
       M.close();R.go('profile');
       toast('Welcome back, '+S.user.name.split(' ')[0]+'!','ok');
     }catch(e){
@@ -1438,8 +1622,8 @@ const A = {
       const u=await DB.register(email,pwd,name);
       await DB.login(email,pwd);
       await DB.create('profiles',{userId:u.$id,name,email,type});
-      S.user={id:u.$id,name,email,type,inits:initials(name)};
-      S.subscribed=false;S.subStatus=null;S.verifyStatus=null;S.myConnections=[];
+      S.user={id:u.$id,name,email,type,inits:initials(name),joinedAt:new Date().toISOString()};
+      S.subscribed=false;S.subStatus=null;S.verifyStatus=null;S.myConnections=[];S.sentConnections=[];
       M.close();R.go('profile');
       toast('Account created! Welcome, '+name.split(' ')[0]+'.','ok');
     }catch(e){
@@ -1510,6 +1694,11 @@ const A = {
   },
 
   async submitOrder(){
+    const unpaid=(S.myConnections||[]).filter(c=>c.status==='deal_done'||c.status==='comm_pending').length;
+    if(unpaid>=3){
+      const go=confirm(`You have ${unpaid} deals with outstanding commission. Please settle these to maintain your standing. Continue posting anyway?`);
+      if(!go) return;
+    }
     const title=document.getElementById('otitle')?.value?.trim();
     const cat=document.getElementById('ocat')?.value;
     const type=document.getElementById('otype')?.value;
@@ -1596,7 +1785,81 @@ const A = {
   },
 
   async reloadConnections(){
-    await loadMyConnections();render();toast('Inbox refreshed.');
+    await Promise.all([loadMyConnections(),loadSentConnections()]);render();toast('Inbox refreshed.');
+  },
+
+  async acceptConn(id){
+    try{await DB.update('connections',id,{status:'accepted'});await loadMyConnections();render();toast('Connection accepted!','ok');}
+    catch(e){toast('Failed: '+e.message,'err');}
+  },
+  async declineConn(id){
+    try{await DB.update('connections',id,{status:'declined'});await loadMyConnections();render();toast('Connection declined.');}
+    catch(e){toast('Failed: '+e.message,'err');}
+  },
+  showDealForm(id){
+    const el=document.getElementById('deal-form-'+id);
+    if(el)el.style.display=el.style.display==='none'?'block':'none';
+  },
+  async submitDealDone(id){
+    const inp=document.getElementById('deal-price-'+id);
+    const fp=parseFloat((inp?.value||'').replace(/[^0-9.]/g,''));
+    if(!fp||isNaN(fp)||fp<=0){toast('Please enter the final agreed price.','err');return;}
+    const comm=(fp*0.02).toFixed(2);
+    const btn=document.getElementById('deal-btn-'+id);
+    if(btn){btn.disabled=true;btn.textContent='Saving…';}
+    try{
+      await DB.update('connections',id,{status:'deal_done',finalPrice:fp,commissionAmt:'$'+comm});
+      await loadMyConnections();render();
+      toast('Deal marked complete. Commission due: $'+comm,'ok');
+    }catch(e){
+      toast('Failed: '+e.message,'err');
+      if(btn){btn.disabled=false;btn.textContent='Confirm';}
+    }
+  },
+  showCommForm(id){
+    const el=document.getElementById('comm-form-'+id);
+    if(el)el.style.display=el.style.display==='none'?'block':'none';
+  },
+  async submitCommission(id){
+    const ref=document.getElementById('comm-ref-'+id)?.value?.trim();
+    if(!ref){toast('Please enter your payment reference.','err');return;}
+    const btn=document.getElementById('comm-btn-'+id);
+    if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+    try{
+      await DB.update('connections',id,{status:'comm_pending',commissionRef:ref});
+      await loadMyConnections();render();
+      toast('Submitted! We will verify within 24 hours.','ok');
+    }catch(e){
+      toast('Failed: '+e.message,'err');
+      if(btn){btn.disabled=false;btn.textContent='I Have Paid';}
+    }
+  },
+  async confirmDeal(id){
+    try{
+      await DB.update('connections',id,{buyerConfirmed:true});
+      await loadSentConnections();render();
+      toast('Deal confirmed. Thank you!','ok');
+    }catch(e){toast('Failed: '+e.message,'err');}
+  },
+  async adminVerifyComm(id){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      await DB.update('connections',id,{status:'comm_paid'});
+      await loadMyConnections();render();
+      toast('Commission verified and marked as paid.','ok');
+    }catch(e){toast('Failed: '+e.message,'err');}
+  },
+  async adminLoadAll(){
+    if(S.user?.id!==ADMIN_ID) return;
+    const r=await DB.list('connections',[Query.orderDesc('$createdAt'),Query.limit(200)]);
+    S._adminConns=r.documents.map(d=>({
+      id:d.$id,fromName:d.fromName,toName:d.toName,
+      orderTitle:d.orderTitle,status:d.status,
+      commissionAmt:d.commissionAmt,commissionRef:d.commissionRef,
+      buyerConfirmed:d.buyerConfirmed,createdAt:d.$createdAt,
+    }));
+    render();
+    toast('Admin data refreshed.');
   },
 
   setCryptoSub(s){
@@ -1722,8 +1985,8 @@ document.addEventListener('DOMContentLoaded', async()=>{
   if(u){
     const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
     const p=res.documents[0];
-    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name)};
-    await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections()]);
+    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt};
+    await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections()]);
   }
   render();
   loadCoins();
