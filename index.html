@@ -32,6 +32,7 @@
 
     .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--rsm);font-family:var(--fb);font-size:.875rem;font-weight:500;cursor:pointer;border:none;transition:var(--ease);text-decoration:none;white-space:nowrap}
     .btn:disabled{opacity:.5;cursor:not-allowed!important;transform:none!important}
+    @media(min-width:769px){.pghdr .btn{margin-top:22px}}
     .bp{background:var(--t1);color:var(--white)}
     .bp:hover:not(:disabled){background:#333028;transform:translateY(-1px);box-shadow:var(--s2)}
     .bo{background:transparent;color:var(--t1);border:1.5px solid var(--bdr2)}
@@ -153,7 +154,8 @@
     .pgttl{font-family:var(--fd);font-size:clamp(1.7rem,3vw,2.2rem);line-height:1.15;margin-bottom:6px}
     .pgsub{font-size:.9rem;color:var(--t2)}
     .tnav{display:flex;gap:4px;background:var(--surf);border-radius:var(--rmd);padding:4px;margin-bottom:26px}
-    .tbtn{flex:1;padding:9px 16px;border-radius:8px;font-size:.875rem;font-weight:500;border:none;background:transparent;color:var(--t2);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;gap:7px}
+    .tbtn{flex:1;padding:9px 10px;border-radius:8px;font-size:.875rem;font-weight:500;border:none;background:transparent;color:var(--t2);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;gap:5px}
+    @media(min-width:769px){.csubnav .tbtn{font-size:.78rem;padding:9px 8px;gap:4px}.csubnav .tbtn i{width:12px!important;height:12px!important;flex-shrink:0}}
     .tbtn.on{background:var(--white);color:var(--t1);box-shadow:var(--s1)}
     .fbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:22px}
     .flbl{font-size:.8125rem;font-weight:500;color:var(--t2);margin-right:4px}
@@ -222,6 +224,36 @@
     .pay-acct{background:var(--white);border:1px solid var(--bdr);border-radius:var(--rsm);padding:11px 14px;font-size:.8rem;margin-top:8px;font-family:monospace;line-height:1.6}
     .pay-acct strong{color:var(--t1);display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;font-family:var(--fb)}
 
+    @media(max-width:768px){.pricing-grid{grid-template-columns:1fr}.plan-card.featured{transform:none}}
+
+    .al-hero{background:linear-gradient(135deg,#0f0f0f,#1a1410 50%,#0f0f15);border-radius:var(--rmd);padding:26px 28px;margin-bottom:20px;border:1px solid rgba(255,255,255,.08)}
+    .al-title{font-family:var(--fd);font-size:1.45rem;color:#fff;margin-bottom:5px}
+    .al-subtitle{font-size:.8rem;color:rgba(255,255,255,.4);line-height:1.55;max-width:560px}
+    .al-updated{font-size:.7rem;color:rgba(255,255,255,.22);margin-top:10px;display:flex;align-items:center;gap:5px}
+    .al-section-hdr{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
+    .al-section-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);white-space:nowrap}
+    .al-section-line{flex:1;height:1px;background:var(--bdr)}
+    .al-wrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden;margin-bottom:4px}
+    .al-table{width:100%;border-collapse:collapse;font-size:.8125rem}
+    .al-table thead th{background:var(--off);padding:10px 14px;text-align:left;font-size:.67rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bdr);white-space:nowrap}
+    .al-table thead th.r,.al-table td.r{text-align:right}
+    .al-table tbody tr{border-bottom:1px solid var(--bdr);transition:background .14s}
+    .al-table tbody tr:last-child{border-bottom:none}
+    .al-table tbody tr:hover{background:var(--off)}
+    .al-table td{padding:12px 14px;vertical-align:middle}
+    .al-num{width:26px;height:26px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:var(--t3)}
+    .al-cell{display:flex;align-items:center;gap:11px}
+    .al-ico{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0;font-family:var(--fd)}
+    .al-aname{font-weight:600;font-size:.875rem}
+    .al-asym{font-size:.7rem;color:var(--t3);margin-top:1px}
+    .al-price{font-weight:600;font-variant-numeric:tabular-nums}
+    .perf{display:inline-block;padding:3px 7px;border-radius:5px;font-size:.76rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .pp{background:#E6F5EE;color:var(--grn)}
+    .pn{background:#FDEAEA;color:var(--red)}
+    .al-note{background:var(--surf);border-radius:var(--rsm);padding:13px 16px;font-size:.72rem;color:var(--t3);line-height:1.7;margin-top:16px}
+    .al-note strong{color:var(--t2)}
+    @media(max-width:768px){.al-hero{padding:18px 16px}.al-table{font-size:.74rem}.al-table td,.al-table thead th{padding:9px 9px}}
+
     .fab{position:fixed;bottom:32px;right:32px;background:var(--t1);color:var(--white);border:none;border-radius:100px;padding:13px 22px;font-family:var(--fb);font-size:.875rem;font-weight:500;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--s3);transition:var(--ease);z-index:100}
     .fab:hover{transform:translateY(-2px);box-shadow:0 20px 60px rgba(26,25,22,.22)}
 
@@ -246,12 +278,13 @@
     .chat-empty{text-align:center;padding:40px;color:var(--t3);font-size:.875rem}
 
     #pg-crypto{padding:40px 24px;max-width:1080px;margin:0 auto}
-    .csubnav{display:flex;gap:4px;margin-bottom:26px;background:var(--surf);border-radius:var(--rmd);padding:4px;max-width:fit-content}
+    .csubnav{display:flex;gap:4px;margin-bottom:26px;background:var(--surf);border-radius:var(--rmd);padding:4px;max-width:fit-content;width:100%}
     .mtbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
     .swrap{position:relative;flex:1;min-width:180px;max-width:300px}
     .swrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--t3);pointer-events:none}
     .swrap input{padding-left:36px}
     .mtwrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden}
+    @media(max-width:768px){.mtwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}}
     .lrow{text-align:center;padding:48px;color:var(--t3);font-size:.875rem}
     .spin{display:inline-block;width:22px;height:22px;border:2px solid var(--bdr);border-top-color:var(--t1);border-radius:50%;animation:sp .7s linear infinite;margin-bottom:10px}
     @keyframes sp{to{transform:rotate(360deg)}}
@@ -311,6 +344,7 @@
     .csgfx{width:110px;height:110px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;margin:0 auto 26px;color:var(--t3)}
 
     .back{display:inline-flex;align-items:center;gap:7px;font-size:.875rem;font-weight:500;color:var(--t2);cursor:pointer;padding:8px 0;margin-bottom:18px;background:none;border:none;transition:var(--ease)}
+    @media(min-width:769px){.back{margin-top:22px}}
     .back:hover{color:var(--t1)}
 
     .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--t1);color:var(--white);padding:11px 20px;border-radius:var(--rmd);font-size:.875rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .28s,transform .28s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 48px)}
@@ -371,7 +405,7 @@ const AW_COL = {
   orders       : 'orders',
   chat         : 'chat',
   watchlist    : 'watchlist',
-  connections  : 'connections',   
+  connections  : 'connections',    
   verifications: 'verifications',  
   subscription: 'subscription',  
 };
@@ -404,6 +438,7 @@ const S = {
   authTab:'login', signupType:null,
   subscribed:false, subStatus:null,
   verifyStatus:null, lastRefresh:null,
+  alPrices:{}, alLoading:false,
 };
 
 let _rt = null;
@@ -483,7 +518,7 @@ async function loadCoins(){
   S.coinsState='loading';render();
   try{
     const pages=await Promise.all([1,2,3,4,5].map(pg=>
-      fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=${pg}&sparkline=false&price_change_percentage=24h`)
+      fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=${pg}&sparkline=false&price_change_percentage=24h&x_cg_demo_api_key=CG-ukJ4Loyx3D9ZvYm1B8smA1tP`)
         .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
     ));
     S.coins=pages.flat().filter(c=>c&&c.id).map(c=>({
@@ -545,6 +580,57 @@ async function loadMyConnections(){
     message:d.message,contact:d.contact,commission:d.commission,
     status:d.status||'pending',createdAt:d.$createdAt,
   }));
+}
+
+async function loadAlData(){
+  if(S.alLoading) return;
+  S.alLoading=true; render();
+
+  const syms=[
+    {id:'gold',  yf:'GC=F'},    {id:'nvda',   yf:'NVDA'},
+    {id:'spx',   yf:'^GSPC'},   {id:'btc',    yf:'BTC-USD'},
+    {id:'dxy',   yf:'DX-Y.NYB'},{id:'eth',    yf:'ETH-USD'},
+    {id:'tet',   yf:'TET-USD'}, {id:'mstr',   yf:'MSTR'},
+    {id:'tsla',  yf:'TSLA'},    {id:'nasdaq', yf:'^IXIC'},
+  ];
+
+  await Promise.all(syms.map(async({id,yf})=>{
+    try{
+      const base=`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yf)}?interval=1mo&range=max`;
+      const r=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(base)}`);
+      if(!r.ok) throw new Error(r.status);
+      const data=await r.json();
+      const res=data?.chart?.result?.[0];
+      if(!res) return;
+      const closes=res.indicators?.quote?.[0]?.close||[];
+      const ts=res.timestamp||[];
+      const valid=ts.map((t,i)=>({t,p:closes[i]})).filter(x=>x.p!=null);
+      if(!valid.length) return;
+      const cur=res.meta?.regularMarketPrice||valid[valid.length-1].p;
+      const now=Date.now()/1000;
+      const nearest=(target)=>{
+        let best=null,bd=Infinity;
+        for(const{t,p}of valid){const d=Math.abs(t-target);if(d<bd){bd=d;best=p;}}
+        return best;
+      };
+      const pct=(old)=>old&&old>0?((cur-old)/old*100):null;
+      S.alPrices[id]={
+        price : cur,
+        ytd   : pct(nearest(new Date(new Date().getFullYear(),0,1).getTime()/1000)),
+        y6    : pct(nearest(new Date(2020,0,1).getTime()/1000)),
+        y5    : pct(nearest(now-5*365.25*24*3600)),
+        y10   : pct(nearest(now-10*365.25*24*3600)),
+        max   : pct(valid[0].p),
+      };
+    }catch(e){console.warn('AL:',id,e.message);}
+  }));
+
+  const cgBtc=S.coins.find(c=>c.id==='bitcoin');
+  const cgEth=S.coins.find(c=>c.id==='ethereum');
+  if(cgBtc&&S.alPrices.btc) S.alPrices.btc.price=cgBtc.price;
+  if(cgEth&&S.alPrices.eth) S.alPrices.eth.price=cgEth.price;
+
+  S.alLoading=false; render();
 }
 
 function render(){
@@ -840,16 +926,21 @@ const P = {
         <div>
           <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
           <h1 class="pgttl">Financial Markets</h1>
-          <p class="pgsub">${subtitle}${!S.subscribed?' &nbsp;•&nbsp; <span style="color:var(--pur);font-size:.8rem;font-weight:500"></span>':''}</p>
+          <p class="pgsub">${subtitle}</p>
         </div>
         ${S.coinsState==='err'?`<button class="btn bo bsm" onclick="loadCoins()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i>Retry</button>`:''}
       </div>
       <div class="csubnav">
         <button class="tbtn ${sub==='market'?'on':''}" onclick="A.setCryptoSub('market')"><i data-lucide="trending-up" style="width:13px;height:13px"></i><span>Market</span></button>
         <button class="tbtn ${sub==='watchlist'?'on':''}" onclick="A.setCryptoSub('watchlist')"><i data-lucide="star" style="width:13px;height:13px"></i><span>Watchlist</span></button>
+        <button class="tbtn ${sub==='assetlist'?'on':''}" onclick="A.setCryptoSub('assetlist')">
+          <i data-lucide="layout-grid" style="width:13px;height:13px"></i>
+          <span>Our AssetList</span>
+          ${!S.subscribed?`<i data-lucide="lock" style="width:10px;height:10px;color:var(--pur);opacity:.75"></i>`:''}
+        </button>
         <button class="tbtn ${sub==='portfolio'?'on':''}" onclick="A.setCryptoSub('portfolio')"><i data-lucide="pie-chart" style="width:13px;height:13px"></i><span>Portfolio</span></button>
       </div>
-      ${sub==='market'?P._mktTable():sub==='deepdive'?P._deepdive():sub==='watchlist'?P._watchlist():P._portfolio()}
+      ${sub==='market'?P._mktTable():sub==='deepdive'?P._deepdive():sub==='watchlist'?P._watchlist():sub==='assetlist'?P._assetList():P._portfolio()}
     </div>`;
   },
 
@@ -875,25 +966,6 @@ const P = {
 
     const thead=`<thead><tr><th style="width:38px">#</th><th>Asset</th><th class="r">Price</th><th class="r">24h</th><th class="r" style="width:48px">★</th></tr></thead>`;
 
-    if(!S.subscribed){
-      const top5=filtered.slice(0,5);
-      return`
-        <div class="mtbar">
-          <div class="swrap"><i data-lucide="search" style="width:14px;height:14px"></i><input type="text" placeholder="Search assets…" value="${S.csearch}" oninput="A.cSearch(this.value)"/></div>
-          <span style="font-size:.8rem;color:var(--t2);margin-left:auto">${total.toLocaleString()} assets</span>
-        </div>
-        <div class="crypto-gate-wrap">
-          <div class="mtwrap"><table>${thead}<tbody>${top5.map((c,i)=>tblRow(c,i)).join('')}</tbody></table></div>
-          <div class="crypto-gate-overlay">
-            <div>
-              <div style="width:44px;height:44px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#fff"><i data-lucide="lock" style="width:20px;height:20px"></i></div>
-              <div style="font-family:var(--fd);font-size:1.05rem;margin-bottom:6px">Unlock all ${total.toLocaleString()} assets</div>
-              <p style="font-size:.8rem;color:var(--t2);margin-bottom:14px;max-width:280px;margin-left:auto;margin-right:auto">Upgrade to Pro for full market table, watchlist, and deep-dive charts.</p>
-              <button class="btn bpur bsm" onclick="R.go('sub')"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — $5/month</button>
-            </div>
-          </div>
-        </div>`;
-    }
 
     const pages=Math.max(1,Math.ceil(total/S.cps));
     const pg=Math.min(S.cpage,pages);
@@ -959,6 +1031,119 @@ const P = {
     return`<div class="mtwrap"><table><thead><tr><th>Asset</th><th class="r">Price</th><th class="r">24h</th><th class="r" style="width:48px">★</th></tr></thead><tbody>
       ${starred.map(c=>{const i=S.coins.indexOf(c);const pos=c.chg>=0;return`<tr onclick="A.openCoin('${c.id}')"><td><div class="acell">${coinIcon(c,i,34)}<div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div></div></td><td class="r price-c">${fmtp(c.price)}</td><td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td><td class="r" onclick="event.stopPropagation()"><button class="wbtn on" onclick="A.toggleWatch('${c.id}')"><i data-lucide="star" style="width:15px;height:15px;fill:currentColor"></i></button></td></tr>`;}).join('')}
     </tbody></table></div>`;
+  },
+
+  _assetList(){
+    if(!S.subscribed){return`<div class="gate-banner">
+      <div class="gate-icon"><i data-lucide="layout-grid" style="width:24px;height:24px"></i></div>
+      <h3 class="gate-t">Our Asset List is a Pro Feature</h3>
+      <p class="gate-d">Access our curated tracker — handpicked assets with live prices and historical returns across YTD, 6-year, 5-year, 10-year and all-time periods.</p>
+      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $5/month</button>
+    </div>`;}
+
+    const lp=S.alPrices; const loading=S.alLoading;
+    const hasPrices=Object.keys(lp).length>0;
+    const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+    const fmtAP=(p)=>{
+      if(p==null||isNaN(p)) return'—';
+      if(p>=10000) return'$'+Math.round(p).toLocaleString('en-US');
+      if(p>=1) return'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      return'$'+p.toFixed(4);
+    };
+
+    const pf=(v)=>{
+      if(v==null||isNaN(v)) return`<span style="color:var(--t3);font-size:.75rem">—</span>`;
+      return`<span class="perf ${v>=0?'pp':'pn'}">${v>=0?'+':''}${Number(v).toFixed(2)}%</span>`;
+    };
+
+    const logo=(id,bg,fg,sym)=>{
+      if(id==='btc'){const c=S.coins.find(x=>x.id==='bitcoin');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
+      if(id==='eth'){const c=S.coins.find(x=>x.id==='ethereum');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
+      if(['nvda','tsla','mstr'].includes(id)){
+        const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR'}[id];
+        return`<div class="al-ico" style="background:#fff;overflow:hidden"><img src="https://financialmodelingprep.com/image-stock/${s}.png" width="36" height="36" style="object-fit:contain;display:block" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=font-size:.65rem;font-weight:700;color:${fg}>${s}</span>'"></div>`;
+      }
+      return`<div class="al-ico" style="background:${bg};color:${fg}">${sym}</div>`;
+    };
+
+    const HOLD=[
+      {id:'gold',  n:1,  name:'Gold',           sym:'XAU', bg:'#B8892A',fg:'#fff', fp:'$4,492.70', ytd:4.73,   y6:2257.60, y5:88.50,   y10:138.20,   max:898440.00},
+      {id:'nvda',  n:2,  name:'Nvidia',         sym:'NVDA',bg:'#76B900',fg:'#fff', fp:'$211.14',   ytd:11.80,  y6:2277.70, y5:1820.00, y10:9540.00,  max:42128.00},
+      {id:'spx',   n:3,  name:'S&P 500',        sym:'SPX', bg:'#2B5BE0',fg:'#fff', fp:'$7,580.06', ytd:10.52,  y6:148.99,  y5:83.40,   y10:183.00,   max:1515912.00},
+      {id:'btc',   n:4,  name:'Bitcoin',        sym:'BTC', bg:'#F7931A',fg:'#fff', fp:'$73,501.13',ytd:-18.27, y6:921.57,  y5:950.00,  y10:15000.00, max:14700126.00},
+      {id:'dxy',   n:5,  name:'Dollar Index',   sym:'DXY', bg:'#26A17B',fg:'#fff', fp:'$1,371.20', ytd:-4.37,  y6:281.95,  y5:130.00,  y10:205.00,   max:274140.00},
+    ];
+    const WATCH=[
+      {id:'eth',   n:'#',name:'Ethereum',       sym:'ETH', bg:'#627EEA',fg:'#fff', fp:'$2,013.93', ytd:-35.05, y6:1453.60, y5:420.00,  y10:8200.00,  max:402685.60},
+      {id:'tet',   n:'#',name:'$TET',           sym:'TET', bg:'#555',   fg:'#fff', fp:'$0.43',     ytd:-92.59, y6:-85.70,  y5:-60.00,  y10:-14.22,   max:-14.22},
+      {id:'mstr',  n:'#',name:'MicroStrategy',  sym:'MSTR',bg:'#F7931A',fg:'#fff', fp:'$159.09',   ytd:1.23,   y6:1177.83, y5:1500.00, y10:5200.00,  max:31718.00},
+      {id:'tsla',  n:'#',name:'Tesla',          sym:'TSLA',bg:'#E84142',fg:'#fff', fp:'$435.79',   ytd:-0.52,  y6:682.81,  y5:310.00,  y10:1250.00,  max:87058.00},
+      {id:'nasdaq',n:'#',name:'Nasdaq Comp.',   sym:'NDX', bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62',ytd:16.08,  y6:184.23,  y5:112.00,  y10:235.00,   max:5394424.00},
+    ];
+
+    const row=(a)=>{
+      const d=lp[a.id];
+      const priceStr=d?.price!=null?fmtAP(d.price):loading?`<span style="display:inline-block;width:14px;height:14px;border:1.5px solid var(--bdr);border-top-color:var(--t3);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle"></span>`:a.fp;
+      const get=(key,fb)=>d?.[key]!=null&&!isNaN(d[key])?d[key]:fb;
+      return`<tr>
+        <td><div class="al-num">${a.n}</div></td>
+        <td><div class="al-cell">${logo(a.id,a.bg,a.fg,a.sym)}<div><div class="al-aname">${a.name}</div><div class="al-asym">${a.sym}</div></div></div></td>
+        <td class="r al-price">${priceStr}</td>
+        <td class="r">${pf(get('ytd',a.ytd))}</td>
+        <td class="r">${pf(get('y6',a.y6))}</td>
+        <td class="r">${pf(get('y5',a.y5))}</td>
+        <td class="r">${pf(get('y10',a.y10))}</td>
+        <td class="r">${pf(get('max',a.max))}</td>
+      </tr>`;
+    };
+
+    const th=`<thead><tr>
+      <th style="width:28px">#</th><th>Asset</th>
+      <th class="r">Price</th><th class="r">YTD</th>
+      <th class="r">2020 (6Y)</th><th class="r">5 Year</th>
+      <th class="r">10 Year</th><th class="r">Max</th>
+    </tr></thead>`;
+
+    return`
+      <div class="al-hero">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div class="al-title">Our Asset List</div>
+            <div class="al-subtitle">Handpicked assets tracking long-term wealth creation across traditional and digital markets — updated live.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <span class="tag tpur"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro</span>
+            <button class="btn bg bsm" onclick="loadAlData()" ${loading?'disabled':''} style="color:rgba(255,255,255,.6);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">
+              <i data-lucide="refresh-cw" style="width:12px;height:12px"></i>${loading?'Updating…':'Refresh'}
+            </button>
+          </div>
+        </div>
+        <div class="al-updated">
+          <i data-lucide="${hasPrices?'check-circle':'clock'}" style="width:10px;height:10px"></i>
+          ${hasPrices?`Live prices · Updated ${now}`:loading?'Fetching live prices from market data…':'Click Refresh to load live prices'}
+        </div>
+      </div>
+
+      <div class="al-section-hdr">
+        <span class="al-section-label">Holdings</span>
+        <div class="al-section-line"></div>
+        <span style="font-size:.72rem;color:var(--t3)">5 assets</span>
+      </div>
+      <div class="al-wrap"><table class="al-table">${th}<tbody>${HOLD.map(row).join('')}</tbody></table></div>
+
+      <div class="al-section-hdr" style="margin-top:24px">
+        <span class="al-section-label">Watching</span>
+        <div class="al-section-line"></div>
+        <span style="font-size:.72rem;color:var(--t3)">5 assets</span>
+      </div>
+      <div class="al-wrap"><table class="al-table">${th}<tbody>${WATCH.map(row).join('')}</tbody></table></div>
+
+      <div class="al-note">
+        <strong>Live data</strong> via Yahoo Finance &amp; CoinGecko. &nbsp;|&nbsp;
+        <strong>Columns:</strong> YTD = year-to-date · 2020 (6Y) = since Jan 2020 · 5Y/10Y = multi-year cumulative · Max = all-time from earliest data. &nbsp;|&nbsp;
+        Not financial advice.
+      </div>`;
   },
 
   _portfolio(){
@@ -1414,7 +1599,11 @@ const A = {
     await loadMyConnections();render();toast('Inbox refreshed.');
   },
 
-  setCryptoSub(s){ S.cryptoSub=s; render(); },
+  setCryptoSub(s){
+    S.cryptoSub=s;
+    if(s==='assetlist'&&!S.alLoading&&Object.keys(S.alPrices).length===0) loadAlData();
+    render();
+  },
   setIv(iv){ S.interval=iv; render(); },
   cSearch(q){ S.csearch=q; S.cpage=1; render(); },
   cPage(p){
