@@ -781,7 +781,7 @@ async function loadAlData(){
       const pct=(old)=>old&&old>0?((cur-old)/old*100):null;
       const joinTs=S.user?.joinedAt?new Date(S.user.joinedAt).getTime()/1000:null;
       S.alPrices[id]={
-        price      : result.meta?.regularMarketPrice || current,
+        price      : res.meta?.regularMarketPrice || cur,
         ytd        : pct(nearest(new Date(new Date().getFullYear(),0,1).getTime()/1000)),
         y6         : pct(nearest(new Date(2020,0,1).getTime()/1000)),
         y5         : pct(nearest(now-5*365.25*24*3600)),
@@ -1459,17 +1459,15 @@ const P = {
       localBaselines = JSON.parse(localStorage.getItem('datum_user_baselines')) || {};
     } catch(e) { localBaselines = {}; }
 
-    if (hasPrices) {
-      let updatedBaselines = false;
-      Object.keys(lp).forEach(id => {
-        if (lp[id]?.price != null && !localBaselines[id]) {
-          localBaselines[id] = lp[id].price;
-          updatedBaselines = true;
+    if(!hasPrices){
+      const cgMap={btc:'bitcoin',eth:'ethereum'};
+      Object.entries(cgMap).forEach(([id,cgId])=>{
+        const c=S.coins.find(x=>x.id===cgId);
+        if(c?.price!=null&&!localBaselines[id]){
+          localBaselines[id]=c.price;
+          localStorage.setItem('datum_user_baselines',JSON.stringify(localBaselines));
         }
       });
-      if (updatedBaselines) {
-        localStorage.setItem('datum_user_baselines', JSON.stringify(localBaselines));
-      }
     }
 
     const fmtAP=(p)=>{
