@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Toomuchcoin</title>
   
-  <meta property="og:title" content="Toomuchcoin x Datum"/>
-  <meta property="og:description" content="Your passport to trade & access the globe. 🌎"/>
+  <meta property="og:title" content="Toomuchcoin | Peer-to-Peer Payments"/>
+  <meta property="og:description" content="Secure P2P trading and seamless instant payment processing gateway."/>
   <meta property="og:image" content="https://toomuchcoin.com/og-preview.png"/>
   <meta property="og:type" content="website"/>
   <meta name="twitter:card" content="summary_large_image"/>
@@ -15,13 +15,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/iife/sdk.js"></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://checkout.flutterwave.com/v3.js"></script>
   <script src="config.js" onerror="console.warn('config.js not found')"></script>
-  <script>
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-  </script>
-  <script defer src="/_vercel/insights/script.js"></script>
   <style>
     :root{
       --white:#fff;--off:#F8F7F4;--surf:#F2F1EE;--bdr:#E4E2DC;--bdr2:#C8C5BC;
@@ -86,6 +83,7 @@
 
     .page{min-height:100vh;padding-top:60px;animation:pup .28s ease}
     @keyframes pup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
 
     #pg-land{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:80px 24px 60px}
     .l-ey{font-size:.72rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:20px}
@@ -284,7 +282,23 @@
     .al-note{background:var(--surf);border-radius:var(--rsm);padding:13px 16px;font-size:.72rem;color:var(--t3);line-height:1.7;margin-top:16px}
     .al-note strong{color:var(--t2)}
     @media(max-width:768px){.al-hero{padding:18px 16px}.al-table{font-size:.74rem}.al-table td,.al-table thead th{padding:9px 9px}}
-
+    .uavatar{width:68px;height:68px;border-radius:50%;object-fit:cover;display:block}
+    .uavatar-wrap{position:relative;flex-shrink:0;width:68px;height:68px}
+    .uavatar-edit{position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:var(--t1);color:var(--white);border:2px solid var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
+    .uavatar-edit:hover{background:var(--blu)}
+    .nav-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;display:block}
+    .oimg-thumb{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0}
+    .order-gallery{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .order-gallery img{width:100%;max-width:200px;height:130px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);cursor:pointer;transition:var(--ease)}
+    .order-gallery img:hover{opacity:.85;transform:scale(1.01)}
+    .img-drop{border:2px dashed var(--bdr);border-radius:var(--rsm);padding:16px;text-align:center;cursor:pointer;transition:var(--ease)}
+    .img-drop:hover{border-color:var(--bdr2);background:var(--off)}
+    .img-drop.has-imgs{border-color:var(--grn);background:#f8fffa}
+    .img-previews{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .img-prev-wrap{position:relative}
+    .img-prev-wrap img{width:68px;height:68px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);display:block}
+    .img-prev-rm{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;line-height:1}
+     
     .ocard.oresolved{opacity:.6;border-color:#B3DFCA;background:#f8fffa;order:1}
     .ocard.oresolved:hover{opacity:.75}
     .ogrid{display:flex;flex-direction:column}
@@ -443,23 +457,27 @@ const _hasFnId   = !!(TMC.APPWRITE_FN_ID && !TMC.APPWRITE_FN_ID.includes('your_'
 const AW_ENDPOINT   = 'https://cloud.appwrite.io/v1';
 const AW_PROJECT_ID = '6a163159003bd203c63f';
 const AW_DB_ID      = '6a1631ee00269fc986b8';
-const ADMIN_ID = '6a196cf100050ff2b3ef';
+const ADMIN_ID = '6a1b51880024a82189ca';
 
 const AW_COL = {
   profiles     : 'profiles',
   orders       : 'orders',
   chat         : 'chat',
   watchlist    : 'watchlist',
-  connections  : 'connections',    
-  verifications: 'verifications',  
-  subscription: 'subscription',
-  reviews      : 'reviews',  
+  connections  : 'connections',
+  verifications: 'verifications',
+  subscription : 'subscription',
+  reviews      : 'reviews',
+  notifications: 'notifications',
+  notif_prefs  : 'notif_prefs',
 };
 
-const { Client, Account, Databases, Query, ID } = Appwrite;
+const { Client, Account, Databases, Storage, Query, ID } = Appwrite;
 const _cl  = new Client().setEndpoint(AW_ENDPOINT).setProject(AW_PROJECT_ID);
 const _acc = new Account(_cl);
-const _db  = new Databases(_cl);
+const _db      = new Databases(_cl);
+const _storage = new Storage(_cl);
+const BUCKET_ID = '6a1c20600034ef4c775c';
 
 const DB = {
   me()            { return _acc.get().catch(()=>null) },
@@ -487,6 +505,8 @@ const S = {
   alPrices:{}, alLoading:false,
   sentConnections:null,
   viewedOrderReviews:[], viewedOrderConnection:null, _reviewRating:0,
+  notifications:[], notifUnread:0, notifOpen:false,
+  notifPrefs:{categories:[],pushEnabled:false}, notifPrefsDocId:null,
 };
 
 let _rt = null;
@@ -503,7 +523,8 @@ function stopAR(){ if(_rt){clearInterval(_rt);_rt=null;} }
 function mapOrder(d){
   return {id:d.$id,userId:d.userId,userName:d.userName,userInitials:d.userInitials,
     category:d.category,type:d.type,title:d.title,price:d.price,
-    desc:d.desc||'',status:d.status,createdAt:d.$createdAt};
+    desc:d.desc||'',status:d.status,createdAt:d.$createdAt,
+    imageIds:d.imageIds||''};
 }
 async function _silentOrders(){
   const r=await DB.list('orders',[Query.orderDesc('$createdAt'),Query.limit(100)]);
@@ -530,6 +551,10 @@ function fmtp(p){
   return'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 function fmtpct(n){if(n==null||isNaN(n))return'—';return(n>=0?'+':'')+Number(n).toFixed(2)+'%';}
+function fileUrl(fileId){
+  if(!fileId) return null;
+  return `${AW_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${AW_PROJECT_ID}`;
+}
 function toast(msg,type=''){
   const el=document.getElementById('toast');
   el.textContent=msg;el.className='toast'+(type?' '+type:'');el.classList.add('show');
@@ -559,6 +584,82 @@ function mockMetrics(id,iv){
     'Avg. Return':r(-15,80,7)+'%','Volatility':r(20,95,11)+'%',
     'Sharpe Ratio':r(0.4,3.2,13).toFixed(2),'Max Drawdown':'-'+r(20,85,5)+'%',
     'Total Volume':'$'+r(1,900,9)+'B','Market Cap':'$'+r(5,8000,19)+'B'};
+}
+
+function initOneSignal(userId){
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal){
+    await OneSignal.init({
+      appId: '053c2629-bed1-46da-8f54-7af7e05b8003',
+      safari_web_id: '',
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+    });
+    await OneSignal.login(userId);
+  });
+}
+
+async function loadNotifications(){
+  if(!S.user) return;
+  const r=await DB.list('notifications',[
+    Query.equal('userId',[S.user.id]),
+    Query.orderDesc('$createdAt'),
+    Query.limit(30),
+  ]);
+  S.notifications=r.documents.map(d=>({
+    id:d.$id, type:d.type, title:d.title, body:d.body,
+    link:d.link||null, read:d.read||false, createdAt:d.$createdAt,
+    orderId:d.orderId||null, category:d.category||null,
+  }));
+  S.notifUnread=S.notifications.filter(n=>!n.read).length;
+}
+
+async function loadNotifPrefs(){
+  if(!S.user) return;
+  const r=await DB.list('notif_prefs',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
+  const doc=r.documents[0];
+  if(doc){
+    S.notifPrefs={categories:doc.categories||[],pushEnabled:doc.pushEnabled||false};
+    S.notifPrefsDocId=doc.$id;
+  }
+}
+
+async function saveNotifPrefs(){
+  if(!S.user) return;
+  const data={userId:S.user.id,categories:S.notifPrefs.categories,pushEnabled:S.notifPrefs.pushEnabled};
+  try{
+    if(S.notifPrefsDocId) await DB.update('notif_prefs',S.notifPrefsDocId,data);
+    else{ const d=await DB.create('notif_prefs',data); S.notifPrefsDocId=d.$id; }
+  }catch(e){console.warn('notifprefs:',e.message);}
+}
+
+async function createNotif(userId,type,title,body,link='',orderId='',category=''){
+  try{
+    await DB.create('notifications',{userId,type,title,body,link,read:false,orderId,category});
+  }catch(e){console.warn('notif create:',e.message);}
+}
+
+async function pushNotif(userId,title,body){
+  try{
+    await fetch('https://onesignal.com/api/v1/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Basic os_v2_app_au6cmkn62fdnvd2upl36aw4aaouxv7giwkju4wf7rvrewojsu4pvcvlqseei3qv6ipjx4hezg7ac57zygoj3pz7fyvmqdgncahex5ja'},
+      body:JSON.stringify({
+        app_id:'053c2629-bed1-46da-8f54-7af7e05b8003',
+        filters:[{field:'external_user_id',value:userId}],
+        headings:{en:title},
+        contents:{en:body},
+      }),
+    });
+  }catch(e){console.warn('push:',e.message);}
+}
+
+async function markAllRead(){
+  const unread=S.notifications.filter(n=>!n.read);
+  await Promise.all(unread.map(n=>DB.update('notifications',n.id,{read:true}).catch(()=>{})));
+  S.notifications.forEach(n=>n.read=true);
+  S.notifUnread=0;
+  render();
 }
 
 async function loadCoins(){
@@ -655,6 +756,7 @@ async function loadAlData(){
     {id:'dxy',   yf:'DX-Y.NYB'},{id:'eth',    yf:'ETH-USD'},
     {id:'tet',   yf:'TET-USD'}, {id:'mstr',   yf:'MSTR'},
     {id:'tsla',  yf:'TSLA'},    {id:'nasdaq', yf:'^IXIC'},
+    {id:'lvmh',  yf:'MC.PA'},   {id:'tsmc',   yf:'TSM'},
   ];
 
   await Promise.all(syms.map(async({id,yf})=>{
@@ -722,10 +824,60 @@ function renderNav(){
     const sub=S.subscribed
       ?`<span class="tag tpur" style="font-size:.68rem;padding:2px 8px">Pro</span>`
       :`<span class="tag tn" style="font-size:.68rem;padding:2px 8px;cursor:pointer" onclick="R.go('sub')">Free</span>`;
-    el.innerHTML=`<div class="nubadge" onclick="R.go('profile')"><div class="navat">${S.user.inits[0]}</div><span>${S.user.name.split(' ')[0]}</span>${sub}</div>`;
+    const bell=`<div style="position:relative;cursor:pointer" onclick="A.toggleNotifPanel()">
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;transition:var(--ease)" onmouseover="this.style.background='var(--bdr)'" onmouseout="this.style.background='var(--surf)'">
+        <i data-lucide="bell" style="width:17px;height:17px;color:var(--t2)"></i>
+      </div>
+      ${S.notifUnread>0?`<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--white)">${S.notifUnread>9?'9+':S.notifUnread}</div>`:''}
+    </div>`;
+    el.innerHTML=`${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
+          ?`<img src="${fileUrl(S.user.avatarId)}" class="nav-avatar" onerror="this.outerHTML='<div class=navat>${S.user.inits[0]}</div>'">`
+          :`<div class="navat">${S.user.inits[0]}</div>`}<span>${S.user.name.split(' ')[0]}</span>${sub}</div>`;
   }else{
     el.innerHTML=`<button class="btn bg bsm" onclick="M.auth()">Sign In</button><button class="btn bp bsm" onclick="M.auth()">Get Started</button>`;
   }
+  lucide.createIcons();
+  if(S.notifOpen) renderNotifPanel();
+}
+
+function renderNotifPanel(){
+  let panel=document.getElementById('notif-panel');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='notif-panel';
+    document.body.appendChild(panel);
+  }
+  const nots=S.notifications;
+  const iconMap={connection:'plug',deal:'flag',commission:'dollar-sign',welcome:'zap',reply:'message-circle',subscription:'check-circle',verification:'shield'};
+  panel.innerHTML=`
+  <div style="position:fixed;inset:0;z-index:850" onclick="A.toggleNotifPanel()"></div>
+  <div style="position:fixed;top:64px;right:16px;width:340px;max-height:480px;background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rlg);box-shadow:var(--s3);z-index:860;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bdr);flex-shrink:0">
+      <span style="font-weight:600;font-size:.9375rem">Notifications</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${S.notifUnread>0?`<button class="btn bg bsm" onclick="markAllRead()" style="font-size:.72rem;padding:4px 10px">Mark all read</button>`:''}
+        <button onclick="A.toggleNotifPanel()" style="background:var(--surf);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2)"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+      </div>
+    </div>
+    <div style="overflow-y:auto;flex:1">
+      ${nots.length===0?`<div style="text-align:center;padding:40px 16px;color:var(--t3);font-size:.875rem">No notifications yet.</div>`
+        :nots.map(n=>`
+        <div onclick="A.notifClick('${n.id}','${n.link||''}')" style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bdr);cursor:pointer;background:${n.read?'var(--white)':'var(--off)'};transition:background .15s" onmouseover="this.style.background='var(--surf)'" onmouseout="this.style.background='${n.read?'var(--white)':'var(--off)'}'">
+          <div style="width:32px;height:32px;border-radius:50%;background:${n.read?'var(--surf)':'var(--t1)'};color:${n.read?'var(--t3)':'var(--white)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
+            <i data-lucide="${iconMap[n.type]||'bell'}" style="width:14px;height:14px"></i>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:${n.read?'400':'600'};font-size:.8125rem;margin-bottom:2px;line-height:1.4">${n.title}</div>
+            <div style="font-size:.75rem;color:var(--t2);line-height:1.5;margin-bottom:3px">${n.body}</div>
+            <div style="font-size:.68rem;color:var(--t3)">${ago(n.createdAt)}</div>
+          </div>
+          ${!n.read?`<div style="width:7px;height:7px;border-radius:50%;background:var(--blu);flex-shrink:0;margin-top:5px"></div>`:''}
+        </div>`).join('')}
+    </div>
+    <div style="padding:10px 16px;border-top:1px solid var(--bdr);flex-shrink:0">
+      <button class="btn bg bsm" style="width:100%;justify-content:center" onclick="A.toggleNotifPanel();R.go('profile')"><i data-lucide="settings" style="width:12px;height:12px"></i>Notification Settings</button>
+    </div>
+  </div>`;
   lucide.createIcons();
 }
 
@@ -801,7 +953,15 @@ const P = {
     return `<div id="pg-profile" class="page">
       <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i> Back</button>
       <div class="phero">
-        <div class="pavat">${u.inits}</div>
+        <div class="uavatar-wrap">
+          ${u.avatarId
+            ?`<img src="${fileUrl(u.avatarId)}" class="uavatar" onerror="this.style.display='none';document.getElementById('pav-fb').style.display='flex'">`
+            :''}
+          <div class="pavat" id="pav-fb" style="${u.avatarId?'display:none':'display:flex'}">${u.inits}</div>
+          <button class="uavatar-edit" onclick="A.changeAvatar()" title="${u.avatarId?'Change photo':'Add photo'}">
+            <i data-lucide="${u.avatarId?'pencil':'plus'}" style="width:11px;height:11px"></i>
+          </button>
+        </div>
         <div>
           <div class="pname">${u.name}</div>
           <div class="pmeta">${u.email}</div>
@@ -1018,6 +1178,30 @@ const P = {
       </div>`:''}
 
       <div class="psec">
+        <div class="psect">Notification Preferences</div>
+        <div style="margin-bottom:14px">
+          <div style="font-size:.8125rem;font-weight:500;color:var(--t2);margin-bottom:10px">Listing categories to follow</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${['p2p','logistics','goods','handyman'].map(cat=>{
+              const on=S.notifPrefs.categories.includes(cat);
+              const label={p2p:'P2P Crypto',logistics:'Logistics',goods:'Buy/Sell Goods',handyman:'Handyman'}[cat];
+              return`<button class="ftag ${on?'on':''}" onclick="A.toggleNotifCat('${cat}')">${label}</button>`;
+            }).join('')}
+          </div>
+          <div style="font-size:.72rem;color:var(--t3);margin-top:8px">You'll be notified when new listings matching these categories are posted.</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--bdr)">
+          <div>
+            <div style="font-size:.8125rem;font-weight:500">Push notifications</div>
+            <div style="font-size:.72rem;color:var(--t3);margin-top:2px">Receive alerts even when the site is closed</div>
+          </div>
+          <div onclick="A.togglePush()" style="width:40px;height:22px;border-radius:100px;background:${S.notifPrefs.pushEnabled?'var(--grn)':'var(--bdr2)'};cursor:pointer;position:relative;transition:var(--ease);flex-shrink:0">
+            <div style="position:absolute;top:3px;${S.notifPrefs.pushEnabled?'right:3px':'left:3px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:var(--ease)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="psec">
         <div class="psect">Account Details</div>
         <div class="irow"><span class="irl">Full Name</span><span class="irv">${u.name}</span></div>
         <div class="irow"><span class="irl">Email</span><span class="irv">${u.email}</span></div>
@@ -1083,7 +1267,7 @@ const P = {
         <div class="ogrid">
           ${list.map(o=>`
           <div class="ocard ${(o.status==='filled'||o.status==='closed')?'oresolved':''}">
-            <div class="oavat">${o.userInitials}</div>
+            ${(()=>{const fid=(o.imageIds||'').split(',').filter(Boolean)[0];return fid?`<div class="oavat" style="overflow:hidden;padding:0;background:var(--surf);flex-shrink:0"><img src="${fileUrl(fid)}" class="oimg-thumb" onerror="this.parentNode.innerHTML='${o.userInitials}';this.parentNode.removeAttribute('style')"></div>`:`<div class="oavat">${o.userInitials}</div>`;})()}
             <div class="obody">
               <div class="otop">
                 <span class="ottl">${o.title}</span>
@@ -1326,7 +1510,8 @@ const P = {
         emoji:'🌏', name:'Asia',
         desc:'Top picks from Asian markets',
         assets:[
-          {id:'tet', n:'#', name:'$TET', sym:'TET', bg:'#26A17B',fg:'#fff', fp:'$0.43', ytd:-92.59, y6:-85.70, y5:-60.00, y10:-14.22, sj:0},
+          {id:'tet',  n:'#', name:'$TET',  sym:'TET',  bg:'#26A17B',fg:'#fff',    fp:'$0.43',    ytd:-92.59, y6:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
+          {id:'tsmc', n:'#', name:'TSMC',  sym:'TSM',  bg:'#E31837',fg:'#fff',    fp:'$168.40',  ytd:12.80,  y6:82.40,   y5:95.30,   y10:520.00,  sj:0},
         ],
       },
       {
@@ -1342,7 +1527,8 @@ const P = {
         emoji:'🌍', name:'Europe',
         desc:'Top picks from European markets',
         assets:[
-          {id:'eth', n:'#', name:'Ethereum', sym:'ETH', bg:'#627EEA',fg:'#fff', fp:'$2,021.36', ytd:-35.05, y6:1453.60, y5:420.00, y10:8200.00, sj:0},
+          {id:'eth',  n:'#', name:'Ethereum', sym:'ETH',  bg:'#627EEA',fg:'#fff', fp:'$2,013.93', ytd:-35.05, y6:1453.60, y5:420.00,  y10:8200.00,  sj:0},
+          {id:'lvmh', n:'#', name:'LVMH',     sym:'MC',   bg:'#2C1810',fg:'#D4AF37', fp:'$748.20', ytd:3.40,  y6:68.50,   y5:45.20,  y10:182.00,   sj:0},
         ],
       },
       {
@@ -1571,6 +1757,16 @@ const M = {
           <div style="font-size:.72rem;color:var(--t3);margin-top:5px"><i data-lucide="info" style="width:10px;height:10px;display:inline;vertical-align:-1px"></i> Price in USD. A 2% platform commission applies on completed deals.</div>
         </div>
         <div class="fg"><label>Description</label><textarea id="odesc" rows="3" placeholder="Full details of your listing…"></textarea></div>
+        <div class="fg">
+          <label>Photos <span style="font-weight:400;color:var(--t3)">(optional · up to 3 · max 3MB each)</span></label>
+          <div class="img-drop" id="img-drop-zone" onclick="document.getElementById('oimgs').click()">
+            <i data-lucide="image" style="width:20px;height:20px;color:var(--t3);display:block;margin:0 auto 6px"></i>
+            <div style="font-size:.78rem;color:var(--t3)">Click to add photos</div>
+            <div style="font-size:.68rem;color:var(--t3);margin-top:2px">JPG, PNG or WebP</div>
+          </div>
+          <input type="file" id="oimgs" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="A.previewOrderImgs(this)"/>
+          <div class="img-previews" id="oimgs-preview"></div>
+        </div>
         <div class="ferr" id="oerr"></div>
         <button class="btn bp" id="obtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.submitOrder()"><i data-lucide="send" style="width:14px;height:14px"></i>Post Listing</button>
       </div>
@@ -1640,6 +1836,10 @@ const M = {
           }
         </div>
         `:''}
+        ${(()=>{
+          const imgs=(order.imageIds||'').split(',').filter(Boolean);
+          return imgs.length?`<div class="order-gallery">${imgs.map(id=>`<img src="${fileUrl(id)}" alt="Listing photo" onclick="window.open('${fileUrl(id)}','_blank')" onerror="this.style.display='none'">`).join('')}</div>`:'';
+        })()}
         <div class="odh">
           <div class="odtags">
             <span class="tag ${sc[order.status]||'tn'}">${order.status==='filled'?'Resolved':order.status}</span>
@@ -1705,6 +1905,39 @@ const M = {
     </div>`);
   },
 
+  welcomeGuide(){
+    const steps=[
+      {icon:'user-check',title:'Complete your profile',desc:'Upload a photo and submit your ID for the Verified badge — buyers trust verified sellers.'},
+      {icon:'store',title:'Post your first listing',desc:'Head to the Marketplace and tap "Post Listing" to sell, buy, or request a service.'},
+      {icon:'bar-chart-2',title:'Track live markets',desc:'Check real-time prices for 500+ crypto and financial assets in the Markets section.'},
+      {icon:'zap',title:'Upgrade to Pro',desc:'Unlock the Open Forum, full marketplace access, and the Datum List for $5/month.'},
+    ];
+    let step=0;
+    const show=()=>{
+      const s=steps[step];
+      const dots=steps.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===step?'var(--t1)':'var(--bdr2)'}"></div>`).join('');
+      M.show(`<div class="mback">
+        <div class="modal" style="text-align:center;max-width:420px">
+          <div style="width:56px;height:56px;background:var(--t1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--white)"><i data-lucide="${s.icon}" style="width:24px;height:24px"></i></div>
+          <div style="font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:8px">Step ${step+1} of ${steps.length}</div>
+          <h2 style="font-family:var(--fd);font-size:1.5rem;margin-bottom:10px;line-height:1.2">${s.title}</h2>
+          <p style="font-size:.9rem;color:var(--t2);line-height:1.6;margin-bottom:28px">${s.desc}</p>
+          <div style="display:flex;justify-content:center;gap:6px;margin-bottom:24px">${dots}</div>
+          <div style="display:flex;gap:10px;justify-content:center">
+            ${step>0?`<button class="btn bo" onclick="wgPrev()"><i data-lucide="arrow-left" style="width:13px;height:13px"></i>Back</button>`:''}
+            ${step<steps.length-1
+              ?`<button class="btn bp" onclick="wgNext()">Next<i data-lucide="arrow-right" style="width:13px;height:13px"></i></button>`
+              :`<button class="btn bc" onclick="M.close();R.go('market')"><i data-lucide="store" style="width:13px;height:13px"></i>Go to Marketplace</button>`}
+            ${step===0?`<button class="btn bg" onclick="M.close()">Skip</button>`:''}
+          </div>
+        </div>
+      </div>`);
+    };
+    window.wgNext=()=>{step=Math.min(step+1,steps.length-1);show();};
+    window.wgPrev=()=>{step=Math.max(step-1,0);show();};
+    show();
+  },
+
   verifyForm(){
     if(!S.user){M.auth();return;}
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
@@ -1753,8 +1986,9 @@ const A = {
       const u=await DB.me();if(!u)throw new Error('No session');
       const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
       const p=res.documents[0];
-      S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt};
-      await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections()]);
+      S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null};
+      await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
+      initOneSignal(S.user.id);
       M.close();R.go('profile');
       toast('Welcome back, '+S.user.name.split(' ')[0]+'!','ok');
     }catch(e){
@@ -1777,9 +2011,12 @@ const A = {
       const u=await DB.register(email,pwd,name);
       await DB.login(email,pwd);
       await DB.create('profiles',{userId:u.$id,name,email,type});
-      S.user={id:u.$id,name,email,type,inits:initials(name),joinedAt:new Date().toISOString()};
+      S.user={id:u.$id,name,email,type,inits:initials(name),joinedAt:new Date().toISOString(),avatarId:null};
       S.subscribed=false;S.subStatus=null;S.verifyStatus=null;S.myConnections=[];S.sentConnections=[];
+      await createNotif(u.$id,'welcome','Welcome to Toomuchcoin! 🎉','Here\'s how to get started — post a listing, explore the marketplace, or check live crypto prices.','market');
       M.close();R.go('profile');
+      await loadNotifications();
+      M.welcomeGuide();
       toast('Account created! Welcome, '+name.split(' ')[0]+'.','ok');
     }catch(e){
       err.textContent='Signup failed: '+(e.message.includes('409')?'Email already in use.':e.message);
@@ -1815,7 +2052,6 @@ const A = {
     const isResolved=o.status==='filled'||o.status==='closed';
     if(isResolved){
       try{
-        // fetch the connection that completed this order
         const cRes=await DB.list('connections',[
           Query.equal('orderId',[id]),
           Query.limit(10),
@@ -1882,6 +2118,8 @@ const A = {
         toUserId, toName,
         message:msg, contact, commission, status:'pending',
       });
+      await createNotif(toUserId,'connection',S.user.name+' wants to connect','Re: "'+orderTitle+'" — tap to view the request in your inbox.','profile',orderId);
+      await pushNotif(toUserId,S.user.name+' wants to connect','Re: "'+orderTitle+'" — check your inbox.');
       M.close();
       toast('Connection request sent to '+toName.split(' ')[0]+'! They will see it in their inbox.','ok');
     }catch(e){
@@ -1910,10 +2148,28 @@ const A = {
     const price=lower==='negotiable'?'Negotiable':(rawP.startsWith('$')?rawP:'$'+rawP);
     btn.disabled=true;btn.textContent='Posting…';
     const inits2=initials(S.user.name);
+    let imageIds='';
+    try{
+      const imgInput=document.getElementById('oimgs');
+      const imgFiles=imgInput?.files?Array.from(imgInput.files).slice(0,3):[];
+      if(imgFiles.length){
+        btn.textContent='Uploading images…';
+        const ids=[];
+        for(const f of imgFiles){
+          try{
+            const up=await _storage.createFile(BUCKET_ID,ID.unique(),f);
+            ids.push(up.$id);
+          }catch(e){console.warn('img upload:',e.message);}
+        }
+        imageIds=ids.join(',');
+      }
+    }catch(e){console.warn('img section:',e.message);}
+    btn.textContent='Posting…';
     try{
       const doc=await DB.create('orders',{
         userId:S.user.id,userName:S.user.name,userInitials:inits2,
         category:cat,type,title,price,desc:desc||'',status:'open',
+        imageIds,
       });
       if(!S.orders)S.orders=[];
       S.orders.unshift({id:doc.$id,userId:S.user.id,userName:S.user.name,
@@ -1921,6 +2177,16 @@ const A = {
         desc:desc||'',status:'open',createdAt:doc.$createdAt||new Date().toISOString()});
       M.close();render();
       toast('Listing posted!','ok');
+      (async()=>{
+        try{
+          const prefDocs=await DB.list('notif_prefs',[Query.equal('categories',[cat]),Query.limit(50)]);
+          const targets=prefDocs.documents.filter(d=>d.userId!==S.user.id&&d.pushEnabled);
+          await Promise.all(targets.map(async d=>{
+            await createNotif(d.userId,'connection','New listing: '+title,'A new '+cat+' listing was posted — "'+title+'" at '+price+'. Tap to view.','market',doc.$id,cat);
+            await pushNotif(d.userId,'New listing: '+title,'"'+title+'" at '+price+' — tap to view.');
+          }));
+        }catch(e){console.warn('listing notif:',e.message);}
+      })();
     }catch(e){
       err.textContent='Failed: '+e.message;
       btn.disabled=false;btn.textContent='Post Listing';
@@ -1938,6 +2204,21 @@ const A = {
     render();
     DB.create('chat',{userId:S.user.id,userName:S.user.name,initials:S.user.inits,text:txt})
       .catch(e=>console.warn('chat:',e.message));
+    (async()=>{
+      try{
+        const msgs=S.msgs||[];
+        const replied=new Set();
+        for(const m of msgs){
+          if(m.userId===S.user.id||replied.has(m.userId)) continue;
+          if(txt.toLowerCase().includes(m.userName.split(' ')[0].toLowerCase())||
+             msgs.slice(-6).some(x=>x.userId===m.userId&&x.userId!==S.user.id)){
+            replied.add(m.userId);
+            await createNotif(m.userId,'reply',S.user.name+' replied in the forum','"'+txt.slice(0,80)+(txt.length>80?'…':'')+'"','market');
+            await pushNotif(m.userId,S.user.name+' replied in the forum',txt.slice(0,100));
+          }
+        }
+      }catch(e){console.warn('reply notif:',e.message);}
+    })();
   },
 
   async submitSub(){
@@ -1986,8 +2267,16 @@ const A = {
   },
 
   async acceptConn(id){
-    try{await DB.update('connections',id,{status:'accepted'});await loadMyConnections();render();toast('Connection accepted!','ok');}
-    catch(e){toast('Failed: '+e.message,'err');}
+    try{
+      await DB.update('connections',id,{status:'accepted'});
+      await loadMyConnections();
+      const conn=(S.myConnections||[]).find(c=>c.id===id);
+      if(conn){
+        await createNotif(conn.fromUserId,'connection','Your request was accepted!',S.user.name+' accepted your connection for "'+conn.orderTitle+'". Expect them to reach out via your contact.','profile',conn.orderId);
+        await pushNotif(conn.fromUserId,'Request accepted!',S.user.name+' accepted your connection for "'+conn.orderTitle+'".');
+      }
+      render();toast('Connection accepted!','ok');
+    }catch(e){toast('Failed: '+e.message,'err');}
   },
   async declineConn(id){ /* replaced by showDeclineForm flow */ },
   showDeclineForm(id){
@@ -2010,6 +2299,57 @@ const A = {
     }
   },
   setReviewRating(n){ S._reviewRating=n; render(); },
+  async changeAvatar(){
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='image/jpeg,image/png,image/webp';
+    input.onchange=async(e)=>{
+      const file=e.target.files[0];
+      if(!file) return;
+      if(file.size>3*1024*1024){toast('Image must be under 3MB','err');return;}
+      toast('Uploading photo…');
+      try{
+        if(S.user.avatarId){
+          try{await _storage.deleteFile(BUCKET_ID,S.user.avatarId);}catch(e){}
+        }
+        const uploaded=await _storage.createFile(BUCKET_ID,ID.unique(),file);
+        const profRes=await DB.list('profiles',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
+        if(profRes.documents[0]){
+          await DB.update('profiles',profRes.documents[0].$id,{avatarId:uploaded.$id});
+        }
+        S.user.avatarId=uploaded.$id;
+        render();
+        toast('Profile photo updated!','ok');
+      }catch(e){toast('Upload failed: '+e.message,'err');}
+    };
+    input.click();
+  },
+
+  previewOrderImgs(input){
+    const preview=document.getElementById('oimgs-preview');
+    const zone=document.getElementById('img-drop-zone');
+    if(!preview) return;
+    preview.innerHTML='';
+    const files=Array.from(input.files||[]).slice(0,3);
+    files.forEach((f,i)=>{
+      const url=URL.createObjectURL(f);
+      const wrap=document.createElement('div');
+      wrap.className='img-prev-wrap';
+      wrap.innerHTML=`<img src="${url}"><button class="img-prev-rm" onclick="A.removeOrderImg(${i},this)">×</button>`;
+      preview.appendChild(wrap);
+    });
+    if(zone) zone.className='img-drop'+(files.length?' has-imgs':'');
+  },
+
+  removeOrderImg(idx,btn){
+    const input=document.getElementById('oimgs');
+    if(!input) return;
+    const dt=new DataTransfer();
+    Array.from(input.files).forEach((f,i)=>{if(i!==idx)dt.items.add(f);});
+    input.files=dt.files;
+    A.previewOrderImgs(input);
+  },
+
   async submitReview(connId,orderId,sellerId,sellerName){
     const rating=S._reviewRating;
     const comment=document.getElementById('review-comment-'+connId)?.value?.trim();
@@ -2047,14 +2387,12 @@ const A = {
     const btn=document.getElementById('deal-btn-'+id);
     if(btn){btn.disabled=true;btn.textContent='Saving…';}
 
-    // Pull connection from local state BEFORE any await
     const allConns=S.myConnections||[];
     const conn=allConns.find(x=>x.id===id);
     const orderId=conn?.orderId||null;
     const buyerNameVal=conn?.fromName||'';
 
     try{
-      // Step 1: update the connection
       await DB.update('connections',id,{
         status     : 'deal_done',
         finalPrice : fp,
@@ -2062,10 +2400,8 @@ const A = {
         buyerName  : buyerNameVal,
       });
 
-      // Step 2: update the order to filled
       if(orderId){
         await DB.update('orders',orderId,{status:'filled'});
-        // reflect immediately in local state (if market was already loaded)
         if(S.orders){
           const ord=S.orders.find(x=>x.id===orderId);
           if(ord) ord.status='filled';
@@ -2073,6 +2409,11 @@ const A = {
       }
 
       await loadMyConnections();
+      const doneConn=(S.myConnections||[]).find(c=>c.id===id);
+      if(doneConn){
+        await createNotif(doneConn.fromUserId,'deal','Deal marked complete','The seller has marked your deal for "'+doneConn.orderTitle+'" as complete. Please confirm in your profile.','profile',doneConn.orderId);
+        await pushNotif(doneConn.fromUserId,'Deal complete','Confirm your deal for "'+doneConn.orderTitle+'" in your profile.');
+      }
       render();
       toast('Deal marked complete. Commission due: $'+comm,'ok');
     }catch(e){
@@ -2110,6 +2451,13 @@ const A = {
     if(S.user?.id!==ADMIN_ID) return;
     try{
       await DB.update('connections',id,{status:'comm_paid'});
+      const allConns=S._adminConns||[];
+      const c=allConns.find(x=>x.id===id);
+      if(c){
+        await createNotif(c.toUserId,'commission','Commission verified ✓','Your commission payment for "'+c.orderTitle+'" has been confirmed. Deal fully resolved — thank you!','profile');
+        await pushNotif(c.toUserId,'Commission verified','Your payment for "'+c.orderTitle+'" is confirmed. Deal resolved!');
+        await createNotif(c.fromUserId,'commission','Commission settled','The platform commission for your deal "'+c.orderTitle+'" has been verified and the deal is now fully resolved.','profile');
+      }
       await loadMyConnections();render();
       toast('Commission verified and marked as paid.','ok');
     }catch(e){toast('Failed: '+e.message,'err');}
@@ -2127,6 +2475,25 @@ const A = {
     toast('Admin data refreshed.');
   },
 
+  toggleNotifPanel(){
+    S.notifOpen=!S.notifOpen;
+    if(!S.notifOpen){const p=document.getElementById('notif-panel');if(p)p.remove();}
+    renderNav();
+  },
+  async notifClick(id,link){
+    await DB.update('notifications',id,{read:true}).catch(()=>{});
+    const n=S.notifications.find(x=>x.id===id);
+    if(n)n.read=true;
+    S.notifUnread=Math.max(0,S.notifUnread-1);
+    S.notifOpen=false;
+    const p=document.getElementById('notif-panel');if(p)p.remove();
+    renderNav();
+    if(link==='market')R.go('market');
+    else if(link==='profile')R.go('profile');
+    else if(link==='crypto')R.go('crypto');
+    else if(link==='sub')R.go('sub');
+  },
+
   setCryptoSub(s){
     S.cryptoSub=s;
     if(s==='assetlist'&&!S.alLoading&&Object.keys(S.alPrices).length===0) loadAlData();
@@ -2142,6 +2509,33 @@ const A = {
     S.cpage=p;render();
   },
   openCoin(id){ S.selCoin=id;S.cryptoSub='deepdive';S.interval='ytd';render(); },
+  async toggleNotifCat(cat){
+    const idx=S.notifPrefs.categories.indexOf(cat);
+    if(idx>=0)S.notifPrefs.categories.splice(idx,1);
+    else S.notifPrefs.categories.push(cat);
+    render();
+    await saveNotifPrefs();
+    toast(idx>=0?'Category removed.':'Notifications enabled for this category.','ok');
+  },
+  async togglePush(){
+    if(!S.notifPrefs.pushEnabled){
+      try{
+        const OneSignal=window.OneSignal;
+        if(!OneSignal){toast('Push not ready yet, try again.','err');return;}
+        await OneSignal.Notifications.requestPermission();
+        S.notifPrefs.pushEnabled=true;
+        render();
+        await saveNotifPrefs();
+        toast('Push notifications enabled!','ok');
+      }catch(e){toast('Could not enable push: '+e.message,'err');}
+    }else{
+      S.notifPrefs.pushEnabled=false;
+      render();
+      await saveNotifPrefs();
+      toast('Push notifications disabled.');
+    }
+  },
+
   toggleWatch(id){
     S.watchlist.has(id)?S.watchlist.delete(id):S.watchlist.add(id);
     saveWatchlist();
@@ -2250,8 +2644,9 @@ document.addEventListener('DOMContentLoaded', async()=>{
   if(u){
     const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
     const p=res.documents[0];
-    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt};
-    await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections()]);
+    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null};
+    await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
+    initOneSignal(S.user.id);
   }
   render();
   loadCoins();
