@@ -262,7 +262,8 @@
     .al-section-hdr{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
     .al-section-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);white-space:nowrap}
     .al-section-line{flex:1;height:1px;background:var(--bdr)}
-    .al-wrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden;margin-bottom:4px}
+    .al-wrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:4px}
+    .al-table{min-width:660px}
     .al-table{width:100%;border-collapse:collapse;font-size:.8125rem}
     .al-table thead th{background:var(--off);padding:10px 14px;text-align:left;font-size:.67rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bdr);white-space:nowrap}
     .al-table thead th.r,.al-table td.r{text-align:right}
@@ -341,8 +342,10 @@
     .swrap{position:relative;flex:1;min-width:180px;max-width:300px}
     .swrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--t3);pointer-events:none}
     .swrap input{padding-left:36px}
-    .mtwrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden}
+    .mtwrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden;margin-bottom:22px}
     @media(max-width:768px){.mtwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}}
+    .al-wrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:4px}
+    .al-table{min-width:680px}
     .lrow{text-align:center;padding:48px;color:var(--t3);font-size:.875rem}
     .spin{display:inline-block;width:22px;height:22px;border:2px solid var(--bdr);border-top-color:var(--t1);border-radius:50%;animation:sp .7s linear infinite;margin-bottom:10px}
     @keyframes sp{to{transform:rotate(360deg)}}
@@ -890,7 +893,7 @@ const P = {
       <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time financial markets — all in one place.</p>
       <div class="ggrid">
         <div class="gcard" onclick="R.acct()">
-          <div class="gci id"><i data-lucide="${S.user?'user-check':'user'}" style="width:22px;height:22px"></i></div>
+          <div class="gci id" style="background:var(--t1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>${S.user?'<polyline points="16 11 18 13 22 9" stroke="#4ade80" stroke-width="2"/>':''}</svg></div>
           <span class="gcl">Identity</span>
           <h2 class="gct">${S.user?S.user.name.split(' ')[0]+"'s Profile":'Account Gateway'}</h2>
           <p class="gcd">${S.user?'View your profile, track your orders, and manage account settings.':'Sign in or create an account to access personalised features and trade on the marketplace.'}</p>
@@ -904,7 +907,7 @@ const P = {
           <div class="gca"><span>Enter Marketplace</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
         <div class="gcard" onclick="R.go('crypto')">
-          <div class="gci ib"><i data-lucide="bar-chart-2" style="width:22px;height:22px"></i></div>
+          <div class="gci ib" style="background:#E8EEFB"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blu)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg></div>
           <span class="gcl">Markets</span>
           <h2 class="gct">Financial Rates</h2>
           <p class="gcd">Live prices for 500+ assets, deep-dive analytics, interval charts, and your personal watchlist.</p>
@@ -1286,6 +1289,7 @@ const P = {
                 <div class="oacts">
                   ${o.status!=='filled'&&o.status!=='closed'?`<button class="btn bc bsm" onclick="A.connectOrder('${o.id}')"><i data-lucide="${S.subscribed?'plug':'lock'}" style="width:12px;height:12px"></i>Connect</button>`:''}
                   <button class="btn bo bsm" onclick="A.viewOrder('${o.id}')"><i data-lucide="${(o.status==='filled'||o.status==='closed')?'award':'eye'}" style="width:12px;height:12px"></i>${(o.status==='filled'||o.status==='closed')?'View Resolution':'View'}</button>
+                  <button class="btn bg bsm" onclick="A.shareOrder('${o.id}','${o.title.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}')"><i data-lucide="share-2" style="width:12px;height:12px"></i></button>
                 </div>
               </div>
             </div>
@@ -1474,6 +1478,24 @@ const P = {
       });
     }
 
+    // Manual stock prices (update these daily until a live feed is integrated)
+    const MANUAL_PRICES={
+      gold:3327.40, nvda:131.38, spx:5967.84, dxy:99.54,
+      tsla:341.21, mstr:421.06, nasdaq:21419.92, lvmh:587.20, tsmc:187.43,
+    };
+    // For crypto assets, always prefer live CoinGecko price from S.coins
+    const cgPriceMap={
+      btc:'bitcoin', eth:'ethereum', tet:'tether',
+    };
+    const getLivePrice=(id)=>{
+      if(cgPriceMap[id]){
+        const c=S.coins.find(x=>x.id===cgPriceMap[id]);
+        if(c?.price!=null) return c.price;
+      }
+      if(S.alPrices[id]?.price!=null) return S.alPrices[id].price;
+      if(MANUAL_PRICES[id]!=null) return MANUAL_PRICES[id];
+      return null;
+    };
     const fmtAP=(p)=>{
       if(p==null||isNaN(p))return'—';
       if(p>=10000)return'$'+Math.round(p).toLocaleString('en-US');
@@ -1542,9 +1564,13 @@ const P = {
 
     const row=(a)=>{
       const d=lp[a.id];
-      const priceStr=d?.price!=null?fmtAP(d.price):loading?`<span style="display:inline-block;width:14px;height:14px;border:1.5px solid var(--bdr);border-top-color:var(--t3);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle"></span>`:a.fp;
-      
-      const currentPrice = d?.price != null ? d.price : parseFloat(a.fp.replace(/[^0-9.-]+/g,""));
+      const livePrice=getLivePrice(a.id);
+      const isManual=MANUAL_PRICES[a.id]!=null&&!cgPriceMap[a.id];
+      const priceStr=livePrice!=null
+        ?fmtAP(livePrice)+(isManual?`<span title="Manually updated" style="font-size:.6rem;color:var(--t3);margin-left:3px;vertical-align:middle">✎</span>`:'')
+        :loading?`<span style="display:inline-block;width:14px;height:14px;border:1.5px solid var(--bdr);border-top-color:var(--t3);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle"></span>`
+        :a.fp;
+      const currentPrice = livePrice!=null ? livePrice : parseFloat(a.fp.replace(/[^0-9.-]+/g,""));
       const userBaselinePrice = localBaselines[a.id];
       
       let computedSinceJoined = 0.00; 
@@ -1626,19 +1652,33 @@ const P = {
   },
 
   _vendors(){
+    const VSVG={
+      logistics:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+      restaurant:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h1v5"/></svg>`,
+      airline:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-4 1-4.5 2.5L11 8 4.8 6.2C4.3 6 3.7 6.3 3.5 6.8c-.2.6.1 1.2.6 1.5L8 11l-2 2H4l-1 1 3 2 2 3 1-1v-2l2-2 3.5 3.8c.4.4.9.6 1.4.5.7-.1 1.1-.8 1.1-1.5l-.2-.6z"/></svg>`,
+      cafe:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+      spa:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C6.5 22 2 17.5 2 12c0-1.4.3-2.7.8-3.9C4.3 9.6 5 11.2 5 13c0 3.9 3.1 7 7 7s7-3.1 7-7c0-1.8.7-3.4 1.2-4.9.5 1.2.8 2.5.8 3.9 0 5.5-4.5 10-9 10z"/><path d="M12 22V12"/><path d="M12 12C12 7 17 3 17 3s0 5-5 9z"/><path d="M12 12C12 7 7 3 7 3s0 5 5 9z"/></svg>`,
+      hotel:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M3 22h18"/><path d="M9 22v-6h6v6"/><rect x="10" y="9" width="4" height="4" rx="0.5"/></svg>`,
+      mechanic:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+      plumbing:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h6v6H3z"/><path d="M15 3h6v6h-6z"/><path d="M3 15h6v6H3z"/><path d="M6 9v3a3 3 0 0 0 3 3h3"/><path d="M18 9v3a3 3 0 0 1-3 3h-3"/></svg>`,
+      convenience:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+      spotlight:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+      music:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+      entertainment:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+    };
     const VENDOR_CATS=[
-      {id:'logistics',icon:'truck',label:'Logistics',color:'var(--blu)'},
-      {id:'restaurant',icon:'utensils',label:'Restaurant',color:'var(--org)'},
-      {id:'airline',icon:'plane',label:'Airline',color:'#0e7490'},
-      {id:'cafe',icon:'coffee',label:'Café',color:'#92400e'},
-      {id:'spa',icon:'sparkles',label:'Spa & Wellness',color:'var(--pur)'},
-      {id:'hotel',icon:'building-2',label:'Hotel',color:'var(--gld)'},
-      {id:'mechanic',icon:'wrench',label:'Auto Mechanic',color:'var(--t2)'},
-      {id:'plumbing',icon:'pipette',label:'Plumbing & HVAC',color:'#0369a1'},
-      {id:'convenience',icon:'shopping-bag',label:'Convenience Store',color:'var(--grn)'},
-      {id:'spotlight',icon:'star',label:'Secret Insider Spotlight',color:'var(--red)'},
-      {id:'music',icon:'music',label:'Music Services',color:'#7c3aed'},
-      {id:'entertainment',icon:'tv-2',label:'Entertainment',color:'#b45309'},
+      {id:'logistics',svg:VSVG.logistics,label:'Logistics',color:'var(--blu)'},
+      {id:'restaurant',svg:VSVG.restaurant,label:'Restaurant',color:'var(--org)'},
+      {id:'airline',svg:VSVG.airline,label:'Airline',color:'#0e7490'},
+      {id:'cafe',svg:VSVG.cafe,label:'Café',color:'#92400e'},
+      {id:'spa',svg:VSVG.spa,label:'Spa & Wellness',color:'var(--pur)'},
+      {id:'hotel',svg:VSVG.hotel,label:'Hotel',color:'var(--gld)'},
+      {id:'mechanic',svg:VSVG.mechanic,label:'Auto Mechanic',color:'var(--t2)'},
+      {id:'plumbing',svg:VSVG.plumbing,label:'Plumbing & HVAC',color:'#0369a1'},
+      {id:'convenience',svg:VSVG.convenience,label:'Convenience Store',color:'var(--grn)'},
+      {id:'spotlight',svg:VSVG.spotlight,label:'Secret Insider Spotlight',color:'var(--red)'},
+      {id:'music',svg:VSVG.music,label:'Music Services',color:'#7c3aed'},
+      {id:'entertainment',svg:VSVG.entertainment,label:'Entertainment',color:'#b45309'},
     ];
     const NIGERIA=[
       'Abuja','Lagos','Ibadan','Kano','Port Harcourt','Benin City','Kaduna','Enugu',
@@ -1662,20 +1702,65 @@ const P = {
       'Japan':['Tokyo','Osaka','Kyoto','Yokohama','Nagoya','Sapporo','Fukuoka'],
       'China':['Shanghai','Beijing','Shenzhen','Guangzhou','Chengdu','Hangzhou','Wuhan'],
     };
+
+    // Mock fan-favorite showcase data (to be replaced with real DB data)
+    const SHOWCASE_ICONS={
+      truck:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+      warehouse:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+      store:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M3 7v13a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7"/><path d="M9 21V11h6v10"/></svg>`,
+      restaurant:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h1v5"/></svg>`,
+      hotel:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M3 22h18"/><path d="M9 22v-6h6v6"/><rect x="10" y="9" width="4" height="4" rx="0.5"/></svg>`,
+      cafe:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+      airline:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-4 1-4.5 2.5L11 8 4.8 6.2C4.3 6 3.7 6.3 3.5 6.8c-.2.6.1 1.2.6 1.5L8 11l-2 2H4l-1 1 3 2 2 3 1-1v-2l2-2 3.5 3.8c.4.4.9.6 1.4.5.7-.1 1.1-.8 1.1-1.5l-.2-.6z"/></svg>`,
+    };
+    const SHOWCASES={
+      logistics_Ibadan:{
+        name:'Datum Haulage Services',
+        tagline:'Ibadan\'s most trusted door-to-door logistics partner',
+        imgSvg:SHOWCASE_ICONS.truck,
+        imgBg:'#E8EEFB',
+        imgColor:'var(--blu)',
+        votes:142, totalVotes:189,
+        lastQuarterWinner:'Taiwo Haulage Services.',
+        comments:[
+          {user:'Kenny.',text:'Delivered my goods from Lagos in record time. Highly recommended!',stars:5},
+          {user:'Deji L.',text:'Very professional drivers, packaging was intact.',stars:5},
+          {user:'Easekid.',text:'Fair pricing, will use again.',stars:4},
+        ],
+        partnerLink:'https://wa.me/2349138476421',
+        nextVoteDate:'July 1, 2026',
+      },
+      logistics_Lagos:{
+        name:'Datum Logistics Lagos',
+        tagline:'Same-day delivery across all Lagos mainland and island routes',
+        imgSvg:SHOWCASE_ICONS.warehouse,
+        imgBg:'#E6F5EE',
+        imgColor:'var(--grn)',
+        votes:98, totalVotes:155,
+        lastQuarterWinner:'SwiftMove Lagos',
+        comments:[
+          {user:'Chioma B.',text:'Best tracking system I\'ve used in Lagos.',stars:5},
+          {user:'Femi D.',text:'On-time every single time.',stars:4},
+        ],
+        partnerLink:'https://wa.me/2349138476421',
+        nextVoteDate:'July 1, 2026',
+      },
+    };
+
     const selCat=S._vCat||null;
     const selCity=S._vCity||null;
     const selCountry=S._vCountry||'Nigeria';
 
     if(!selCat){
       return`<div style="animation:pup .28s ease">
-        <p style="font-size:.875rem;color:var(--t2);margin-bottom:20px">Discover local businesses and services by category, anywhere in the world.</p>
+        <p style="font-size:.875rem;color:var(--t2);margin-bottom:20px">Discover local businesses and services by category. Each city features a community-voted fan favourite.</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
           ${VENDOR_CATS.map(c=>`
           <div onclick="A.setVendorCat('${c.id}')" style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:18px 16px;cursor:pointer;transition:var(--ease);display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px"
             onmouseover="this.style.borderColor='${c.color}';this.style.transform='translateY(-2px)';this.style.boxShadow='var(--s2)'"
             onmouseout="this.style.borderColor='var(--bdr)';this.style.transform='none';this.style.boxShadow='none'">
-            <div style="width:42px;height:42px;border-radius:var(--rsm);background:${c.color}18;display:flex;align-items:center;justify-content:center">
-              <i data-lucide="${c.icon}" style="width:20px;height:20px;color:${c.color}"></i>
+            <div style="width:42px;height:42px;border-radius:var(--rsm);background:${c.color}18;display:flex;align-items:center;justify-content:center;color:${c.color}">
+              ${c.svg}
             </div>
             <span style="font-weight:600;font-size:.8125rem;color:var(--t1)">${c.label}</span>
           </div>`).join('')}
@@ -1684,53 +1769,151 @@ const P = {
     }
 
     const cat=VENDOR_CATS.find(c=>c.id===selCat);
-
-    // Country + city picker
     const cities=selCountry==='Nigeria'?NIGERIA:(GLOBAL[selCountry]||[]);
+    const showcaseKey=selCity?`${selCat}_${selCity}`:null;
+    const showcase=showcaseKey?SHOWCASES[showcaseKey]:null;
+    const userVoted=S._vVoted&&S._vVoted[showcaseKey];
+    const pct=showcase?Math.round((showcase.votes/showcase.totalVotes)*100):0;
 
     return`<div style="animation:pup .28s ease">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
         <button class="back" style="margin:0" onclick="A.setVendorCat(null)"><i data-lucide="arrow-left" style="width:14px;height:14px"></i>Categories</button>
-        <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:7px;background:${cat.color}18;border:1.5px solid ${cat.color}44;border-radius:100px;padding:5px 14px 5px 8px">
-            <i data-lucide="${cat.icon}" style="width:15px;height:15px;color:${cat.color}"></i>
-            <span style="font-weight:600;font-size:.875rem;color:${cat.color}">${cat.label}</span>
-          </div>
+        <div style="display:flex;align-items:center;gap:7px;background:${cat.color}18;border:1.5px solid ${cat.color}44;border-radius:100px;padding:5px 14px 5px 8px">
+          <span style="display:flex;align-items:center;color:${cat.color};width:15px;height:15px">${cat.svg.replace('width="20" height="20"','width="15" height="15"')}</span>
+          <span style="font-weight:600;font-size:.875rem;color:${cat.color}">${cat.label}</span>
         </div>
       </div>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
-        <div style="flex:1;min-width:160px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px">
+        <div style="flex:1;min-width:150px">
           <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);display:block;margin-bottom:6px">Country</label>
           <select onchange="A.setVendorCountry(this.value)" style="font-size:.875rem">
             <option value="Nigeria" ${selCountry==='Nigeria'?'selected':''}>🇳🇬 Nigeria</option>
             ${Object.keys(GLOBAL).map(c=>`<option value="${c}" ${selCountry===c?'selected':''}>${c}</option>`).join('')}
           </select>
         </div>
-        <div style="flex:1;min-width:160px">
+        <div style="flex:1;min-width:150px">
           <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);display:block;margin-bottom:6px">City</label>
           <select onchange="A.setVendorCity(this.value)" style="font-size:.875rem">
-            <option value="">All cities</option>
+            <option value="">Select a city…</option>
             ${cities.map(city=>`<option value="${city}" ${selCity===city?'selected':''}>${city}</option>`).join('')}
           </select>
         </div>
       </div>
 
-      <div style="background:linear-gradient(135deg,#F3EEFF,#E8EEFB);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:32px 24px;text-align:center">
-        <div style="width:48px;height:48px;background:${cat.color};border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
-          <i data-lucide="${cat.icon}" style="width:22px;height:22px;color:#fff"></i>
+      ${selCity&&showcase?`
+      <!-- FAN FAVOURITE SHOWCASE -->
+      <div style="border:2px solid var(--gld);border-radius:var(--rlg);overflow:hidden;margin-bottom:22px;background:var(--white)">
+        <div style="background:linear-gradient(135deg,#FBF4E6,#fff8ed);padding:16px 20px;border-bottom:1px solid #E8D9B0;display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--gld);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gld)">Community Fan Favourite · ${selCity}</div>
+            <div style="font-size:.72rem;color:var(--t3);margin-top:1px">Voted by the Datum community · Next vote: ${showcase.nextVoteDate}</div>
+          </div>
+          <span class="tag tgd" style="font-size:.68rem"><i data-lucide="star" style="width:10px;height:10px"></i>Showcase</span>
         </div>
-        <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">${cat.label} in ${selCity||selCountry}</div>
-        <p style="font-size:.875rem;color:var(--t2);margin-bottom:18px;line-height:1.6;max-width:380px;margin-left:auto;margin-right:auto">
-          Vendor listings for this category are coming soon. Be the first to list your ${cat.label.toLowerCase()} business here!
+
+        <div style="padding:20px">
+          <!-- Business card -->
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+            <div style="width:68px;height:68px;border-radius:var(--rmd);background:${showcase.imgBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--bdr);color:${showcase.imgColor}">${showcase.imgSvg}</div>
+            <div>
+              <div style="font-family:var(--fd);font-size:1.15rem;margin-bottom:3px">${showcase.name}</div>
+              <div style="font-size:.8125rem;color:var(--t2);line-height:1.5">${showcase.tagline}</div>
+              <div style="font-size:.72rem;color:var(--t3);margin-top:5px;display:flex;align-items:center;gap:5px">
+                <i data-lucide="trophy" style="width:11px;height:11px;color:var(--gld)"></i>
+                Last quarter winner: <strong style="color:var(--t2)">${showcase.lastQuarterWinner}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vote poll -->
+          <div style="background:var(--off);border-radius:var(--rmd);padding:14px 16px;margin-bottom:14px;border:1px solid var(--bdr)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-weight:600;font-size:.875rem;display:flex;align-items:center;gap:6px">
+                <i data-lucide="bar-chart-2" style="width:14px;height:14px;color:var(--pur)"></i>
+                Community Vote — Q${Math.ceil((new Date().getMonth()+1)/3)} ${new Date().getFullYear()}
+              </div>
+              <span style="font-size:.72rem;color:var(--t3)">${showcase.totalVotes} votes cast</span>
+            </div>
+            <div style="background:var(--bdr);border-radius:100px;height:10px;overflow:hidden;margin-bottom:6px">
+              <div style="height:100%;width:${pct}%;background:var(--gld);border-radius:100px;transition:width .5s ease"></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:.78rem">
+              <span style="color:var(--t2)">${showcase.votes} votes for ${showcase.name.split(' ').slice(0,2).join(' ')}</span>
+              <span style="font-weight:600;color:var(--gld)">${pct}%</span>
+            </div>
+            <div style="margin-top:10px">
+              ${userVoted
+                ?`<div style="font-size:.78rem;color:var(--grn);display:flex;align-items:center;gap:5px"><i data-lucide="check-circle" style="width:12px;height:12px"></i>You voted this quarter — results update monthly.</div>`
+                :S.user
+                  ?`<button class="btn bc bsm" onclick="A.castVote('${showcaseKey}')"><i data-lucide="thumbs-up" style="width:12px;height:12px"></i>Vote for ${showcase.name.split(' ').slice(0,2).join(' ')}</button>`
+                  :`<button class="btn bo bsm" onclick="M.auth()"><i data-lucide="lock" style="width:12px;height:12px"></i>Sign in to vote</button>`}
+            </div>
+          </div>
+
+          <!-- Community comments -->
+          <div style="margin-bottom:14px">
+            <div style="font-weight:600;font-size:.875rem;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+              <i data-lucide="message-circle" style="width:14px;height:14px;color:var(--t3)"></i>
+              Community Posts
+            </div>
+            ${showcase.comments.map(c=>`
+            <div style="border:1px solid var(--bdr);border-radius:var(--rsm);padding:11px 13px;margin-bottom:8px;background:var(--white)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                <div style="width:26px;height:26px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--t2)">${c.user.split(' ').map(w=>w[0]).join('')}</div>
+                <div style="font-weight:500;font-size:.8125rem">${c.user}</div>
+                <div style="color:var(--gld);font-size:.8rem;margin-left:auto">${'★'.repeat(c.stars)}${'☆'.repeat(5-c.stars)}</div>
+              </div>
+              <div style="font-size:.8125rem;color:var(--t2);line-height:1.55">"${c.text}"</div>
+            </div>`).join('')}
+          </div>
+
+          <!-- Connect to fan favourite -->
+          <div style="background:linear-gradient(135deg,#E6F5EE,#f0fff6);border:1.5px solid #B3DFCA;border-radius:var(--rmd);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:160px">
+              <div style="font-weight:600;font-size:.875rem;color:var(--grn);margin-bottom:2px">Connect to Fan Favourite</div>
+              <div style="font-size:.75rem;color:var(--t2);line-height:1.5">We link you directly to our trusted community partner.</div>
+            </div>
+            <a href="${showcase.partnerLink}" target="_blank" rel="noopener" class="btn bc bsm">
+              <i data-lucide="external-link" style="width:12px;height:12px"></i>Connect Now
+            </a>
+          </div>
+        </div>
+      </div>`
+
+      :selCity?`
+      <!-- No showcase yet for this city — waitlist / nomination -->
+      <div style="border:2px dashed var(--bdr2);border-radius:var(--rlg);padding:32px 24px;text-align:center;margin-bottom:22px">
+        <div style="width:52px;height:52px;background:${cat.color}18;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:${cat.color}">
+          ${cat.svg.replace('width="20" height="20"','width="24" height="24"')}
+        </div>
+        <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">${cat.label} in ${selCity}</div>
+        <p style="font-size:.875rem;color:var(--t2);margin-bottom:6px;line-height:1.6;max-width:400px;margin-left:auto;margin-right:auto">
+          No fan favourite has been crowned here yet. List your business to join the waitlist, the community votes every quarter to pick the one we showcase.
         </p>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          ${S.user
-            ?`<button class="btn bp" onclick="M.createOrder()"><i data-lucide="plus" style="width:14px;height:14px"></i>List My Business</button>`
-            :`<button class="btn bpur" onclick="M.auth()"><i data-lucide="user-plus" style="width:14px;height:14px"></i>Sign in to List</button>`}
-          <button class="btn bo" onclick="A.setVendorCat(null)">Browse Categories</button>
+        <div style="background:var(--off);border-radius:var(--rsm);padding:11px 14px;margin:14px auto;max-width:420px;font-size:.78rem;color:var(--t2);line-height:1.6;text-align:left">
+          <div style="font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:5px"><i data-lucide="info" style="width:12px;height:12px;color:var(--pur)"></i>How the Showcase Works</div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
+            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">Businesses join the waitlist by submitting their details below.</div></div>
+            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">The community nominates and votes for their favourite each quarter.</div></div>
+            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">The winner is showcased with their storefront, curated reviews, and a direct connect link.</div></div>
+            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">A fresh vote is held every quarter — any waitlisted business can win.</div></div>
+          </div>
         </div>
-      </div>
+        ${S.user
+          ?`<button class="btn bp" onclick="M.vendorWaitlist('${selCat}','${selCity}','${cat.label}')"><i data-lucide="plus" style="width:14px;height:14px"></i>List My Business on Waitlist</button>`
+          :`<button class="btn bpur" onclick="M.auth()"><i data-lucide="user-plus" style="width:14px;height:14px"></i>Sign in to List Your Business</button>`}
+      </div>`
+
+      :`<!-- Prompt user to pick a city -->
+      <div style="background:var(--off);border-radius:var(--rmd);padding:20px;text-align:center;color:var(--t3);font-size:.875rem;border:1.5px dashed var(--bdr)">
+        <i data-lucide="map-pin" style="width:22px;height:22px;display:block;margin:0 auto 10px"></i>
+        Select a city above to see the community fan favourite for ${cat.label}.
+      </div>`}
+
     </div>`;
   },
 
@@ -1840,6 +2023,9 @@ const M = {
 
   _signupForm(){
     const sel=S.signupType;
+    const notifCats=['unique','logistics','goods','services','b2b','finance','knowledge','music','entertainment'];
+    const notifLabels={unique:'Unique Requests',logistics:'Logistics',goods:'Goods',services:'Services',b2b:'B2B',finance:'Finance & Trading',knowledge:'Knowledge-based',music:'Music Services',entertainment:'Entertainment'};
+    const selNotif=S._signupNotifCats||[];
     return`<div class="fg"><label>Full Name</label><input type="text" id="sname" placeholder="Your full name" autocomplete="name"/></div>
       <div class="fg"><label>Email Address</label><input type="email" id="semail" placeholder="you@example.com" autocomplete="email"/></div>
       <div class="fg"><label>Password</label><input type="password" id="spwd" placeholder="Min. 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')A.signup()"/></div>
@@ -1848,6 +2034,16 @@ const M = {
           <div class="utcard ${sel==='A'?'on':''}" onclick="A.setUType('A')"><div class="uticon"><i data-lucide="briefcase" style="width:19px;height:19px"></i></div><div class="utn">Business</div><div class="utd">Merchants, Vendors, Artisans, Service providers.</div></div>
           <div class="utcard ${sel==='B'?'on':''}" onclick="A.setUType('B')"><div class="uticon"><i data-lucide="user" style="width:19px;height:19px"></i></div><div class="utn">Individual</div><div class="utd">Personal traders, P2P buyers/sellers.</div></div>
         </div>
+      </div>
+      <div class="fg">
+        <label style="margin-bottom:8px">Listing Notifications <span style="font-weight:400;color:var(--t3)">(optional — pick categories you want alerts for)</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:7px">
+          ${notifCats.map(cat=>{
+            const on=selNotif.includes(cat);
+            return`<button type="button" class="ftag ${on?'on':''}" style="font-size:.75rem;padding:5px 12px" onclick="A.toggleSignupNotifCat('${cat}')">${notifLabels[cat]}</button>`;
+          }).join('')}
+        </div>
+        <div style="font-size:.72rem;color:var(--t3);margin-top:7px;line-height:1.5">You'll get push notifications when new listings in these categories are posted. You can change this anytime in your profile.</div>
       </div>
       <div class="ferr" id="serr"></div>
       <button class="btn bp" id="sbtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.signup()">Create Account</button>
@@ -1948,7 +2144,7 @@ const M = {
         </div>
         `:''}
         ${(()=>{
-          const imgs=(order.imageId||'').split(',').filter(Boolean);
+          const imgs=(order.imageIds||'').split(',').filter(Boolean);
           return imgs.length?`<div class="order-gallery">${imgs.map(id=>`<img src="${fileUrl(id)}" alt="Listing photo" onclick="window.open('${fileUrl(id)}','_blank')" onerror="this.style.display='none'">`).join('')}</div>`:'';
         })()}
         <div class="odh">
@@ -2049,6 +2245,32 @@ const M = {
     show();
   },
 
+  vendorWaitlist(catId,city,catLabel){
+    if(!S.user){M.auth();return;}
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal">
+        <div class="mhdr">
+          <div><div class="mey">Vendor Waitlist</div><h2 class="mtitle">List My Business</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+        <div style="background:var(--off);border-radius:var(--rsm);padding:11px 14px;margin-bottom:18px;font-size:.8rem;color:var(--t2);line-height:1.6">
+          <strong style="color:var(--t1)">How this works:</strong> Your listing joins the community waitlist for <strong>${catLabel}</strong> in <strong>${city}</strong>. Every quarter, the community votes for their favourite, the winner gets a featured showcase slot with photos, reviews, and a direct connect link. A new vote is held each quarter, so there's always a chance to win.
+        </div>
+        <div class="fg"><label>Business Name</label><input type="text" id="wlbizname" placeholder="e.g. Businessname..."/></div>
+        <div class="fg"><label>Tagline <span style="font-weight:400;color:var(--t3)">(one sentence)</span></label><input type="text" id="wltagline" placeholder="e.g. States fastest..."/></div>
+        <div class="fg"><label>Contact (WhatsApp, phone, or email)</label><input type="text" id="wlcontact" placeholder="e.g. +234..."/></div>
+        <div class="fg"><label>Why should the community vote for you?</label><textarea id="wlwhy" rows="3" placeholder="Tell the community what makes your business stand out…"></textarea></div>
+        <div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px 13px;margin-bottom:16px;font-size:.78rem;color:#8a6820;line-height:1.5">
+          <strong>Note:</strong> If voted as fan favourite, a 1% referral commission applies on connections made through the platform showcase.
+        </div>
+        <div class="ferr" id="wlerr"></div>
+        <button class="btn bp" id="wlbtn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitVendorWaitlist('${catId}','${city}','${catLabel}')">
+          <i data-lucide="send" style="width:14px;height:14px"></i>Join the Waitlist
+        </button>
+      </div>
+    </div>`);
+  },
+
   verifyForm(){
     if(!S.user){M.auth();return;}
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
@@ -2124,6 +2346,15 @@ const A = {
       await DB.create('profiles',{userId:u.$id,name,email,type});
       S.user={id:u.$id,name,email,type,inits:initials(name),joinedAt:new Date().toISOString(),avatarId:null};
       S.subscribed=false;S.subStatus=null;S.verifyStatus=null;S.myConnections=[];S.sentConnections=[];
+      const signupCats=S._signupNotifCats||[];
+      if(signupCats.length>0){
+        try{
+          const prefsDoc=await DB.create('notif_prefs',{userId:u.$id,categories:signupCats,pushEnabled:false});
+          S.notifPrefs={categories:signupCats,pushEnabled:false};
+          S.notifPrefsDocId=prefsDoc.$id;
+        }catch(e){console.warn('signup notif prefs:',e.message);}
+      }
+      S._signupNotifCats=[];
       await createNotif(u.$id,'welcome','Welcome to Toomuchcoin! 🎉','Here\'s how to get started — post a listing, explore the marketplace, or check live crypto prices.','market');
       M.close();R.go('profile');
       await loadNotifications();
@@ -2656,6 +2887,54 @@ const A = {
   setVendorCat(cat){ S._vCat=cat; S._vCity=null; render(); },
   setVendorCity(city){ S._vCity=city||null; render(); },
   setVendorCountry(country){ S._vCountry=country; S._vCity=null; render(); },
+  toggleSignupNotifCat(cat){
+    S._signupNotifCats=S._signupNotifCats||[];
+    const idx=S._signupNotifCats.indexOf(cat);
+    if(idx>=0) S._signupNotifCats.splice(idx,1); else S._signupNotifCats.push(cat);
+    M.auth();
+  },
+  castVote(key){
+    if(!S.user){M.auth();return;}
+    S._vVoted=S._vVoted||{};
+    S._vVoted[key]=true;
+    render();
+    toast('Vote cast! Results update at the end of the quarter.','ok');
+  },
+  async shareOrder(id,title){
+    const url=window.location.origin+window.location.pathname+'?listing='+id;
+    const text='Check out this listing on Toomuchcoin: '+title;
+    if(navigator.share){
+      try{ await navigator.share({title:'Toomuchcoin Listing',text,url}); return; }catch(e){ if(e.name==='AbortError') return; }
+    }
+    try{ await navigator.clipboard.writeText(url); toast('Link copied to clipboard!','ok'); }
+    catch(e){ prompt('Copy this link to share:',url); }
+  },
+  async submitVendorWaitlist(catId,city,catLabel){
+    const bizName=document.getElementById('wlbizname')?.value?.trim();
+    const tagline=document.getElementById('wltagline')?.value?.trim();
+    const contact=document.getElementById('wlcontact')?.value?.trim();
+    const why=document.getElementById('wlwhy')?.value?.trim();
+    const err=document.getElementById('wlerr');
+    const btn=document.getElementById('wlbtn');
+    if(!bizName){err.textContent='Please enter your business name.';return;}
+    if(!contact){err.textContent='Please provide a contact.';return;}
+    btn.disabled=true;btn.textContent='Submitting…';
+    try{
+      await DB.create('connections',{
+        orderId:'vendor_waitlist',orderTitle:catLabel+' — '+city,
+        fromUserId:S.user.id,fromName:S.user.name,fromInitials:S.user.inits,
+        toUserId:ADMIN_ID,toName:'Datum Admin',
+        message:bizName+(tagline?' | '+tagline:'')+(why?' | '+why:''),
+        contact,commission:'5% referral on showcase connections',
+        status:'pending',
+      });
+      M.close();
+      toast(bizName+' added to the '+catLabel+' waitlist for '+city+'!','ok');
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Join the Waitlist';
+    }
+  },
 
   toggleWatch(id){
     S.watchlist.has(id)?S.watchlist.delete(id):S.watchlist.add(id);
