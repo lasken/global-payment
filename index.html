@@ -2901,12 +2901,26 @@ const A = {
     toast('Vote cast! Results update at the end of the quarter.','ok');
   },
   async shareOrder(id,title){
-    const url=window.location.origin+window.location.pathname+'?listing='+id;
+    // Build a clean slug from the listing title
+    const slug=(title||'listing')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g,'')
+      .replace(/\s+/g,'-')
+      .replace(/-+/g,'-')
+      .slice(0,48)
+      .replace(/-$/,'');
+    // Store slug↔id map so deep-link resolution works in the same session
+    S._slugMap=S._slugMap||{};
+    S._idToSlug=S._idToSlug||{};
+    S._slugMap[slug]=id;
+    S._idToSlug[id]=slug;
+    const url=window.location.origin+window.location.pathname+'?listing='+slug;
     const text='Check out this listing on Toomuchcoin: '+title;
     if(navigator.share){
-      try{ await navigator.share({title:'Toomuchcoin Listing',text,url}); return; }catch(e){ if(e.name==='AbortError') return; }
+      try{ await navigator.share({title:title,text,url}); return; }catch(e){ if(e.name==='AbortError') return; }
     }
-    try{ await navigator.clipboard.writeText(url); toast('Link copied to clipboard!','ok'); }
+    try{ await navigator.clipboard.writeText(url); toast('Link copied!','ok'); }
     catch(e){ prompt('Copy this link to share:',url); }
   },
   async submitVendorWaitlist(catId,city,catLabel){
@@ -3050,6 +3064,21 @@ document.addEventListener('DOMContentLoaded', async()=>{
   }
   render();
   loadCoins();
+  // Resolve ?listing= deep links (supports both slug and raw id)
+  const _qs=new URLSearchParams(window.location.search);
+  const _listingParam=_qs.get('listing');
+  if(_listingParam){
+    await loadOrders();
+    S._slugMap=S._slugMap||{};
+    // Try slug map first, then fall back to direct id match
+    const _resolvedId=S._slugMap[_listingParam]||_listingParam;
+    const _linked=(S.orders||[]).find(o=>{
+      // Match by stored slug, direct id, or freshly generated slug from title
+      const tSlug=(o.title||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').slice(0,48).replace(/-$/,'');
+      return o.id===_resolvedId||tSlug===_listingParam;
+    });
+    if(_linked){ R.go('market'); setTimeout(()=>A.viewOrder(_linked.id),300); }
+  }
 });
 </script>
 </body>
