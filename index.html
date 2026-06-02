@@ -1924,7 +1924,7 @@ const P = {
       <div class="csbadge"><i data-lucide="clock" style="width:11px;height:11px"></i>Coming Soon</div>
       <h2 class="cst">Portfolio Tracker</h2>
       <p class="css">Automated portfolio tracking with real-time P&L, allocation charts, and multi-exchange sync is in development.</p>
-      <button class="btn bp" style="margin-top:26px"><i data-lucide="bell" style="width:14px;height:14px"></i>Join Waitlist</button>
+      <button class="btn bp" style="margin-top:26px" onclick="A.joinPortfolioWaitlist()"><i data-lucide="bell" style="width:14px;height:14px"></i>Join Waitlist</button>
     </div></div>`;
   },
 
@@ -2885,6 +2885,60 @@ const A = {
     }
   },
 
+  joinPortfolioWaitlist(){
+    if(!S.user){M.auth();toast('Sign in to join the waitlist.');return;}
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal" style="text-align:center;max-width:420px">
+        <div class="mhdr" style="justify-content:flex-end"><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
+        <div style="width:56px;height:56px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:#fff">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg>
+        </div>
+        <div class="mey" style="margin-bottom:6px">Coming Soon</div>
+        <h2 class="mtitle" style="margin-bottom:10px">Portfolio Tracker</h2>
+        <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:22px">Real-time P&L, allocation charts, and multi-exchange sync. Join the waitlist and we'll notify you the moment it launches.</p>
+        <div class="fg" style="text-align:left"><label>Your email</label><input type="email" id="wl-email" value="${S.user.email}" placeholder="you@example.com"/></div>
+        <div class="fg" style="text-align:left"><label>What feature matters most to you? <span style="font-weight:400;color:var(--t3)">(optional)</span></label>
+          <select id="wl-feature">
+            <option value="">Select…</option>
+            <option value="pnl">Real-time P&L tracking</option>
+            <option value="alloc">Portfolio allocation charts</option>
+            <option value="exchange">Multi-exchange sync</option>
+            <option value="alerts">Price alerts</option>
+            <option value="tax">Tax reporting</option>
+          </select>
+        </div>
+        <div class="ferr" id="wl-err"></div>
+        <button class="btn bpur" id="wl-btn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitPortfolioWaitlist()">
+          <i data-lucide="bell" style="width:14px;height:14px"></i>Notify Me at Launch
+        </button>
+        <p style="font-size:.72rem;color:var(--t3);margin-top:12px">No spam. One email when it launches.</p>
+      </div>
+    </div>`);
+    lucide.createIcons();
+  },
+  async submitPortfolioWaitlist(){
+    const email=document.getElementById('wl-email')?.value?.trim();
+    const feature=document.getElementById('wl-feature')?.value||'';
+    const err=document.getElementById('wl-err');
+    const btn=document.getElementById('wl-btn');
+    if(!email){err.textContent='Please enter your email.';return;}
+    btn.disabled=true;btn.textContent='Joining…';
+    try{
+      await DB.create('notifications',{
+        userId:S.user.id,
+        type:'subscription',
+        title:'Portfolio Waitlist — '+S.user.name,
+        body:'Email: '+email+(feature?' | Feature: '+feature:''),
+        link:'',read:false,orderId:'',category:'portfolio_waitlist',
+      });
+      await createNotif(ADMIN_ID,'subscription','New portfolio waitlist signup',S.user.name+' ('+email+') joined the portfolio tracker waitlist.'+(feature?' Wants: '+feature:''),'');
+      M.close();
+      toast('You\'re on the list! We\'ll email you when Portfolio Tracker launches.','ok');
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Notify Me at Launch';
+    }
+  },
   setVendorCat(cat){ S._vCat=cat; S._vCity=null; render(); },
   setVendorCity(city){ S._vCity=city||null; render(); },
   setVendorCountry(country){ S._vCountry=country; S._vCity=null; render(); },
