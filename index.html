@@ -19,6 +19,7 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://checkout.flutterwave.com/v3.js"></script>
   <script src="config.js" onerror="console.warn('config.js not found')"></script>
+  <script src="prices.json" onerror="console.warn('Error in loading prices')"></script>
   <style>
     :root{
       --white:#fff;--off:#F8F7F4;--surf:#F2F1EE;--bdr:#E4E2DC;--bdr2:#C8C5BC;
@@ -1646,7 +1647,7 @@ const P = {
         </div>`).join('')}
 
       <div class="al-note" style="margin-top:8px">
-        <strong>Live data</strong> via Yahoo Finance &amp; CoinGecko. Stock logos via FMP. &nbsp;|&nbsp;
+        <strong>Live data</strong> via Yahoo Finance &amp; CoinGecko. &nbsp;|&nbsp;
         <strong>Columns:</strong> YTD = year-to-date · 2020 (6Y) = since Jan 2020 · 5Y/10Y = multi-year cumulative · &nbsp;|&nbsp; Not financial advice.
       </div>`;
   },
