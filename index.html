@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Toomuchcoin</title>
   
-  <meta property="og:title" content="Toomuchcoin x Datum | Your passport to trade and access the globe"/>
-  <meta property="og:description" content="Agentic Commerce: Your passport to trade and access the globe."/>
+  <meta property="og:title" content="Toomuchcoin x Datum"/>
+  <meta property="og:description" content="Agentic Commerce: Your passport to trade and access the globe 🌎"/>
   <meta property="og:image" content="https://toomuchcoin.com/og-preview.png"/>
   <meta property="og:type" content="website"/>
   <meta name="twitter:card" content="summary_large_image"/>
@@ -893,7 +893,7 @@ const P = {
       <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time financial markets — all in one place.</p>
       <div class="ggrid">
         <div class="gcard" onclick="R.acct()">
-          <div class="gci id"><i data-lucide="${S.user?'user-check':'user'}" style="width:22px;height:22px"></i></div>
+          <div class="gci id" style="background:var(--t1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>${S.user?'<polyline points="16 11 18 13 22 9" stroke="#4ade80" stroke-width="2"/>':''}</svg></div>
           <span class="gcl">Identity</span>
           <h2 class="gct">${S.user?S.user.name.split(' ')[0]+"'s Profile":'Account Gateway'}</h2>
           <p class="gcd">${S.user?'View your profile, track your orders, and manage account settings.':'Sign in or create an account to access personalised features and trade on the marketplace.'}</p>
@@ -907,7 +907,7 @@ const P = {
           <div class="gca"><span>Enter Marketplace</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
         <div class="gcard" onclick="R.go('crypto')">
-          <div class="gci ib"><i data-lucide="bar-chart-2" style="width:22px;height:22px"></i></div>
+          <div class="gci ib" style="background:#E8EEFB"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blu)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg></div>
           <span class="gcl">Markets</span>
           <h2 class="gct">Financial Rates</h2>
           <p class="gcd">Live prices for 500+ assets, deep-dive analytics, interval charts, and your personal watchlist.</p>
@@ -1452,7 +1452,7 @@ const P = {
     if(!S.subscribed){return`<div class="gate-banner">
       <div class="gate-icon"><i data-lucide="layout-grid" style="width:24px;height:24px"></i></div>
       <h3 class="gate-t">Datum List is a Pro Feature</h3>
-      <p class="gate-d">Access our curated tracker — handpicked assets with live prices and returns across YTD, 6-year, 5-year, and your personal return since joining Datum.</p>
+      <p class="gate-d">Access our curated tracker — handpicked assets with live prices and returns across YTD, 5-year, 10-year, and your personal return since joining Datum.</p>
       <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $5/month</button>
     </div>`;}
 
@@ -1478,8 +1478,8 @@ const P = {
       });
     }
 
-    // Manual stock prices (update these daily until a live feed is integrated)
-    const MANUAL_PRICES={
+    // Manual stock prices loaded from prices.json (daily update)
+    const MANUAL_PRICES=S._manualPrices||{
       gold:3327.40, nvda:131.38, spx:5967.84, dxy:99.54,
       tsla:341.21, mstr:421.06, nasdaq:21419.92, lvmh:587.20, tsmc:187.43,
     };
@@ -1652,19 +1652,33 @@ const P = {
   },
 
   _vendors(){
+    const VSVG={
+      logistics:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+      restaurant:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h1v5"/></svg>`,
+      airline:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-4 1-4.5 2.5L11 8 4.8 6.2C4.3 6 3.7 6.3 3.5 6.8c-.2.6.1 1.2.6 1.5L8 11l-2 2H4l-1 1 3 2 2 3 1-1v-2l2-2 3.5 3.8c.4.4.9.6 1.4.5.7-.1 1.1-.8 1.1-1.5l-.2-.6z"/></svg>`,
+      cafe:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+      spa:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C6.5 22 2 17.5 2 12c0-1.4.3-2.7.8-3.9C4.3 9.6 5 11.2 5 13c0 3.9 3.1 7 7 7s7-3.1 7-7c0-1.8.7-3.4 1.2-4.9.5 1.2.8 2.5.8 3.9 0 5.5-4.5 10-9 10z"/><path d="M12 22V12"/><path d="M12 12C12 7 17 3 17 3s0 5-5 9z"/><path d="M12 12C12 7 7 3 7 3s0 5 5 9z"/></svg>`,
+      hotel:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M3 22h18"/><path d="M9 22v-6h6v6"/><rect x="10" y="9" width="4" height="4" rx="0.5"/></svg>`,
+      mechanic:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+      plumbing:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h6v6H3z"/><path d="M15 3h6v6h-6z"/><path d="M3 15h6v6H3z"/><path d="M6 9v3a3 3 0 0 0 3 3h3"/><path d="M18 9v3a3 3 0 0 1-3 3h-3"/></svg>`,
+      convenience:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+      spotlight:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+      music:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+      entertainment:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+    };
     const VENDOR_CATS=[
-      {id:'logistics',icon:'truck',label:'Logistics',color:'var(--blu)'},
-      {id:'restaurant',icon:'utensils',label:'Restaurant',color:'var(--org)'},
-      {id:'airline',icon:'plane',label:'Airline',color:'#0e7490'},
-      {id:'cafe',icon:'coffee',label:'Café',color:'#92400e'},
-      {id:'spa',icon:'sparkles',label:'Spa & Wellness',color:'var(--pur)'},
-      {id:'hotel',icon:'building-2',label:'Hotel',color:'var(--gld)'},
-      {id:'mechanic',icon:'wrench',label:'Auto Mechanic',color:'var(--t2)'},
-      {id:'plumbing',icon:'pipette',label:'Plumbing & HVAC',color:'#0369a1'},
-      {id:'convenience',icon:'shopping-bag',label:'Convenience Store',color:'var(--grn)'},
-      {id:'spotlight',icon:'star',label:'Secret Insider Spotlight',color:'var(--red)'},
-      {id:'music',icon:'music',label:'Music Services',color:'#7c3aed'},
-      {id:'entertainment',icon:'tv-2',label:'Entertainment',color:'#b45309'},
+      {id:'logistics',svg:VSVG.logistics,label:'Logistics',color:'var(--blu)'},
+      {id:'restaurant',svg:VSVG.restaurant,label:'Restaurant',color:'var(--org)'},
+      {id:'airline',svg:VSVG.airline,label:'Airline',color:'#0e7490'},
+      {id:'cafe',svg:VSVG.cafe,label:'Café',color:'#92400e'},
+      {id:'spa',svg:VSVG.spa,label:'Spa & Wellness',color:'var(--pur)'},
+      {id:'hotel',svg:VSVG.hotel,label:'Hotel',color:'var(--gld)'},
+      {id:'mechanic',svg:VSVG.mechanic,label:'Auto Mechanic',color:'var(--t2)'},
+      {id:'plumbing',svg:VSVG.plumbing,label:'Plumbing & HVAC',color:'#0369a1'},
+      {id:'convenience',svg:VSVG.convenience,label:'Convenience Store',color:'var(--grn)'},
+      {id:'spotlight',svg:VSVG.spotlight,label:'Secret Insider Spotlight',color:'var(--red)'},
+      {id:'music',svg:VSVG.music,label:'Music Services',color:'#7c3aed'},
+      {id:'entertainment',svg:VSVG.entertainment,label:'Entertainment',color:'#b45309'},
     ];
     const NIGERIA=[
       'Abuja','Lagos','Ibadan','Kano','Port Harcourt','Benin City','Kaduna','Enugu',
@@ -1690,32 +1704,45 @@ const P = {
     };
 
     // Mock fan-favorite showcase data (to be replaced with real DB data)
+    const SHOWCASE_ICONS={
+      truck:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+      warehouse:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+      store:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M3 7v13a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7"/><path d="M9 21V11h6v10"/></svg>`,
+      restaurant:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h1v5"/></svg>`,
+      hotel:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M3 22h18"/><path d="M9 22v-6h6v6"/><rect x="10" y="9" width="4" height="4" rx="0.5"/></svg>`,
+      cafe:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+      airline:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-4 1-4.5 2.5L11 8 4.8 6.2C4.3 6 3.7 6.3 3.5 6.8c-.2.6.1 1.2.6 1.5L8 11l-2 2H4l-1 1 3 2 2 3 1-1v-2l2-2 3.5 3.8c.4.4.9.6 1.4.5.7-.1 1.1-.8 1.1-1.5l-.2-.6z"/></svg>`,
+    };
     const SHOWCASES={
       logistics_Ibadan:{
-        name:'Mr Taiwo Haulage Services',
+        name:'Datum Haulage Services',
         tagline:'Ibadan\'s most trusted door-to-door logistics partner',
-        img:'🚛',
+        imgSvg:SHOWCASE_ICONS.truck,
+        imgBg:'#E8EEFB',
+        imgColor:'var(--blu)',
         votes:142, totalVotes:189,
-        lastQuarterWinner:'Adewale Freight Co.',
+        lastQuarterWinner:'Taiwo Haulage Services.',
         comments:[
-          {user:'Tunde A.',text:'Delivered my goods from Lagos in record time. Highly recommended!',stars:5},
-          {user:'Sade O.',text:'Very professional drivers, packaging was intact.',stars:5},
-          {user:'Emeka C.',text:'Fair pricing, will use again.',stars:4},
+          {user:'Kenny.',text:'Delivered my goods from Lagos in record time. Highly recommended!',stars:5},
+          {user:'Deji L.',text:'Very professional drivers, packaging was intact.',stars:5},
+          {user:'Easekid.',text:'Fair pricing, will use again.',stars:4},
         ],
-        partnerLink:'https://wa.me/2348012345678',
+        partnerLink:'https://wa.me/2349138476421',
         nextVoteDate:'July 1, 2026',
       },
       logistics_Lagos:{
         name:'Datum Logistics Lagos',
         tagline:'Same-day delivery across all Lagos mainland and island routes',
-        img:'🏭',
+        imgSvg:SHOWCASE_ICONS.warehouse,
+        imgBg:'#E6F5EE',
+        imgColor:'var(--grn)',
         votes:98, totalVotes:155,
         lastQuarterWinner:'SwiftMove Lagos',
         comments:[
           {user:'Chioma B.',text:'Best tracking system I\'ve used in Lagos.',stars:5},
           {user:'Femi D.',text:'On-time every single time.',stars:4},
         ],
-        partnerLink:'https://wa.me/2348099887766',
+        partnerLink:'https://wa.me/2349138476421',
         nextVoteDate:'July 1, 2026',
       },
     };
@@ -1732,8 +1759,8 @@ const P = {
           <div onclick="A.setVendorCat('${c.id}')" style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:18px 16px;cursor:pointer;transition:var(--ease);display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px"
             onmouseover="this.style.borderColor='${c.color}';this.style.transform='translateY(-2px)';this.style.boxShadow='var(--s2)'"
             onmouseout="this.style.borderColor='var(--bdr)';this.style.transform='none';this.style.boxShadow='none'">
-            <div style="width:42px;height:42px;border-radius:var(--rsm);background:${c.color}18;display:flex;align-items:center;justify-content:center">
-              <i data-lucide="${c.icon}" style="width:20px;height:20px;color:${c.color}"></i>
+            <div style="width:42px;height:42px;border-radius:var(--rsm);background:${c.color}18;display:flex;align-items:center;justify-content:center;color:${c.color}">
+              ${c.svg}
             </div>
             <span style="font-weight:600;font-size:.8125rem;color:var(--t1)">${c.label}</span>
           </div>`).join('')}
@@ -1752,7 +1779,7 @@ const P = {
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
         <button class="back" style="margin:0" onclick="A.setVendorCat(null)"><i data-lucide="arrow-left" style="width:14px;height:14px"></i>Categories</button>
         <div style="display:flex;align-items:center;gap:7px;background:${cat.color}18;border:1.5px solid ${cat.color}44;border-radius:100px;padding:5px 14px 5px 8px">
-          <i data-lucide="${cat.icon}" style="width:15px;height:15px;color:${cat.color}"></i>
+          <span style="display:flex;align-items:center;color:${cat.color};width:15px;height:15px">${cat.svg.replace('width="20" height="20"','width="15" height="15"')}</span>
           <span style="font-weight:600;font-size:.875rem;color:${cat.color}">${cat.label}</span>
         </div>
       </div>
@@ -1779,7 +1806,7 @@ const P = {
       <div style="border:2px solid var(--gld);border-radius:var(--rlg);overflow:hidden;margin-bottom:22px;background:var(--white)">
         <div style="background:linear-gradient(135deg,#FBF4E6,#fff8ed);padding:16px 20px;border-bottom:1px solid #E8D9B0;display:flex;align-items:center;gap:10px">
           <div style="width:34px;height:34px;border-radius:50%;background:var(--gld);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i data-lucide="award" style="width:16px;height:16px;color:#fff"></i>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
           </div>
           <div style="flex:1">
             <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gld)">Community Fan Favourite · ${selCity}</div>
@@ -1791,7 +1818,7 @@ const P = {
         <div style="padding:20px">
           <!-- Business card -->
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
-            <div style="width:68px;height:68px;border-radius:var(--rmd);background:#FBF4E6;display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;border:1px solid #E8D9B0">${showcase.img}</div>
+            <div style="width:68px;height:68px;border-radius:var(--rmd);background:${showcase.imgBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--bdr);color:${showcase.imgColor}">${showcase.imgSvg}</div>
             <div>
               <div style="font-family:var(--fd);font-size:1.15rem;margin-bottom:3px">${showcase.name}</div>
               <div style="font-size:.8125rem;color:var(--t2);line-height:1.5">${showcase.tagline}</div>
@@ -1860,16 +1887,21 @@ const P = {
       :selCity?`
       <!-- No showcase yet for this city — waitlist / nomination -->
       <div style="border:2px dashed var(--bdr2);border-radius:var(--rlg);padding:32px 24px;text-align:center;margin-bottom:22px">
-        <div style="width:52px;height:52px;background:${cat.color}18;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
-          <i data-lucide="${cat.icon}" style="width:24px;height:24px;color:${cat.color}"></i>
+        <div style="width:52px;height:52px;background:${cat.color}18;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:${cat.color}">
+          ${cat.svg.replace('width="20" height="20"','width="24" height="24"')}
         </div>
         <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">${cat.label} in ${selCity}</div>
         <p style="font-size:.875rem;color:var(--t2);margin-bottom:6px;line-height:1.6;max-width:400px;margin-left:auto;margin-right:auto">
-          No fan favourite has been crowned here yet. List your business to join the waitlist — the community votes every quarter to pick the one we showcase.
+          No fan favourite has been crowned here yet. List your business to join the waitlist, the community votes every quarter to pick the one we showcase.
         </p>
         <div style="background:var(--off);border-radius:var(--rsm);padding:11px 14px;margin:14px auto;max-width:420px;font-size:.78rem;color:var(--t2);line-height:1.6;text-align:left">
           <div style="font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:5px"><i data-lucide="info" style="width:12px;height:12px;color:var(--pur)"></i>How the Showcase Works</div>
-          <div>① Businesses join the waitlist below &nbsp;→&nbsp; ② The community nominates and votes each quarter &nbsp;→&nbsp; ③ The winner is showcased with reviews, their storefront, and a direct connect link &nbsp;→&nbsp; ④ A new vote is held each quarter.</div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
+            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">Businesses join the waitlist by submitting their details below.</div></div>
+            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">The community nominates and votes for their favourite each quarter.</div></div>
+            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">The winner is showcased with their storefront, curated reviews, and a direct connect link.</div></div>
+            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">A fresh vote is held every quarter — any waitlisted business can win.</div></div>
+          </div>
         </div>
         ${S.user
           ?`<button class="btn bp" onclick="M.vendorWaitlist('${selCat}','${selCity}','${cat.label}')"><i data-lucide="plus" style="width:14px;height:14px"></i>List My Business on Waitlist</button>`
@@ -2222,14 +2254,14 @@ const M = {
           <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
         </div>
         <div style="background:var(--off);border-radius:var(--rsm);padding:11px 14px;margin-bottom:18px;font-size:.8rem;color:var(--t2);line-height:1.6">
-          <strong style="color:var(--t1)">How this works:</strong> Your listing joins the community waitlist for <strong>${catLabel}</strong> in <strong>${city}</strong>. Every quarter, the community votes for their favourite — the winner gets a featured showcase slot with photos, reviews, and a direct connect link. A new vote is held each quarter, so there's always a chance to win.
+          <strong style="color:var(--t1)">How this works:</strong> Your listing joins the community waitlist for <strong>${catLabel}</strong> in <strong>${city}</strong>. Every quarter, the community votes for their favourite, the winner gets a featured showcase slot with photos, reviews, and a direct connect link. A new vote is held each quarter, so there's always a chance to win.
         </div>
-        <div class="fg"><label>Business Name</label><input type="text" id="wlbizname" placeholder="e.g. Taiwo Haulage Services"/></div>
-        <div class="fg"><label>Tagline <span style="font-weight:400;color:var(--t3)">(one sentence)</span></label><input type="text" id="wltagline" placeholder="e.g. Ibadan's fastest door-to-door logistics"/></div>
-        <div class="fg"><label>Contact (WhatsApp, phone, or email)</label><input type="text" id="wlcontact" placeholder="e.g. +234 801 234 5678"/></div>
+        <div class="fg"><label>Business Name</label><input type="text" id="wlbizname" placeholder="e.g. Businessname..."/></div>
+        <div class="fg"><label>Tagline <span style="font-weight:400;color:var(--t3)">(one sentence)</span></label><input type="text" id="wltagline" placeholder="e.g. States fastest..."/></div>
+        <div class="fg"><label>Contact (WhatsApp, phone, or email)</label><input type="text" id="wlcontact" placeholder="e.g. +234..."/></div>
         <div class="fg"><label>Why should the community vote for you?</label><textarea id="wlwhy" rows="3" placeholder="Tell the community what makes your business stand out…"></textarea></div>
         <div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px 13px;margin-bottom:16px;font-size:.78rem;color:#8a6820;line-height:1.5">
-          <strong>Note:</strong> If voted as fan favourite, a 5% referral commission applies on connections made through the platform showcase.
+          <strong>Note:</strong> If voted as fan favourite, a 1% referral commission applies on connections made through the platform showcase.
         </div>
         <div class="ferr" id="wlerr"></div>
         <button class="btn bp" id="wlbtn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitVendorWaitlist('${catId}','${city}','${catLabel}')">
@@ -2869,12 +2901,26 @@ const A = {
     toast('Vote cast! Results update at the end of the quarter.','ok');
   },
   async shareOrder(id,title){
-    const url=window.location.origin+window.location.pathname+'?listing='+id;
+    // Build a clean slug from the listing title
+    const slug=(title||'listing')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g,'')
+      .replace(/\s+/g,'-')
+      .replace(/-+/g,'-')
+      .slice(0,48)
+      .replace(/-$/,'');
+    // Store slug↔id map so deep-link resolution works in the same session
+    S._slugMap=S._slugMap||{};
+    S._idToSlug=S._idToSlug||{};
+    S._slugMap[slug]=id;
+    S._idToSlug[id]=slug;
+    const url=window.location.origin+window.location.pathname+'?listing='+slug;
     const text='Check out this listing on Toomuchcoin: '+title;
     if(navigator.share){
-      try{ await navigator.share({title:'Toomuchcoin Listing',text,url}); return; }catch(e){ if(e.name==='AbortError') return; }
+      try{ await navigator.share({title:title,text,url}); return; }catch(e){ if(e.name==='AbortError') return; }
     }
-    try{ await navigator.clipboard.writeText(url); toast('Link copied to clipboard!','ok'); }
+    try{ await navigator.clipboard.writeText(url); toast('Link copied!','ok'); }
     catch(e){ prompt('Copy this link to share:',url); }
   },
   async submitVendorWaitlist(catId,city,catLabel){
@@ -3016,8 +3062,28 @@ document.addEventListener('DOMContentLoaded', async()=>{
     await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
     initOneSignal(S.user.id);
   }
+  // Load manual stock prices from prices.json (cache-busted each page load)
+  fetch('prices.json?v='+Date.now())
+    .then(r=>r.json())
+    .then(data=>{ S._manualPrices=data; render(); })
+    .catch(()=>{}); // silently falls back to hardcoded values if fetch fails
   render();
   loadCoins();
+  // Resolve ?listing= deep links (supports both slug and raw id)
+  const _qs=new URLSearchParams(window.location.search);
+  const _listingParam=_qs.get('listing');
+  if(_listingParam){
+    await loadOrders();
+    S._slugMap=S._slugMap||{};
+    // Try slug map first, then fall back to direct id match
+    const _resolvedId=S._slugMap[_listingParam]||_listingParam;
+    const _linked=(S.orders||[]).find(o=>{
+      // Match by stored slug, direct id, or freshly generated slug from title
+      const tSlug=(o.title||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').slice(0,48).replace(/-$/,'');
+      return o.id===_resolvedId||tSlug===_listingParam;
+    });
+    if(_linked){ R.go('market'); setTimeout(()=>A.viewOrder(_linked.id),300); }
+  }
 });
 </script>
 </body>
