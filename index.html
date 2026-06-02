@@ -282,6 +282,7 @@
     .al-note{background:var(--surf);border-radius:var(--rsm);padding:13px 16px;font-size:.72rem;color:var(--t3);line-height:1.7;margin-top:16px}
     .al-note strong{color:var(--t2)}
     @media(max-width:768px){.al-hero{padding:18px 16px}.al-table{font-size:.74rem}.al-table td,.al-table thead th{padding:9px 9px}}
+    /* Avatars & images */
     .uavatar{width:68px;height:68px;border-radius:50%;object-fit:cover;display:block}
     .uavatar-wrap{position:relative;flex-shrink:0;width:68px;height:68px}
     .uavatar-edit{position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:var(--t1);color:var(--white);border:2px solid var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
@@ -524,7 +525,7 @@ function mapOrder(d){
   return {id:d.$id,userId:d.userId,userName:d.userName,userInitials:d.userInitials,
     category:d.category,type:d.type,title:d.title,price:d.price,
     desc:d.desc||'',status:d.status,createdAt:d.$createdAt,
-    imageIds:d.imageIds||''};
+    imageId:d.imageId||''};
 }
 async function _silentOrders(){
   const r=await DB.list('orders',[Query.orderDesc('$createdAt'),Query.limit(100)]);
@@ -1182,9 +1183,9 @@ const P = {
         <div style="margin-bottom:14px">
           <div style="font-size:.8125rem;font-weight:500;color:var(--t2);margin-bottom:10px">Listing categories to follow</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            ${['p2p','logistics','goods','handyman'].map(cat=>{
+            ${['unique','logistics','goods','services','b2b','finance','knowledge','music','entertainment'].map(cat=>{
               const on=S.notifPrefs.categories.includes(cat);
-              const label={p2p:'P2P Crypto',logistics:'Logistics',goods:'Buy/Sell Goods',handyman:'Handyman'}[cat];
+              const label={unique:'Unique Requests',logistics:'Logistics',goods:'Goods',services:'Services',b2b:'B2B',finance:'Finance & Trading',knowledge:'Knowledge-based',music:'Music Services',entertainment:'Entertainment'}[cat];
               return`<button class="ftag ${on?'on':''}" onclick="A.toggleNotifCat('${cat}')">${label}</button>`;
             }).join('')}
           </div>
@@ -1230,21 +1231,24 @@ const P = {
         </div>
       </div>
       <div class="tnav">
-        <button class="tbtn ${isBoard?'on':''}" onclick="A.setMTab('board')">
+        <button class="tbtn ${S.mTab==='board'?'on':''}" onclick="A.setMTab('board')">
           <i data-lucide="layout-list" style="width:15px;height:15px"></i><span>Order Board</span>
         </button>
-        <button class="tbtn ${!isBoard?'on':''}" onclick="A.setMTab('forum')">
+        <button class="tbtn ${S.mTab==='vendors'?'on':''}" onclick="A.setMTab('vendors')">
+          <i data-lucide="map-pin" style="width:15px;height:15px"></i><span>Vendors</span>
+        </button>
+        <button class="tbtn ${S.mTab==='forum'?'on':''}" onclick="A.setMTab('forum')">
           <i data-lucide="message-circle" style="width:15px;height:15px"></i>
           <span>Open Forum</span>
           ${!S.subscribed?`<i data-lucide="lock" style="width:11px;height:11px;color:var(--pur);opacity:.8"></i>`:''}
         </button>
       </div>
-      ${isBoard?P._board():P._forum()}
+      ${S.mTab==='board'?P._board():S.mTab==='vendors'?P._vendors():P._forum()}
     </div>`;
   },
 
   _board(){
-    const cats=[{id:'all',l:'All Listings'},{id:'p2p',l:'P2P Crypto'},{id:'logistics',l:'Logistics'},{id:'goods',l:'Buy / Sell Goods'},{id:'handyman',l:'Handyman'}];
+    const cats=[{id:'all',l:'All Listings'},{id:'unique',l:'Unique Requests'},{id:'logistics',l:'Logistics'},{id:'goods',l:'Goods'},{id:'services',l:'Services'},{id:'b2b',l:'B2B'},{id:'finance',l:'Finance & Trading'},{id:'knowledge',l:'Knowledge-based'},{id:'music',l:'Music Services'},{id:'entertainment',l:'Entertainment'}];
     if(S.ordersLoading)return`<div class="oloading"><div class="spin"></div><br>Loading listings…</div>`;
     const all=S.orders||[];
     const listRaw=S.mFilter==='all'?all:all.filter(o=>o.category===S.mFilter);
@@ -1267,7 +1271,7 @@ const P = {
         <div class="ogrid">
           ${list.map(o=>`
           <div class="ocard ${(o.status==='filled'||o.status==='closed')?'oresolved':''}">
-            ${(()=>{const fid=(o.imageIds||'').split(',').filter(Boolean)[0];return fid?`<div class="oavat" style="overflow:hidden;padding:0;background:var(--surf);flex-shrink:0"><img src="${fileUrl(fid)}" class="oimg-thumb" onerror="this.parentNode.innerHTML='${o.userInitials}';this.parentNode.removeAttribute('style')"></div>`:`<div class="oavat">${o.userInitials}</div>`;})()}
+            ${(()=>{const fid=(o.imageId||'').split(',').filter(Boolean)[0];return fid?`<div class="oavat" style="overflow:hidden;padding:0;background:var(--surf);flex-shrink:0"><img src="${fileUrl(fid)}" class="oimg-thumb" onerror="this.parentNode.innerHTML='${o.userInitials}';this.parentNode.removeAttribute('style')"></div>`:`<div class="oavat">${o.userInitials}</div>`;})()}
             <div class="obody">
               <div class="otop">
                 <span class="ottl">${o.title}</span>
@@ -1621,6 +1625,115 @@ const P = {
       </div>`;
   },
 
+  _vendors(){
+    const VENDOR_CATS=[
+      {id:'logistics',icon:'truck',label:'Logistics',color:'var(--blu)'},
+      {id:'restaurant',icon:'utensils',label:'Restaurant',color:'var(--org)'},
+      {id:'airline',icon:'plane',label:'Airline',color:'#0e7490'},
+      {id:'cafe',icon:'coffee',label:'Café',color:'#92400e'},
+      {id:'spa',icon:'sparkles',label:'Spa & Wellness',color:'var(--pur)'},
+      {id:'hotel',icon:'building-2',label:'Hotel',color:'var(--gld)'},
+      {id:'mechanic',icon:'wrench',label:'Auto Mechanic',color:'var(--t2)'},
+      {id:'plumbing',icon:'pipette',label:'Plumbing & HVAC',color:'#0369a1'},
+      {id:'convenience',icon:'shopping-bag',label:'Convenience Store',color:'var(--grn)'},
+      {id:'spotlight',icon:'star',label:'Secret Insider Spotlight',color:'var(--red)'},
+      {id:'music',icon:'music',label:'Music Services',color:'#7c3aed'},
+      {id:'entertainment',icon:'tv-2',label:'Entertainment',color:'#b45309'},
+    ];
+    const NIGERIA=[
+      'Abuja','Lagos','Ibadan','Kano','Port Harcourt','Benin City','Kaduna','Enugu',
+      'Owerri','Abeokuta','Akure','Calabar','Uyo','Warri','Jos','Ilorin','Aba',
+      'Asaba','Maiduguri','Zaria','Onitsha','Sokoto','Ile-Ife','Ado-Ekiti','Bauchi',
+    ];
+    const GLOBAL={
+      'United States':['New York','Los Angeles','Chicago','Houston','Miami','Atlanta','Dallas','San Francisco','Seattle','Boston'],
+      'United Kingdom':['London','Manchester','Birmingham','Leeds','Glasgow','Edinburgh','Liverpool','Bristol','Sheffield'],
+      'Canada':['Toronto','Vancouver','Montreal','Calgary','Ottawa','Edmonton','Winnipeg','Halifax'],
+      'Australia':['Sydney','Melbourne','Brisbane','Perth','Adelaide','Canberra','Gold Coast'],
+      'South Africa':['Johannesburg','Cape Town','Durban','Pretoria','Port Elizabeth','Bloemfontein'],
+      'Ghana':['Accra','Kumasi','Tamale','Cape Coast','Takoradi','Sunyani'],
+      'Kenya':['Nairobi','Mombasa','Kisumu','Nakuru','Eldoret','Thika'],
+      'India':['Mumbai','Delhi','Bangalore','Hyderabad','Chennai','Kolkata','Pune','Ahmedabad'],
+      'UAE':['Dubai','Abu Dhabi','Sharjah','Ajman','Ras Al Khaimah'],
+      'Germany':['Berlin','Munich','Hamburg','Frankfurt','Cologne','Stuttgart','Düsseldorf'],
+      'France':['Paris','Lyon','Marseille','Toulouse','Nice','Nantes','Bordeaux'],
+      'Brazil':['São Paulo','Rio de Janeiro','Brasília','Salvador','Fortaleza','Belo Horizonte'],
+      'Singapore':['Singapore City'],
+      'Japan':['Tokyo','Osaka','Kyoto','Yokohama','Nagoya','Sapporo','Fukuoka'],
+      'China':['Shanghai','Beijing','Shenzhen','Guangzhou','Chengdu','Hangzhou','Wuhan'],
+    };
+    const selCat=S._vCat||null;
+    const selCity=S._vCity||null;
+    const selCountry=S._vCountry||'Nigeria';
+
+    if(!selCat){
+      return`<div style="animation:pup .28s ease">
+        <p style="font-size:.875rem;color:var(--t2);margin-bottom:20px">Discover local businesses and services by category, anywhere in the world.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+          ${VENDOR_CATS.map(c=>`
+          <div onclick="A.setVendorCat('${c.id}')" style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:18px 16px;cursor:pointer;transition:var(--ease);display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px"
+            onmouseover="this.style.borderColor='${c.color}';this.style.transform='translateY(-2px)';this.style.boxShadow='var(--s2)'"
+            onmouseout="this.style.borderColor='var(--bdr)';this.style.transform='none';this.style.boxShadow='none'">
+            <div style="width:42px;height:42px;border-radius:var(--rsm);background:${c.color}18;display:flex;align-items:center;justify-content:center">
+              <i data-lucide="${c.icon}" style="width:20px;height:20px;color:${c.color}"></i>
+            </div>
+            <span style="font-weight:600;font-size:.8125rem;color:var(--t1)">${c.label}</span>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    const cat=VENDOR_CATS.find(c=>c.id===selCat);
+
+    // Country + city picker
+    const cities=selCountry==='Nigeria'?NIGERIA:(GLOBAL[selCountry]||[]);
+
+    return`<div style="animation:pup .28s ease">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <button class="back" style="margin:0" onclick="A.setVendorCat(null)"><i data-lucide="arrow-left" style="width:14px;height:14px"></i>Categories</button>
+        <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:7px;background:${cat.color}18;border:1.5px solid ${cat.color}44;border-radius:100px;padding:5px 14px 5px 8px">
+            <i data-lucide="${cat.icon}" style="width:15px;height:15px;color:${cat.color}"></i>
+            <span style="font-weight:600;font-size:.875rem;color:${cat.color}">${cat.label}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+        <div style="flex:1;min-width:160px">
+          <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);display:block;margin-bottom:6px">Country</label>
+          <select onchange="A.setVendorCountry(this.value)" style="font-size:.875rem">
+            <option value="Nigeria" ${selCountry==='Nigeria'?'selected':''}>🇳🇬 Nigeria</option>
+            ${Object.keys(GLOBAL).map(c=>`<option value="${c}" ${selCountry===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div style="flex:1;min-width:160px">
+          <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);display:block;margin-bottom:6px">City</label>
+          <select onchange="A.setVendorCity(this.value)" style="font-size:.875rem">
+            <option value="">All cities</option>
+            ${cities.map(city=>`<option value="${city}" ${selCity===city?'selected':''}>${city}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div style="background:linear-gradient(135deg,#F3EEFF,#E8EEFB);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:32px 24px;text-align:center">
+        <div style="width:48px;height:48px;background:${cat.color};border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+          <i data-lucide="${cat.icon}" style="width:22px;height:22px;color:#fff"></i>
+        </div>
+        <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">${cat.label} in ${selCity||selCountry}</div>
+        <p style="font-size:.875rem;color:var(--t2);margin-bottom:18px;line-height:1.6;max-width:380px;margin-left:auto;margin-right:auto">
+          Vendor listings for this category are coming soon. Be the first to list your ${cat.label.toLowerCase()} business here!
+        </p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          ${S.user
+            ?`<button class="btn bp" onclick="M.createOrder()"><i data-lucide="plus" style="width:14px;height:14px"></i>List My Business</button>`
+            :`<button class="btn bpur" onclick="M.auth()"><i data-lucide="user-plus" style="width:14px;height:14px"></i>Sign in to List</button>`}
+          <button class="btn bo" onclick="A.setVendorCat(null)">Browse Categories</button>
+        </div>
+      </div>
+    </div>`;
+  },
+
   _portfolio(){
     return`<div style="display:flex;align-items:center;justify-content:center;padding:56px 24px"><div class="cscard">
       <div class="csgfx"><i data-lucide="line-chart" style="width:48px;height:48px"></i></div>
@@ -1747,7 +1860,7 @@ const M = {
       <div class="modal">
         <div class="mhdr"><div><div class="mey">New Listing</div><h2 class="mtitle">Post an Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
         <div class="fg"><label>Title</label><input type="text" id="otitle" placeholder="e.g. Sell 0.1 ETH at spot rate"/></div>
-        <div class="fg"><label>Category</label><select id="ocat"><option value="">Select…</option><option value="p2p">P2P Crypto Trading</option><option value="logistics">Logistics / Delivery</option><option value="goods">Buy / Sell Goods</option><option value="handyman">Handyman / Service</option></select></div>
+        <div class="fg"><label>Category</label><select id="ocat"><option value="">Select…</option><option value="unique">Unique Requests</option><option value="logistics">Logistics</option><option value="goods">Goods</option><option value="services">Services</option><option value="b2b">B2B</option><option value="finance">Finance & Trading</option><option value="knowledge">Knowledge-based</option><option value="music">Music Services</option><option value="entertainment">Entertainment</option></select></div>
         <div class="fg"><label>Order Type</label><select id="otype"><option value="sell">Sell</option><option value="buy">Buy</option><option value="request">Service Request</option></select></div>
         <div class="fg">
           <label>Price / Budget</label>
@@ -1835,7 +1948,7 @@ const M = {
         </div>
         `:''}
         ${(()=>{
-          const imgs=(order.imageIds||'').split(',').filter(Boolean);
+          const imgs=(order.imageId||'').split(',').filter(Boolean);
           return imgs.length?`<div class="order-gallery">${imgs.map(id=>`<img src="${fileUrl(id)}" alt="Listing photo" onclick="window.open('${fileUrl(id)}','_blank')" onerror="this.style.display='none'">`).join('')}</div>`:'';
         })()}
         <div class="odh">
@@ -2050,6 +2163,7 @@ const A = {
     const isResolved=o.status==='filled'||o.status==='closed';
     if(isResolved){
       try{
+        // fetch the connection that completed this order
         const cRes=await DB.list('connections',[
           Query.equal('orderId',[id]),
           Query.limit(10),
@@ -2146,7 +2260,8 @@ const A = {
     const price=lower==='negotiable'?'Negotiable':(rawP.startsWith('$')?rawP:'$'+rawP);
     btn.disabled=true;btn.textContent='Posting…';
     const inits2=initials(S.user.name);
-    let imageIds='';
+    // Upload order images
+    let imageId='';
     try{
       const imgInput=document.getElementById('oimgs');
       const imgFiles=imgInput?.files?Array.from(imgInput.files).slice(0,3):[];
@@ -2159,7 +2274,7 @@ const A = {
             ids.push(up.$id);
           }catch(e){console.warn('img upload:',e.message);}
         }
-        imageIds=ids.join(',');
+        imageId=ids.join(',');
       }
     }catch(e){console.warn('img section:',e.message);}
     btn.textContent='Posting…';
@@ -2167,7 +2282,7 @@ const A = {
       const doc=await DB.create('orders',{
         userId:S.user.id,userName:S.user.name,userInitials:inits2,
         category:cat,type,title,price,desc:desc||'',status:'open',
-        imageIds,
+        imageId,
       });
       if(!S.orders)S.orders=[];
       S.orders.unshift({id:doc.$id,userId:S.user.id,userName:S.user.name,
@@ -2385,12 +2500,14 @@ const A = {
     const btn=document.getElementById('deal-btn-'+id);
     if(btn){btn.disabled=true;btn.textContent='Saving…';}
 
+    // Pull connection from local state BEFORE any await
     const allConns=S.myConnections||[];
     const conn=allConns.find(x=>x.id===id);
     const orderId=conn?.orderId||null;
     const buyerNameVal=conn?.fromName||'';
 
     try{
+      // Step 1: update the connection
       await DB.update('connections',id,{
         status     : 'deal_done',
         finalPrice : fp,
@@ -2398,8 +2515,10 @@ const A = {
         buyerName  : buyerNameVal,
       });
 
+      // Step 2: update the order to filled
       if(orderId){
         await DB.update('orders',orderId,{status:'filled'});
+        // reflect immediately in local state (if market was already loaded)
         if(S.orders){
           const ord=S.orders.find(x=>x.id===orderId);
           if(ord) ord.status='filled';
@@ -2533,6 +2652,10 @@ const A = {
       toast('Push notifications disabled.');
     }
   },
+
+  setVendorCat(cat){ S._vCat=cat; S._vCity=null; render(); },
+  setVendorCity(city){ S._vCity=city||null; render(); },
+  setVendorCountry(country){ S._vCountry=country; S._vCity=null; render(); },
 
   toggleWatch(id){
     S.watchlist.has(id)?S.watchlist.delete(id):S.watchlist.add(id);
