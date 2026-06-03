@@ -942,7 +942,7 @@ const P = {
       pending:{cls:'vstat-pending',icon:'clock',col:'var(--gld)',title:'Payment Under Review',
         desc:'Your payment reference is being confirmed. Access granted within 24 hours.'},
     }[S.subStatus]||{cls:'vstat-unverified',icon:'lock',col:'var(--t3)',title:'Free Plan',
-      desc:'Upgrade to Pro ($5/month) to unlock full marketplace, forum, and 500+ crypto assets.'};
+      desc:'Upgrade to Pro ($20/month) to unlock full marketplace, forum, and 500+ crypto assets.'};
 
     const vTag=S.verifyStatus==='verified'?`<span class="tag tg"><i data-lucide="check-circle" style="width:11px;height:11px"></i>Verified</span>`
       :S.verifyStatus==='pending'?`<span class="tag tgd"><i data-lucide="clock" style="width:11px;height:11px"></i>Pending Review</span>`
@@ -997,7 +997,7 @@ const P = {
       <div class="psec">
         <div class="psect">Subscription
           ${!S.subscribed&&S.subStatus!=='pending'
-            ?`<button class="btn bpur bsm" onclick="R.go('sub')"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — $5/mo</button>`:''}
+            ?`<button class="btn bpur bsm" onclick="R.go('sub')"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — $20/mo</button>`:''}
         </div>
         <div class="vstat-box ${subInfo.cls}">
           <i data-lucide="${subInfo.icon}" style="width:20px;height:20px;color:${subInfo.col};flex-shrink:0;margin-top:1px"></i>
@@ -1302,8 +1302,8 @@ const P = {
     if(!S.subscribed){return`<div class="gate-banner">
       <div class="gate-icon"><i data-lucide="message-circle" style="width:24px;height:24px"></i></div>
       <h3 class="gate-t">Open Forum is a Pro Feature</h3>
-      <p class="gate-d">Join the community, share market insights, and connect with traders — included in the $5/month Pro plan.</p>
-      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $5/month</button>
+      <p class="gate-d">Join the community, share market insights, and connect with traders — included in the $20/month Pro plan.</p>
+      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/month</button>
     </div>`;}
     if(S.msgsLoading)return`<div class="chat-wrap"><div class="chat-empty"><div class="spin"></div><br>Loading forum…</div></div>`;
     const msgs=S.msgs||[];
@@ -1454,7 +1454,7 @@ const P = {
       <div class="gate-icon"><i data-lucide="layout-grid" style="width:24px;height:24px"></i></div>
       <h3 class="gate-t">Datum List is a Pro Feature</h3>
       <p class="gate-d">Access our curated tracker — handpicked assets with live prices and returns across YTD, 5-year, 10-year, and your personal return since joining Datum.</p>
-      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $5/month</button>
+      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/month</button>
     </div>`;}
 
     const lp=S.alPrices;const loading=S.alLoading;
@@ -1936,7 +1936,7 @@ const P = {
       <div style="text-align:center;margin-bottom:8px">
         <div class="sub-badge"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro Membership</div>
         <h1 class="l-h" style="font-size:clamp(1.8rem,4vw,2.8rem);margin-bottom:10px">Unlock <em>everything</em> on Datum.</h1>
-        <div class="sub-price">$5 <span>/ month</span></div>
+        <div class="sub-price">$20 <span>/ month</span></div>
         <p style="font-size:.95rem;color:var(--t2);max-width:420px;margin:10px auto 0;line-height:1.6">One flat rate. Full access to marketplace, open forum, and 500+ live crypto assets.</p>
       </div>
 
@@ -1960,7 +1960,7 @@ const P = {
         </div>`
       :`<div class="pay-card">
         <h3 style="font-family:var(--fd);font-size:1.35rem;margin-bottom:5px">Choose Payment Method</h3>
-        <p style="font-size:.8rem;color:var(--t2);margin-bottom:22px;line-height:1.6">$5/month — secure checkout, instant activation for card/bank payments.</p>
+        <p style="font-size:.8rem;color:var(--t2);margin-bottom:22px;line-height:1.6">$20/month — secure checkout, instant activation for card/bank payments.</p>
         ${!S.user
           ?`<div style="text-align:center;padding:14px;background:var(--surf);border-radius:var(--rsm);font-size:.875rem;color:var(--t2)"><a onclick="M.auth()" style="color:var(--t1);font-weight:500;cursor:pointer">Sign in first</a> to continue to payment.</div>`
           :`<div style="display:flex;flex-direction:column;gap:12px">
@@ -2201,14 +2201,14 @@ const M = {
         <div style="text-align:center;padding:8px 0 20px">
           <div style="width:56px;height:56px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff"><i data-lucide="lock" style="width:24px;height:24px"></i></div>
           <p style="font-family:var(--fd);font-size:1.35rem;margin-bottom:8px">This is a Pro feature</p>
-          <p style="font-size:.875rem;color:var(--t2);margin-bottom:0;line-height:1.6">Upgrade to Pro for $5/month to unlock full marketplace access, the open forum, and 500+ crypto assets.</p>
+          <p style="font-size:.875rem;color:var(--t2);margin-bottom:0;line-height:1.6">Upgrade to Pro for $20/month to unlock full marketplace access, the open forum, and 500+ crypto assets.</p>
         </div>
         ${S.user
           ?`<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
-              <button class="btn bp" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withFlutterwave()"><i data-lucide="credit-card" style="width:14px;height:14px"></i>Pay by Card or Bank — $5/month</button>
-              <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withCrypto()"><i data-lucide="bitcoin" style="width:14px;height:14px"></i>Pay with Crypto — $5/month</button>
+              <button class="btn bp" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withFlutterwave()"><i data-lucide="credit-card" style="width:14px;height:14px"></i>Pay by Card or Bank — $20/month</button>
+              <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withCrypto()"><i data-lucide="bitcoin" style="width:14px;height:14px"></i>Pay with Crypto — $20/month</button>
             </div>`
-          :`<button class="btn bpur" style="width:100%;justify-content:center;padding:12px;margin-bottom:10px" onclick="M.close();R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $5/month</button>`}
+          :`<button class="btn bpur" style="width:100%;justify-content:center;padding:12px;margin-bottom:10px" onclick="M.close();R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/month</button>`}
         <button class="btn bo" style="width:100%;justify-content:center" onclick="M.close()">Maybe Later</button>
       </div>
     </div>`);
@@ -2219,7 +2219,7 @@ const M = {
       {icon:'user-check',title:'Complete your profile',desc:'Upload a photo and submit your ID for the Verified badge — buyers trust verified sellers.'},
       {icon:'store',title:'Post your first listing',desc:'Head to the Marketplace and tap "Post Listing" to sell, buy, or request a service.'},
       {icon:'bar-chart-2',title:'Track live markets',desc:'Check real-time prices for 500+ crypto and financial assets in the Markets section.'},
-      {icon:'zap',title:'Upgrade to Pro',desc:'Unlock the Open Forum, full marketplace access, and the Datum List for $5/month.'},
+      {icon:'zap',title:'Upgrade to Pro',desc:'Unlock the Open Forum, full marketplace access, and the Datum List for $20/month.'},
     ];
     let step=0;
     const show=()=>{
@@ -3268,7 +3268,7 @@ const PAY = {
       },
       customizations: {
         title      : 'Toomuchcoin Pro',
-        description: '$5/month — Full platform access',
+        description: '$20/month — Full platform access',
         logo       : '',
       },
       callback: async function(data){
