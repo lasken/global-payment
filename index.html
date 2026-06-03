@@ -3355,7 +3355,22 @@ document.addEventListener('DOMContentLoaded', async()=>{
   // Load manual stock prices from prices.json (cache-busted each page load)
   fetch('prices.json?v='+Date.now())
     .then(r=>r.json())
-    .then(data=>{ S._manualPrices=data; render(); })
+    .then(data=>{
+      S._manualPrices=data;
+      // Set baselines for stock assets on first visit so Since Joined % works
+      const STOCK_IDS=['gold','nvda','spx','dxy','tsla','mstr','nasdaq','lvmh','tsmc'];
+      let baselines={};
+      try{ baselines=JSON.parse(localStorage.getItem('datum_user_baselines'))||{}; }catch(e){}
+      let changed=false;
+      STOCK_IDS.forEach(id=>{
+        if(!baselines[id]&&data[id]!=null){
+          baselines[id]=data[id];
+          changed=true;
+        }
+      });
+      if(changed) localStorage.setItem('datum_user_baselines',JSON.stringify(baselines));
+      render();
+    })
     .catch(()=>{}); // silently falls back to hardcoded values if fetch fails
   render();
   loadCoins();
