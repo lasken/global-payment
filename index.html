@@ -1647,7 +1647,7 @@ const P = {
         </div>`).join('')}
 
       <div class="al-note" style="margin-top:8px">
-        <strong>Live data</strong> via Yahoo Finance &amp; CoinGecko. &nbsp;|&nbsp;
+        <strong>Live data</strong> via Yahoo Finance &amp; CoinGecko. Stock logos via FMP. &nbsp;|&nbsp;
         <strong>Columns:</strong> YTD = year-to-date · 2020 (6Y) = since Jan 2020 · 5Y/10Y = multi-year cumulative · &nbsp;|&nbsp; Not financial advice.
       </div>`;
   },
@@ -2053,7 +2053,7 @@ const M = {
   },
 
   createOrder(){
-    if(!S.user){M.auth();toast('You need to be signed in to post a listing.');return;}
+    if(!S.user){M.auth();toast('Please sign in to post a listing.');return;}
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
         <div class="mhdr"><div><div class="mey">New Listing</div><h2 class="mtitle">Post an Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
@@ -2247,6 +2247,115 @@ const M = {
     show();
   },
 
+  contactSupport(){
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal" style="max-width:480px">
+        <div class="mhdr">
+          <div><div class="mey">We're here to help</div><h2 class="mtitle">Contact Support</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+
+        <!-- Quick contact options -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px">
+          <a href="https://wa.me/2348159718496" target="_blank" rel="noopener"
+            style="display:flex;align-items:center;gap:10px;padding:14px;background:#E6F5EE;border:1.5px solid #B3DFCA;border-radius:var(--rmd);text-decoration:none;transition:var(--ease)"
+            onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+            <div style="width:36px;height:36px;background:var(--grn);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </div>
+            <div><div style="font-weight:600;font-size:.8125rem;color:var(--grn)">WhatsApp</div><div style="font-size:.72rem;color:var(--t2)">Fastest response</div></div>
+          </a>
+          <a href="mailto:support@toomuchcoin.com"
+            style="display:flex;align-items:center;gap:10px;padding:14px;background:#E8EEFB;border:1.5px solid #C4D0F0;border-radius:var(--rmd);text-decoration:none;transition:var(--ease)"
+            onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+            <div style="width:36px;height:36px;background:var(--blu);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div><div style="font-weight:600;font-size:.8125rem;color:var(--blu)">Email Us</div><div style="font-size:.72rem;color:var(--t2)">support@toomuchcoin.com</div></div>
+          </a>
+        </div>
+
+        <!-- Message form -->
+        <div style="border-top:1px solid var(--bdr);padding-top:20px">
+          <div style="font-weight:600;font-size:.875rem;margin-bottom:14px">Or send us a message</div>
+          <div class="fg">
+            <label>What do you need help with?</label>
+            <select id="cs-topic">
+              <option value="">Select a topic…</option>
+              <option value="payment">Payment or subscription issue</option>
+              <option value="account">Account access or login problem</option>
+              <option value="listing">Issue with a listing or order</option>
+              <option value="commission">Commission or deal dispute</option>
+              <option value="verification">ID verification question</option>
+              <option value="bug">Something isn't working properly</option>
+              <option value="other">Something else</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Message</label>
+            <textarea id="cs-msg" rows="4" placeholder="Describe what happened and we'll get back to you as soon as possible…"></textarea>
+          </div>
+          ${S.user?'':`<div class="fg"><label>Your email</label><input type="email" id="cs-email" placeholder="so we can reply to you"/></div>`}
+          <div class="ferr" id="cserr2"></div>
+          <button class="btn bp" id="csbtn2" style="width:100%;justify-content:center;padding:12px" onclick="A.submitSupport()">
+            <i data-lucide="send" style="width:14px;height:14px"></i>Send Message
+          </button>
+        </div>
+      </div>
+    </div>`);
+  },
+
+  forgotPassword(){
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal" style="max-width:420px">
+        <div class="mhdr">
+          <div><div class="mey">Account Recovery</div><h2 class="mtitle">Reset Password</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+        <div style="background:var(--off);border-radius:var(--rsm);padding:12px 14px;margin-bottom:20px;font-size:.8rem;color:var(--t2);line-height:1.6">
+          Enter the email address on your account and we'll send you a link to reset your password. Check your spam folder if it doesn't arrive within a few minutes.
+        </div>
+        <div class="fg"><label>Email Address</label><input type="email" id="fpemail" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')A.sendReset()"/></div>
+        <div class="ferr" id="fperr"></div>
+        <button class="btn bp" id="fpbtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.sendReset()">
+          <i data-lucide="send" style="width:14px;height:14px"></i>Send Reset Link
+        </button>
+        <div style="text-align:center;margin-top:14px"><a onclick="M.auth()" style="font-size:.78rem;color:var(--t2);cursor:pointer;text-decoration:underline">Back to Sign In</a></div>
+      </div>
+    </div>`);
+  },
+
+  forgotPasswordSuccess(){
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal" style="max-width:420px;text-align:center">
+        <div style="width:56px;height:56px;background:#E6F5EE;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--grn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="mey" style="margin-bottom:6px">Check your inbox</div>
+        <h2 class="mtitle" style="margin-bottom:10px">Reset link sent!</h2>
+        <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:22px">We've sent a password reset link to your email. Click the link in the email to choose a new password. It expires in 1 hour.</p>
+        <p style="font-size:.78rem;color:var(--t3);margin-bottom:20px">Didn't get it? Check your spam folder, or <a onclick="M.forgotPassword()" style="color:var(--t1);cursor:pointer;text-decoration:underline">try again</a>.</p>
+        <button class="btn bp" style="width:100%;justify-content:center;padding:12px" onclick="M.close()">Done</button>
+      </div>
+    </div>`);
+  },
+
+  resetPassword(userId, secret){
+    M.show(`<div class="mback">
+      <div class="modal" style="max-width:420px">
+        <div class="mhdr">
+          <div><div class="mey">Almost there</div><h2 class="mtitle">Choose a New Password</h2></div>
+        </div>
+        <div class="fg"><label>New Password</label><input type="password" id="rp-pwd" placeholder="Min. 8 characters" autocomplete="new-password"/></div>
+        <div class="fg"><label>Confirm New Password</label><input type="password" id="rp-pwd2" placeholder="Repeat your new password" autocomplete="new-password" onkeydown="if(event.key==='Enter')A.confirmReset('${userId}','${secret}')"/></div>
+        <div class="ferr" id="rperr"></div>
+        <button class="btn bp" id="rpbtn" style="width:100%;justify-content:center;padding:12px;margin-top:4px" onclick="A.confirmReset('${userId}','${secret}')">
+          <i data-lucide="lock" style="width:14px;height:14px"></i>Set New Password
+        </button>
+      </div>
+    </div>`);
+  },
+
   vendorWaitlist(catId,city,catLabel){
     if(!S.user){M.auth();return;}
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
@@ -2327,7 +2436,7 @@ const A = {
     const pwd=document.getElementById('lpwd')?.value;
     const err=document.getElementById('lerr');
     const btn=document.getElementById('lbtn');
-    if(!email||!pwd){err.textContent='Please enter your email and password.';return;}
+    if(!email||!pwd){err.textContent='Please fill in all fields.';return;}
     btn.disabled=true;btn.textContent='Signing in…';
     try{
       await DB.login(email,pwd);
@@ -2340,7 +2449,7 @@ const A = {
       M.close();R.go('profile');
       toast('Welcome back, '+S.user.name.split(' ')[0]+'!','ok');
     }catch(e){
-      err.textContent=e.message.includes('401')||e.message.includes('invalid')||e.message.includes('password')?'The email or password you entered is incorrect. Please try again.':'Something went wrong signing you in. Please try again in a moment.';
+      err.textContent='Login failed: '+(e.message.includes('401')||e.message.includes('invalid')?'Wrong email or password.':e.message);
       btn.disabled=false;btn.textContent='Sign In';
     }
   },
@@ -2352,8 +2461,8 @@ const A = {
     const type=S.signupType;
     const err=document.getElementById('serr');
     const btn=document.getElementById('sbtn');
-    if(!name||!email||!pwd){err.textContent='Please fill in your name, email, and a password to continue.';return;}
-      if(!type){err.textContent='Please choose whether you\'re signing up as a Business or an Individual.';return;}
+    if(!name||!email||!pwd){err.textContent='Please fill in all fields.';return;}
+    if(!type){err.textContent='Please select an account type.';return;}
     btn.disabled=true;btn.textContent='Creating account…';
     try{
       const u=await DB.register(email,pwd,name);
@@ -2376,7 +2485,7 @@ const A = {
       M.welcomeGuide();
       toast('Account created! Welcome, '+name.split(' ')[0]+'.','ok');
     }catch(e){
-      err.textContent=e.message.includes('409')||e.message.includes('conflict')?'An account with this email already exists. Try signing in instead.':'We couldn\'t create your account right now. Please check your details and try again.';
+      err.textContent='Signup failed: '+(e.message.includes('409')?'Email already in use.':e.message);
       btn.disabled=false;btn.textContent='Create Account';
     }
   },
@@ -2448,7 +2557,7 @@ const A = {
   },
 
   connectOrder(id){
-    if(!S.user){M.auth();toast('Sign in first to send a connection request.');return;}
+    if(!S.user){M.auth();toast('Please sign in to connect.');return;}
     if(!S.subscribed){M.subscribe();return;}
     const o=(S.orders||[]).find(x=>x.id===id);
     if(!o) return;
@@ -2466,8 +2575,8 @@ const A = {
     const contact=document.getElementById('ccontact')?.value?.trim();
     const err=document.getElementById('cerr');
     const btn=document.getElementById('cbtn');
-    if(!msg){err.textContent='Write a short message to introduce yourself to the seller.';return;}
-    if(!contact){err.textContent='Add a way for the seller to reach you - WhatsApp, phone, or email.';return;}
+    if(!msg){err.textContent='Please write a message.';return;}
+    if(!contact){err.textContent='Please provide your contact details.';return;}
     btn.disabled=true;btn.textContent='Sending…';
     try{
       await DB.create('connections',{
@@ -2481,7 +2590,7 @@ const A = {
       M.close();
       toast('Connection request sent to '+toName.split(' ')[0]+'! They will see it in their inbox.','ok');
     }catch(e){
-      err.textContent='Your request couldn\'t be sent right now. Please try again.';
+      err.textContent='Failed: '+e.message;
       btn.disabled=false;btn.textContent='Send Request';
     }
   },
@@ -2499,9 +2608,9 @@ const A = {
     const desc=document.getElementById('odesc')?.value?.trim();
     const err=document.getElementById('oerr');
     const btn=document.getElementById('obtn');
-    if(!title){err.textContent='Give your listing a title so buyers know what you\'re offering.';return;}
-    if(!cat){err.textContent='Please choose a category for your listing.';return;}
-    if(!rawP){err.textContent='Add a price or type "Negotiable" if you\'re open to offers.';return;}
+    if(!title){err.textContent='Please add a title.';return;}
+    if(!cat){err.textContent='Please select a category.';return;}
+    if(!rawP){err.textContent='Please add a price or budget.';return;}
     const lower=rawP.toLowerCase();
     const price=lower==='negotiable'?'Negotiable':(rawP.startsWith('$')?rawP:'$'+rawP);
     btn.disabled=true;btn.textContent='Posting…';
@@ -2547,7 +2656,7 @@ const A = {
         }catch(e){console.warn('listing notif:',e.message);}
       })();
     }catch(e){
-      err.textContent='Your listing couldn\'t be posted right now. Please try again.';
+      err.textContent='Failed: '+e.message;
       btn.disabled=false;btn.textContent='Post Listing';
     }
   },
@@ -2585,8 +2694,8 @@ const A = {
     const method=document.getElementById('submethod')?.value;
     const err=document.getElementById('suberr');
     const btn=document.getElementById('subbtn');
-    if(!ref){err.textContent='Paste your payment reference or transaction ID so we can confirm your payment.';return;}
-    if(!method){err.textContent='Let us know how you paid so we can match your reference correctly.';return;}
+    if(!ref){err.textContent='Please enter your payment reference.';return;}
+    if(!method){err.textContent='Please select your payment method.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
       await DB.create('subscription',{userId:S.user.id,status:'pending',plan:'monthly',amount:'5',reference:ref,paymentMethod:method});
@@ -2594,7 +2703,7 @@ const A = {
       toast('Reference submitted! Access granted within 24 hours.','ok');
       render();
     }catch(e){
-      err.textContent='We couldn\'t submit your reference right now. Please try again or contact support.';
+      err.textContent='Failed: '+e.message;
       btn.disabled=false;btn.textContent='Submit Payment Reference';
     }
   },
@@ -2606,9 +2715,9 @@ const A = {
     const note=document.getElementById('vidnote')?.value?.trim();
     const err=document.getElementById('verr');
     const btn=document.getElementById('vbtn');
-    if(!name){err.textContent='Enter your full name exactly as it appears on your ID.';return;}
-    if(!idType){err.textContent='Select the type of ID you\'re submitting.';return;}
-    if(!idNum){err.textContent='Enter the number shown on your ID document.';return;}
+    if(!name){err.textContent='Please enter your full name.';return;}
+    if(!idType){err.textContent='Please select an ID type.';return;}
+    if(!idNum){err.textContent='Please enter your ID number.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
       await DB.create('verifications',{userId:S.user.id,fullName:name,idType,idNumber:idNum,note:note||'',status:'pending'});
@@ -2616,7 +2725,7 @@ const A = {
       M.close();render();
       toast('Verification submitted! Review within 24–48 hours.','ok');
     }catch(e){
-      err.textContent='Your verification couldn\'t be submitted right now. Please try again.';
+      err.textContent='Failed: '+e.message;
       btn.disabled=false;btn.textContent='Submit for Verification';
     }
   },
@@ -2635,7 +2744,7 @@ const A = {
         await pushNotif(conn.fromUserId,'Request accepted!',S.user.name+' accepted your connection for "'+conn.orderTitle+'".');
       }
       render();toast('Connection accepted!','ok');
-    }catch(e){toast('Something went wrong. Please refresh and try again.','err');}
+    }catch(e){toast('Failed: '+e.message,'err');}
   },
   async declineConn(id){ /* replaced by showDeclineForm flow */ },
   showDeclineForm(id){
@@ -2653,7 +2762,7 @@ const A = {
       await loadMyConnections();render();
       toast('Connection declined.');
     }catch(e){
-      toast('Couldn\'t decline this request right now. Please try again.','err');
+      toast('Failed: '+e.message,'err');
       if(btn){btn.disabled=false;btn.textContent='Confirm Decline';}
     }
   },
@@ -2712,7 +2821,7 @@ const A = {
   async submitReview(connId,orderId,sellerId,sellerName){
     const rating=S._reviewRating;
     const comment=document.getElementById('review-comment-'+connId)?.value?.trim();
-    if(!rating){toast('Tap a star to rate your experience before submitting.','err');return;}
+    if(!rating){toast('Please select a star rating.','err');return;}
     const btn=document.getElementById('review-btn-'+connId);
     if(btn){btn.disabled=true;btn.textContent='Submitting…';}
     try{
@@ -2729,7 +2838,7 @@ const A = {
       render();
       toast('Review submitted! Thank you.','ok');
     }catch(e){
-      toast('Your review couldn\'t be submitted right now. Please try again.','err');
+      toast('Failed: '+e.message,'err');
       if(btn){btn.disabled=false;btn.textContent='Submit Review';}
     }
   },
@@ -2741,7 +2850,7 @@ const A = {
     const inp=document.getElementById('deal-price-'+id);
     const rawVal=inp?.value||'';
     const fp=parseFloat(rawVal.replace(/[^0-9.]/g,''));
-    if(!fp||isNaN(fp)||fp<=0){toast('Enter the final price you and the buyer agreed on to continue.','err');return;}
+    if(!fp||isNaN(fp)||fp<=0){toast('Please enter the final agreed price.','err');return;}
     const comm=(fp*0.02).toFixed(2);
     const btn=document.getElementById('deal-btn-'+id);
     if(btn){btn.disabled=true;btn.textContent='Saving…';}
@@ -2791,7 +2900,7 @@ const A = {
   },
   async submitCommission(id){
     const ref=document.getElementById('comm-ref-'+id)?.value?.trim();
-    if(!ref){toast('Paste your payment reference or transaction hash so we can verify your commission.','err');return;}
+    if(!ref){toast('Please enter your payment reference.','err');return;}
     const btn=document.getElementById('comm-btn-'+id);
     if(btn){btn.disabled=true;btn.textContent='Submitting…';}
     try{
@@ -2890,12 +2999,109 @@ const A = {
         render();
         await saveNotifPrefs();
         toast('Push notifications enabled!','ok');
-      }catch(e){toast('We couldn\'t turn on push notifications. Check your browser permissions and try again.','err');}
+      }catch(e){toast('Could not enable push: '+e.message,'err');}
     }else{
       S.notifPrefs.pushEnabled=false;
       render();
       await saveNotifPrefs();
       toast('Push notifications disabled.');
+    }
+  },
+
+  async submitSupport(){
+    const topic=document.getElementById('cs-topic')?.value;
+    const msg=document.getElementById('cs-msg')?.value?.trim();
+    const emailEl=document.getElementById('cs-email');
+    const replyEmail=emailEl?emailEl.value.trim():S.user?.email||'';
+    const err=document.getElementById('cserr2');
+    const btn=document.getElementById('csbtn2');
+    if(!topic){err.textContent='Let us know what you need help with by selecting a topic above.';return;}
+    if(!msg||msg.length<10){err.textContent='Please describe your issue in a bit more detail so we can help you properly.';return;}
+    if(!replyEmail){err.textContent='Add your email address so we can get back to you.';return;}
+    btn.disabled=true;btn.textContent='Sending…';
+    try{
+      await createNotif(ADMIN_ID,'reply',
+        'Support: '+topic+(S.user?' — '+S.user.name:' — '+replyEmail),
+        msg+' | Reply to: '+replyEmail,
+        '',''
+      );
+      M.close();
+      toast('Message sent! We typically reply within 24 hours.','ok');
+    }catch(e){
+      err.textContent='Your message couldn\'t be sent right now. Please email us directly at support@toomuchcoin.com.';
+      btn.disabled=false;btn.textContent='Send Message';
+    }
+  },
+
+  async sendReset(){
+    const email=document.getElementById('fpemail')?.value?.trim();
+    const err=document.getElementById('fperr');
+    const btn=document.getElementById('fpbtn');
+    if(!email){err.textContent='Enter the email address on your account.';return;}
+    btn.disabled=true;btn.textContent='Sending…';
+    try{
+      await _acc.createRecovery(email, window.location.origin+window.location.pathname+'?reset=1');
+      M.forgotPasswordSuccess();
+    }catch(e){
+      err.textContent=e.message.includes('user_not_found')||e.message.includes('404')
+        ?'We couldn\'t find an account with that email address.'
+        :'Something went wrong. Please try again in a moment.';
+      btn.disabled=false;btn.textContent='Send Reset Link';
+    }
+  },
+
+  async confirmReset(userId, secret){
+    const pwd=document.getElementById('rp-pwd')?.value;
+    const pwd2=document.getElementById('rp-pwd2')?.value;
+    const err=document.getElementById('rperr');
+    const btn=document.getElementById('rpbtn');
+    if(!pwd||pwd.length<8){err.textContent='Your password needs to be at least 8 characters long.';return;}
+    if(pwd!==pwd2){err.textContent='The passwords don\'t match — please check and try again.';return;}
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      await _acc.updateRecovery(userId, secret, pwd);
+      M.close();
+      toast('Password updated! You can now sign in with your new password.','ok');
+      M.auth();
+    }catch(e){
+      err.textContent='This reset link has expired or already been used. Please request a new one.';
+      btn.disabled=false;btn.textContent='Set New Password';
+    }
+  },
+
+  async sendReset(){
+    const email=document.getElementById('fpemail')?.value?.trim();
+    const err=document.getElementById('fperr');
+    const btn=document.getElementById('fpbtn');
+    if(!email){err.textContent='Enter the email address on your account.';return;}
+    btn.disabled=true;btn.textContent='Sending…';
+    try{
+      await _acc.createRecovery(email, window.location.origin+window.location.pathname+'?reset=1');
+      M.forgotPasswordSuccess();
+    }catch(e){
+      err.textContent=e.message.includes('user_not_found')||e.message.includes('404')
+        ?'We couldn\'t find an account with that email address.'
+        :'Something went wrong. Please try again in a moment.';
+      btn.disabled=false;btn.textContent='Send Reset Link';
+    }
+  },
+
+  async confirmReset(userId, secret){
+    const pwd=document.getElementById('rp-pwd')?.value;
+    const pwd2=document.getElementById('rp-pwd2')?.value;
+    const err=document.getElementById('rperr');
+    const btn=document.getElementById('rpbtn');
+    if(!pwd||pwd.length<8){err.textContent='Your password needs to be at least 8 characters long.';return;}
+    if(pwd!==pwd2){err.textContent='The passwords don\'t match — please check and try again.';return;}
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      await _acc.updateRecovery(userId, secret, pwd);
+      M.close();
+      toast('Password updated! You can now sign in with your new password.','ok');
+      M.auth();
+    }catch(e){
+      err.textContent='This reset link has expired or already been used. Please request a new one.';
+      btn.disabled=false;btn.textContent='Set New Password';
     }
   },
 
@@ -2945,11 +3151,12 @@ const A = {
         body:'Email: '+email+(feature?' | Feature: '+feature:''),
         link:'',read:false,orderId:'',category:'portfolio_waitlist',
       });
+      // Also ping admin
       await createNotif(ADMIN_ID,'subscription','New portfolio waitlist signup',S.user.name+' ('+email+') joined the portfolio tracker waitlist.'+(feature?' Wants: '+feature:''),'');
       M.close();
       toast('You\'re on the list! We\'ll email you when Portfolio Tracker launches.','ok');
     }catch(e){
-      err.textContent='Something went wrong. Please try again.';
+      err.textContent='Failed: '+e.message;
       btn.disabled=false;btn.textContent='Notify Me at Launch';
     }
   },
@@ -3004,7 +3211,7 @@ const A = {
     const err=document.getElementById('wlerr');
     const btn=document.getElementById('wlbtn');
     if(!bizName){err.textContent='Please enter your business name.';return;}
-    if(!contact){err.textContent='Add a contact number or handle so customers can reach you if you win.';return;}
+    if(!contact){err.textContent='Please provide a contact.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
       await DB.create('connections',{
@@ -3018,7 +3225,7 @@ const A = {
       M.close();
       toast(bizName+' added to the '+catLabel+' waitlist for '+city+'!','ok');
     }catch(e){
-      err.textContent='We couldn\'t add you to the waitlist right now. Please try again.';
+      err.textContent='Failed: '+e.message;
       btn.disabled=false;btn.textContent='Join the Waitlist';
     }
   },
@@ -3044,7 +3251,7 @@ const PAY = {
   withFlutterwave(){
     if(!S.user){ M.auth(); return; }
     if(!_hasFwKey){
-      toast('Card payment isn\'t available right now. Please use the manual transfer option below.','err');
+      toast('Payment not configured yet — config.js missing.','err');
       console.warn('Set FW_PUBLIC_KEY in config.js');
       return;
     }
@@ -3080,9 +3287,9 @@ const PAY = {
             M.close();
             render();
             toast('Payment successful! Pro access activated.','ok');
-          }catch(e){ toast('Payment received! If your access isn\'t active within a few minutes, please contact us and we\'ll sort it out.','err'); }
+          }catch(e){ toast('Payment received but activation failed — contact support.','err'); }
         } else {
-          toast('Looks like the payment didn\'t go through. You can try again or use a different method.','err');
+          toast('Payment was not completed.','err');
         }
       },
       onclose: function(){
@@ -3093,7 +3300,7 @@ const PAY = {
   async withCrypto(){
     if(!S.user){ M.auth(); return; }
     if(!_hasFnId){
-      toast('Crypto checkout isn\'t available right now. Please try another payment method.','err');
+      toast('Crypto payment not configured yet.','err');
       console.warn('Set APPWRITE_FN_ID in config.js');
       return;
     }
@@ -3120,7 +3327,7 @@ const PAY = {
         toast('Crypto checkout opened in new tab. Access granted after confirmation.','ok');
       }
     }catch(e){
-      toast('We couldn\'t open the crypto checkout right now. Please try again or use card payment.','err');
+      toast('Could not create crypto invoice: '+e.message,'err');
       if(btn){ btn.disabled=false; btn.textContent='Pay with Crypto (USDT)'; }
     }
   },
