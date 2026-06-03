@@ -4,7 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Toomuchcoin</title>
-  <link rel="icon" type="image/jpeg" href="toomuchcoin.png">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="toomuchcoin.png">
   
   <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta property="og:description" content="Agentic Commerce: Your passport to trade and access the globe 🌎"/>
@@ -443,7 +444,10 @@
 </head>
 <body>
 <nav id="gnav">
-  <div class="nbrand" onclick="R.go('land')">Toomuchcoin<span>.</span></div>
+  <div class="nbrand" onclick="R.go('land')" style="display:flex;align-items:center;gap:8px">
+    <img src="toomuchcoin.png" alt="Toomuchcoin" style="width:28px;height:28px;object-fit:contain;display:block;flex-shrink:0">
+    Toomuchcoin<span>.</span>
+  </div>
   <div class="nact" id="nact"></div>
 </nav>
 <main id="root"></main>
@@ -2003,7 +2007,10 @@ const M = {
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
         <div class="mhdr">
-          <div><div class="mey">${login?'Welcome back':'Create account'}</div><h2 class="mtitle">${login?'Sign In':'Join Datum'}</h2></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <img src="toomuchcoin.png" alt="Toomuchcoin" style="width:32px;height:32px;object-fit:contain;border-radius:6px;flex-shrink:0">
+            <div><div class="mey">${login?'Welcome back':'Create account'}</div><h2 class="mtitle">${login?'Sign In':'Join Datum'}</h2></div>
+          </div>
           <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
         </div>
         <div class="mtabs">
