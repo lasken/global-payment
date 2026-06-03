@@ -2052,7 +2052,7 @@ const M = {
   },
 
   createOrder(){
-    if(!S.user){M.auth();toast('Please sign in to post a listing.');return;}
+    if(!S.user){M.auth();toast('You need to be signed in to post a listing.');return;}
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
         <div class="mhdr"><div><div class="mey">New Listing</div><h2 class="mtitle">Post an Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
@@ -2306,14 +2306,27 @@ const R = {
 
 const A = {
   authTab(t){ S.authTab=t; M.auth(); },
-  setUType(t){ S.signupType=t; M.auth(); },
+  setUType(t){
+    S.signupType=t;
+    document.querySelectorAll('.utcard').forEach(el=>el.classList.remove('on'));
+    document.querySelectorAll('.utcard').forEach(el=>{
+      const icon=el.querySelector('.uticon i');
+      if(el.querySelector('.utn')?.textContent==='Business'){
+        el.classList.toggle('on',t==='A');
+        if(icon){icon.closest('.uticon').style.background=t==='A'?'var(--t1)':'var(--surf)';icon.style.color=t==='A'?'var(--white)':'var(--t2)';}
+      } else {
+        el.classList.toggle('on',t==='B');
+        if(icon){icon.closest('.uticon').style.background=t==='B'?'var(--t1)':'var(--surf)';icon.style.color=t==='B'?'var(--white)':'var(--t2)';}
+      }
+    });
+  },
 
   async login(){
     const email=document.getElementById('lemail')?.value?.trim();
     const pwd=document.getElementById('lpwd')?.value;
     const err=document.getElementById('lerr');
     const btn=document.getElementById('lbtn');
-    if(!email||!pwd){err.textContent='Please fill in all fields.';return;}
+    if(!email||!pwd){err.textContent='Please enter your email and password.';return;}
     btn.disabled=true;btn.textContent='Signing in…';
     try{
       await DB.login(email,pwd);
@@ -2326,7 +2339,7 @@ const A = {
       M.close();R.go('profile');
       toast('Welcome back, '+S.user.name.split(' ')[0]+'!','ok');
     }catch(e){
-      err.textContent='Login failed: '+(e.message.includes('401')||e.message.includes('invalid')?'Wrong email or password.':e.message);
+      err.textContent=e.message.includes('401')||e.message.includes('invalid')||e.message.includes('password')?'The email or password you entered is incorrect. Please try again.':'Something went wrong signing you in. Please try again in a moment.';
       btn.disabled=false;btn.textContent='Sign In';
     }
   },
@@ -2338,8 +2351,8 @@ const A = {
     const type=S.signupType;
     const err=document.getElementById('serr');
     const btn=document.getElementById('sbtn');
-    if(!name||!email||!pwd){err.textContent='Please fill in all fields.';return;}
-    if(!type){err.textContent='Please select an account type.';return;}
+    if(!name||!email||!pwd){err.textContent='Please fill in your name, email, and a password to continue.';return;}
+      if(!type){err.textContent='Please choose whether you\'re signing up as a Business or an Individual.';return;}
     btn.disabled=true;btn.textContent='Creating account…';
     try{
       const u=await DB.register(email,pwd,name);
@@ -2362,7 +2375,7 @@ const A = {
       M.welcomeGuide();
       toast('Account created! Welcome, '+name.split(' ')[0]+'.','ok');
     }catch(e){
-      err.textContent='Signup failed: '+(e.message.includes('409')?'Email already in use.':e.message);
+      err.textContent=e.message.includes('409')||e.message.includes('conflict')?'An account with this email already exists. Try signing in instead.':'We couldn\'t create your account right now. Please check your details and try again.';
       btn.disabled=false;btn.textContent='Create Account';
     }
   },
@@ -2434,7 +2447,7 @@ const A = {
   },
 
   connectOrder(id){
-    if(!S.user){M.auth();toast('Please sign in to connect.');return;}
+    if(!S.user){M.auth();toast('Sign in first to send a connection request.');return;}
     if(!S.subscribed){M.subscribe();return;}
     const o=(S.orders||[]).find(x=>x.id===id);
     if(!o) return;
@@ -2452,8 +2465,8 @@ const A = {
     const contact=document.getElementById('ccontact')?.value?.trim();
     const err=document.getElementById('cerr');
     const btn=document.getElementById('cbtn');
-    if(!msg){err.textContent='Please write a message.';return;}
-    if(!contact){err.textContent='Please provide your contact details.';return;}
+    if(!msg){err.textContent='Write a short message to introduce yourself to the seller.';return;}
+    if(!contact){err.textContent='Add a way for the seller to reach you - WhatsApp, phone, or email.';return;}
     btn.disabled=true;btn.textContent='Sending…';
     try{
       await DB.create('connections',{
@@ -2467,7 +2480,7 @@ const A = {
       M.close();
       toast('Connection request sent to '+toName.split(' ')[0]+'! They will see it in their inbox.','ok');
     }catch(e){
-      err.textContent='Failed: '+e.message;
+      err.textContent='Your request couldn\'t be sent right now. Please try again.';
       btn.disabled=false;btn.textContent='Send Request';
     }
   },
@@ -2485,9 +2498,9 @@ const A = {
     const desc=document.getElementById('odesc')?.value?.trim();
     const err=document.getElementById('oerr');
     const btn=document.getElementById('obtn');
-    if(!title){err.textContent='Please add a title.';return;}
-    if(!cat){err.textContent='Please select a category.';return;}
-    if(!rawP){err.textContent='Please add a price or budget.';return;}
+    if(!title){err.textContent='Give your listing a title so buyers know what you\'re offering.';return;}
+    if(!cat){err.textContent='Please choose a category for your listing.';return;}
+    if(!rawP){err.textContent='Add a price or type "Negotiable" if you\'re open to offers.';return;}
     const lower=rawP.toLowerCase();
     const price=lower==='negotiable'?'Negotiable':(rawP.startsWith('$')?rawP:'$'+rawP);
     btn.disabled=true;btn.textContent='Posting…';
@@ -2533,7 +2546,7 @@ const A = {
         }catch(e){console.warn('listing notif:',e.message);}
       })();
     }catch(e){
-      err.textContent='Failed: '+e.message;
+      err.textContent='Your listing couldn\'t be posted right now. Please try again.';
       btn.disabled=false;btn.textContent='Post Listing';
     }
   },
@@ -2571,8 +2584,8 @@ const A = {
     const method=document.getElementById('submethod')?.value;
     const err=document.getElementById('suberr');
     const btn=document.getElementById('subbtn');
-    if(!ref){err.textContent='Please enter your payment reference.';return;}
-    if(!method){err.textContent='Please select your payment method.';return;}
+    if(!ref){err.textContent='Paste your payment reference or transaction ID so we can confirm your payment.';return;}
+    if(!method){err.textContent='Let us know how you paid so we can match your reference correctly.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
       await DB.create('subscription',{userId:S.user.id,status:'pending',plan:'monthly',amount:'5',reference:ref,paymentMethod:method});
@@ -2580,7 +2593,7 @@ const A = {
       toast('Reference submitted! Access granted within 24 hours.','ok');
       render();
     }catch(e){
-      err.textContent='Failed: '+e.message;
+      err.textContent='We couldn\'t submit your reference right now. Please try again or contact support.';
       btn.disabled=false;btn.textContent='Submit Payment Reference';
     }
   },
@@ -2592,9 +2605,9 @@ const A = {
     const note=document.getElementById('vidnote')?.value?.trim();
     const err=document.getElementById('verr');
     const btn=document.getElementById('vbtn');
-    if(!name){err.textContent='Please enter your full name.';return;}
-    if(!idType){err.textContent='Please select an ID type.';return;}
-    if(!idNum){err.textContent='Please enter your ID number.';return;}
+    if(!name){err.textContent='Enter your full name exactly as it appears on your ID.';return;}
+    if(!idType){err.textContent='Select the type of ID you\'re submitting.';return;}
+    if(!idNum){err.textContent='Enter the number shown on your ID document.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
       await DB.create('verifications',{userId:S.user.id,fullName:name,idType,idNumber:idNum,note:note||'',status:'pending'});
@@ -2602,7 +2615,7 @@ const A = {
       M.close();render();
       toast('Verification submitted! Review within 24–48 hours.','ok');
     }catch(e){
-      err.textContent='Failed: '+e.message;
+      err.textContent='Your verification couldn\'t be submitted right now. Please try again.';
       btn.disabled=false;btn.textContent='Submit for Verification';
     }
   },
@@ -2621,7 +2634,7 @@ const A = {
         await pushNotif(conn.fromUserId,'Request accepted!',S.user.name+' accepted your connection for "'+conn.orderTitle+'".');
       }
       render();toast('Connection accepted!','ok');
-    }catch(e){toast('Failed: '+e.message,'err');}
+    }catch(e){toast('Something went wrong. Please refresh and try again.','err');}
   },
   async declineConn(id){ /* replaced by showDeclineForm flow */ },
   showDeclineForm(id){
@@ -2639,7 +2652,7 @@ const A = {
       await loadMyConnections();render();
       toast('Connection declined.');
     }catch(e){
-      toast('Failed: '+e.message,'err');
+      toast('Couldn\'t decline this request right now. Please try again.','err');
       if(btn){btn.disabled=false;btn.textContent='Confirm Decline';}
     }
   },
@@ -2698,7 +2711,7 @@ const A = {
   async submitReview(connId,orderId,sellerId,sellerName){
     const rating=S._reviewRating;
     const comment=document.getElementById('review-comment-'+connId)?.value?.trim();
-    if(!rating){toast('Please select a star rating.','err');return;}
+    if(!rating){toast('Tap a star to rate your experience before submitting.','err');return;}
     const btn=document.getElementById('review-btn-'+connId);
     if(btn){btn.disabled=true;btn.textContent='Submitting…';}
     try{
@@ -2715,7 +2728,7 @@ const A = {
       render();
       toast('Review submitted! Thank you.','ok');
     }catch(e){
-      toast('Failed: '+e.message,'err');
+      toast('Your review couldn\'t be submitted right now. Please try again.','err');
       if(btn){btn.disabled=false;btn.textContent='Submit Review';}
     }
   },
@@ -2727,7 +2740,7 @@ const A = {
     const inp=document.getElementById('deal-price-'+id);
     const rawVal=inp?.value||'';
     const fp=parseFloat(rawVal.replace(/[^0-9.]/g,''));
-    if(!fp||isNaN(fp)||fp<=0){toast('Please enter the final agreed price.','err');return;}
+    if(!fp||isNaN(fp)||fp<=0){toast('Enter the final price you and the buyer agreed on to continue.','err');return;}
     const comm=(fp*0.02).toFixed(2);
     const btn=document.getElementById('deal-btn-'+id);
     if(btn){btn.disabled=true;btn.textContent='Saving…';}
@@ -2777,7 +2790,7 @@ const A = {
   },
   async submitCommission(id){
     const ref=document.getElementById('comm-ref-'+id)?.value?.trim();
-    if(!ref){toast('Please enter your payment reference.','err');return;}
+    if(!ref){toast('Paste your payment reference or transaction hash so we can verify your commission.','err');return;}
     const btn=document.getElementById('comm-btn-'+id);
     if(btn){btn.disabled=true;btn.textContent='Submitting…';}
     try{
@@ -2876,7 +2889,7 @@ const A = {
         render();
         await saveNotifPrefs();
         toast('Push notifications enabled!','ok');
-      }catch(e){toast('Could not enable push: '+e.message,'err');}
+      }catch(e){toast('We couldn\'t turn on push notifications. Check your browser permissions and try again.','err');}
     }else{
       S.notifPrefs.pushEnabled=false;
       render();
@@ -2935,7 +2948,7 @@ const A = {
       M.close();
       toast('You\'re on the list! We\'ll email you when Portfolio Tracker launches.','ok');
     }catch(e){
-      err.textContent='Failed: '+e.message;
+      err.textContent='Something went wrong. Please try again.';
       btn.disabled=false;btn.textContent='Notify Me at Launch';
     }
   },
@@ -2945,8 +2958,12 @@ const A = {
   toggleSignupNotifCat(cat){
     S._signupNotifCats=S._signupNotifCats||[];
     const idx=S._signupNotifCats.indexOf(cat);
-    if(idx>=0) S._signupNotifCats.splice(idx,1); else S._signupNotifCats.push(cat);
-    M.auth();
+    if(idx>=0) S._signupNotifCats.splice(idx,1);
+    else S._signupNotifCats.push(cat);
+    document.querySelectorAll('.ftag[onclick*="toggleSignupNotifCat"]').forEach(btn=>{
+      const btnCat=btn.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+      if(btnCat===cat) btn.classList.toggle('on', S._signupNotifCats.includes(cat));
+    });
   },
   castVote(key){
     if(!S.user){M.auth();return;}
@@ -2986,7 +3003,7 @@ const A = {
     const err=document.getElementById('wlerr');
     const btn=document.getElementById('wlbtn');
     if(!bizName){err.textContent='Please enter your business name.';return;}
-    if(!contact){err.textContent='Please provide a contact.';return;}
+    if(!contact){err.textContent='Add a contact number or handle so customers can reach you if you win.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
       await DB.create('connections',{
@@ -3000,7 +3017,7 @@ const A = {
       M.close();
       toast(bizName+' added to the '+catLabel+' waitlist for '+city+'!','ok');
     }catch(e){
-      err.textContent='Failed: '+e.message;
+      err.textContent='We couldn\'t add you to the waitlist right now. Please try again.';
       btn.disabled=false;btn.textContent='Join the Waitlist';
     }
   },
@@ -3026,7 +3043,7 @@ const PAY = {
   withFlutterwave(){
     if(!S.user){ M.auth(); return; }
     if(!_hasFwKey){
-      toast('Payment not configured yet — config.js missing.','err');
+      toast('Card payment isn\'t available right now. Please use the manual transfer option below.','err');
       console.warn('Set FW_PUBLIC_KEY in config.js');
       return;
     }
@@ -3062,9 +3079,9 @@ const PAY = {
             M.close();
             render();
             toast('Payment successful! Pro access activated.','ok');
-          }catch(e){ toast('Payment received but activation failed — contact support.','err'); }
+          }catch(e){ toast('Payment received! If your access isn\'t active within a few minutes, please contact us and we\'ll sort it out.','err'); }
         } else {
-          toast('Payment was not completed.','err');
+          toast('Looks like the payment didn\'t go through. You can try again or use a different method.','err');
         }
       },
       onclose: function(){
@@ -3075,7 +3092,7 @@ const PAY = {
   async withCrypto(){
     if(!S.user){ M.auth(); return; }
     if(!_hasFnId){
-      toast('Crypto payment not configured yet.','err');
+      toast('Crypto checkout isn\'t available right now. Please try another payment method.','err');
       console.warn('Set APPWRITE_FN_ID in config.js');
       return;
     }
@@ -3102,7 +3119,7 @@ const PAY = {
         toast('Crypto checkout opened in new tab. Access granted after confirmation.','ok');
       }
     }catch(e){
-      toast('Could not create crypto invoice: '+e.message,'err');
+      toast('We couldn\'t open the crypto checkout right now. Please try again or use card payment.','err');
       if(btn){ btn.disabled=false; btn.textContent='Pay with Crypto (USDT)'; }
     }
   },
