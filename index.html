@@ -722,10 +722,36 @@ async function saveWatchlist(){
 }
 async function loadSubscription(){
   if(!S.user){S.subscribed=false;S.subStatus=null;return;}
-  const r=await DB.list('subscription',[Query.equal('userId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(1)]);
+  const r=await DB.list('subscription',[
+    Query.equal('userId',[S.user.id]),
+    Query.orderDesc('$createdAt'),
+    Query.limit(1)
+  ]);
   const doc=r.documents[0];
-  S.subStatus=doc?.status||null;
-  S.subscribed=S.subStatus==='active';
+  if(!doc){S.subStatus=null;S.subscribed=false;S._trialDoc=null;return;}
+
+  S._trialDoc=doc;
+  const status=doc.status||null;
+
+  // Handle trial expiry
+  if(status==='trial'){
+    if(doc.trialEnd){
+      const expired=new Date(doc.trialEnd)<new Date();
+      if(expired){
+        S.subStatus='expired';
+        S.subscribed=false;
+        try{await DB.update('subscription',doc.$id,{status:'expired'});}catch(e){}
+        return;
+      }
+    }
+    // Trial is still valid
+    S.subStatus='trial';
+    S.subscribed=true;
+    return;
+  }
+
+  S.subStatus=status;
+  S.subscribed=status==='active';
 }
 async function loadVerifyStatus(){
   if(!S.user){S.verifyStatus=null;return;}
@@ -795,7 +821,7 @@ async function loadAlData(){
       S.alPrices[id]={
         price      : res.meta?.regularMarketPrice || cur,
         ytd        : pct(nearest(new Date(new Date().getFullYear(),0,1).getTime()/1000)),
-        y6         : pct(nearest(new Date(2020,0,1).getTime()/1000)),
+        y1         : pct(nearest(now-1*365.25*24*3600)),
         y5         : pct(nearest(now-5*365.25*24*3600)),
         y10        : pct(nearest(now-10*365.25*24*3600)),
         sinceJoined: joinTs?pct(nearest(joinTs)):pct(valid[0].p),
@@ -833,8 +859,12 @@ function render(){
 function renderNav(){
   const el=document.getElementById('nact');
   if(S.user){
-    const sub=S.subscribed
+    const sub=S.subStatus==='active'
       ?`<span class="tag tpur" style="font-size:.68rem;padding:2px 8px">Pro</span>`
+      :S.subStatus==='trial'
+      ?`<span class="tag tg" style="font-size:.68rem;padding:2px 8px">Trial</span>`
+      :S.subStatus==='expired'
+      ?`<span class="tag tr" style="font-size:.68rem;padding:2px 8px;cursor:pointer" onclick="R.go('sub')">Trial Ended</span>`
       :`<span class="tag tn" style="font-size:.68rem;padding:2px 8px;cursor:pointer" onclick="R.go('sub')">Free</span>`;
     const bell=`<div style="position:relative;cursor:pointer" onclick="A.toggleNotifPanel()">
       <div style="width:34px;height:34px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;transition:var(--ease)" onmouseover="this.style.background='var(--bdr)'" onmouseout="this.style.background='var(--surf)'">
@@ -943,11 +973,17 @@ const P = {
     }[S.verifyStatus]||{cls:'vstat-unverified',icon:'shield-off',col:'var(--t3)',title:'Not Verified',
       desc:'Submit a government-issued ID to get the verified badge on your listings.'};
 
+    const trialDoc=S._trialDoc;
+    const trialDaysLeft=trialDoc?.trialEnd?Math.max(0,Math.ceil((new Date(trialDoc.trialEnd)-new Date())/(1000*60*60*24))):null;
     const subInfo={
       active:{cls:'vstat-verified',icon:'zap',col:'var(--pur)',title:'Pro Membership Active',
         desc:'Full access to all marketplace, forum, and 500+ crypto features.'},
+      trial:{cls:'vstat-verified',icon:'gift',col:'var(--grn)',title:'Free Trial Active'+(trialDaysLeft!==null?' — '+trialDaysLeft+' day'+(trialDaysLeft===1?'':'s')+' remaining':''),
+        desc:'You\'re on a free 30-day Pro trial. Enjoy full access to all features. Upgrade before your trial ends to keep access.'},
       pending:{cls:'vstat-pending',icon:'clock',col:'var(--gld)',title:'Payment Under Review',
         desc:'Your payment reference is being confirmed. Access granted within 24 hours.'},
+      expired:{cls:'vstat-rejected',icon:'clock',col:'var(--red)',title:'Free Trial Ended',
+        desc:'Your 30-day free trial has ended. Upgrade to Pro for $20/month to restore full access.'},
     }[S.subStatus]||{cls:'vstat-unverified',icon:'lock',col:'var(--t3)',title:'Free Plan',
       desc:'Upgrade to Pro ($20/month) to unlock full marketplace, forum, and 500+ crypto assets.'};
 
@@ -956,10 +992,14 @@ const P = {
       :S.verifyStatus==='rejected'?`<span class="tag tr"><i data-lucide="x-circle" style="width:11px;height:11px"></i>Rejected</span>`
       :`<span class="tag tn"><i data-lucide="shield-off" style="width:11px;height:11px"></i>Unverified</span>`;
 
-    const subTag=S.subscribed
+    const subTag=S.subStatus==='active'
       ?`<span class="tag tpur"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro</span>`
+      :S.subStatus==='trial'
+      ?`<span class="tag tg" style="cursor:pointer" onclick="R.go('sub')"><i data-lucide="gift" style="width:11px;height:11px"></i>Free Trial</span>`
       :S.subStatus==='pending'
       ?`<span class="tag tgd"><i data-lucide="clock" style="width:11px;height:11px"></i>Sub Pending</span>`
+      :S.subStatus==='expired'
+      ?`<span class="tag tr" style="cursor:pointer" onclick="R.go('sub')"><i data-lucide="alert-circle" style="width:11px;height:11px"></i>Trial Ended — Upgrade</span>`
       :`<span class="tag tn" style="cursor:pointer" onclick="R.go('sub')"><i data-lucide="lock" style="width:11px;height:11px"></i>Free Plan</span>`;
 
     return `<div id="pg-profile" class="page">
@@ -1083,7 +1123,11 @@ const P = {
               ${c.status==='deal_done'?`<div style="margin-top:10px">
                 <div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:14px;margin-bottom:10px">
                   <div style="font-weight:700;font-size:.9rem;color:var(--gld);margin-bottom:5px">Commission Due: ${c.commissionAmt}</div>
-                  <div style="font-size:.78rem;color:#8a6820;line-height:1.5;margin-bottom:10px">Please pay this amount to one of the platform accounts below, then click "I Have Paid" to submit your reference.</div>
+                  <div style="font-size:.78rem;color:#8a6820;line-height:1.5;margin-bottom:8px">Please pay this amount to one of the platform accounts below, then click "I Have Paid" to submit your reference.</div>
+                  <div style="background:#E6F5EE;border:1px solid #B3DFCA;border-radius:var(--rsm);padding:9px 12px;margin-bottom:10px;font-size:.75rem;color:var(--grn);line-height:1.55;display:flex;align-items:flex-start;gap:8px">
+                    <i data-lucide="heart" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"></i>
+                    <div><strong>10% goes to charity.</strong> Of your commission, $${(parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0)*0.10).toFixed(2)} is automatically split across Feed the Future Africa, Code for Kids Foundation, and Clean Water Initiative NG — thank you for contributing.</div>
+                  </div>
                   <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px;margin-bottom:6px">
                     <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">Bank Transfer</strong>
                     <span style="font-size:.8rem">Toomuchcoin Ltd &nbsp;·&nbsp; Acct: <strong>0123456789</strong> &nbsp;·&nbsp; Routing: 021000021</span>
@@ -1163,14 +1207,59 @@ const P = {
         ${(()=>{
           const all=S._adminConns||[];
           if(!all.length) return`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:12px 0">Click "Load All" to fetch commission data.</p>`;
+
+          // Split vendor waitlist from deal commissions
+          const waitlist=all.filter(c=>c.status==='vendor_waitlist');
           const pending=all.filter(c=>c.status==='deal_done'||c.status==='comm_pending');
           const totalPending=pending.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
           const paid=all.filter(c=>c.status==='comm_paid');
           const totalPaid=paid.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
+
           return`
+          <!-- Commission summary -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
             <div class="psc"><div class="psv" style="font-size:1.2rem;color:var(--red)">$${totalPending.toFixed(2)}</div><div class="psl">Outstanding</div></div>
             <div class="psc"><div class="psv" style="font-size:1.2rem;color:var(--grn)">$${totalPaid.toFixed(2)}</div><div class="psl">Collected</div></div>
+          </div>
+
+          <!-- Vendor Waitlist section -->
+          ${waitlist.length>0?`
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pur);margin:14px 0 8px;display:flex;align-items:center;gap:6px">
+            <i data-lucide="map-pin" style="width:11px;height:11px"></i>Vendor Waitlist (${waitlist.length})
+          </div>
+          ${waitlist.map(c=>{
+            let info={bizName:c.fromName,tagline:'',category:'',city:'',storefrontId:''};
+            try{info=JSON.parse(c.message)||info;}catch(e){}
+            const sfUrl=info.storefrontId?fileUrl(info.storefrontId):null;
+            return`<div class="cxcard" style="border-color:var(--pur)22">
+              <div class="cxhead">
+                <div style="flex:1;min-width:0">
+                  <div class="cxname">${info.bizName||c.fromName}</div>
+                  <div class="cxorder">${info.catLabel||''} · ${info.city||''} &nbsp;•&nbsp; ${ago(c.createdAt)}</div>
+                </div>
+                <span class="tag tpur" style="font-size:.65rem">Waitlist</span>
+              </div>
+              ${info.tagline?`<div style="font-size:.78rem;color:var(--t2);margin:5px 0;font-style:italic">"${info.tagline}"</div>`:''}
+              ${sfUrl?`<img src="${sfUrl}" style="width:100%;height:100px;object-fit:cover;border-radius:var(--rsm);margin:6px 0;border:1px solid var(--bdr)">`:''}
+              <div style="font-size:.78rem;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:5px">
+                <i data-lucide="phone" style="width:11px;height:11px;color:var(--t3)"></i>${c.contact}
+                &nbsp;•&nbsp; Submitted by: <strong>${c.fromName}</strong>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn bc bsm" onclick="A.adminApproveWaitlist('${c.id}','${(info.bizName||'').replace(/'/g,'\\\'')}')" >
+                  <i data-lucide="check" style="width:11px;height:11px"></i>Approve for Showcase
+                </button>
+                <button class="btn bo bsm" onclick="A.adminRejectWaitlist('${c.id}','${c.fromUserId}','${(info.bizName||'').replace(/'/g,'\\\'')}')" >
+                  <i data-lucide="x" style="width:11px;height:11px"></i>Decline
+                </button>
+              </div>
+            </div>`;
+          }).join('')}`:''}
+
+          <!-- Commission payments -->
+          ${pending.length>0?`
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gld);margin:14px 0 8px;display:flex;align-items:center;gap:6px">
+            <i data-lucide="dollar-sign" style="width:11px;height:11px"></i>Commission Payments
           </div>
           ${pending.map(c=>`<div class="cxcard" style="border-color:${c.status==='comm_pending'?'var(--gld)':'var(--bdr)'}">
             <div class="cxhead">
@@ -1185,7 +1274,7 @@ const P = {
               ${c.commissionRef?`<div style="font-size:.75rem;color:var(--t2)">Ref: <strong>${c.commissionRef}</strong></div>`:''}
               ${c.status==='comm_pending'?`<button class="btn bc bsm" onclick="A.adminVerifyComm('${c.id}')"><i data-lucide="check" style="width:12px;height:12px"></i>Mark Paid</button>`:''}
             </div>
-          </div>`).join('')}`;
+          </div>`).join('')}`:''}`;
         })()}
       </div>`:''}
 
@@ -1490,6 +1579,7 @@ const P = {
     const MANUAL_PRICES=S._manualPrices||{
       gold:3327.40, nvda:131.38, spx:5967.84, dxy:99.54,
       tsla:341.21, mstr:421.06, nasdaq:21419.92, lvmh:587.20, tsmc:187.43,
+      dangcem:1180.00, nestle:3125.90,
     };
     // For crypto assets, always prefer live CoinGecko price from S.coins
     const cgPriceMap={
@@ -1504,11 +1594,13 @@ const P = {
       if(MANUAL_PRICES[id]!=null) return MANUAL_PRICES[id];
       return null;
     };
-    const fmtAP=(p)=>{
+    const NAIRA_IDS=['dangcem','nestle'];
+    const fmtAP=(p,id='')=>{
       if(p==null||isNaN(p))return'—';
-      if(p>=10000)return'$'+Math.round(p).toLocaleString('en-US');
-      if(p>=1)return'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-      return'$'+p.toFixed(4);
+      const sym=NAIRA_IDS.includes(id)?'₦':'$';
+      if(p>=10000)return sym+Math.round(p).toLocaleString('en-US');
+      if(p>=1)return sym+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      return sym+p.toFixed(4);
     };
     const pf=(v)=>{
       if(v==null||isNaN(v))return`<span style="color:var(--t3);font-size:.75rem">—</span>`;
@@ -1517,50 +1609,53 @@ const P = {
     const logo=(id,bg,fg,sym)=>{
       if(id==='btc'){const c=S.coins.find(x=>x.id==='bitcoin');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
       if(id==='eth'){const c=S.coins.find(x=>x.id==='ethereum');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
-      if(['nvda','tsla','mstr'].includes(id)){
-        const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR'}[id];
+      if(['nvda','tsla','mstr','dangcem','nestle'].includes(id)){
+        const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR',dangcem:'DANGCEM',nestle:'NESTLE'}[id];
         return`<div class="al-ico" style="background:#fff;overflow:hidden"><img src="https://financialmodelingprep.com/image-stock/${s}.png" width="36" height="36" style="object-fit:contain;display:block" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=font-size:.65rem;font-weight:700;color:${fg}>${s}</span>'"></div>`;
       }
       return`<div class="al-ico" style="background:${bg};color:${fg}">${sym}</div>`;
     };
 
     const HOLD=[
-      {id:'gold',  n:1, name:'Gold',          sym:'XAU',  bg:'#B8892A',fg:'#fff', fp:'$4,492.70',   ytd:4.73,   y6:2257.60, y5:88.50,   y10:138.20,   sj:0},
-      {id:'nvda',  n:2, name:'Nvidia',         sym:'NVDA', bg:'#76B900',fg:'#fff', fp:'$211.14',    ytd:11.80,  y6:2277.70, y5:1820.00, y10:9540.00,  sj:0},
-      {id:'spx',   n:3, name:"S&P 500",        sym:'SPX',  bg:'#2B5BE0',fg:'#fff', fp:'$7,580.06',   ytd:10.52,  y6:148.99,  y5:83.40,   y10:183.00,   sj:0},
-      {id:'btc',   n:4, name:'Bitcoin',        sym:'BTC',  bg:'#F7931A',fg:'#fff', fp:'$73,893.85',  ytd:-18.27, y6:921.57,  y5:950.00,  y10:15000.00, sj:0},
-      {id:'dxy',   n:5, name:'Dollar Index',   sym:'DXY',  bg:'#26A17B',fg:'#fff', fp:'$98.942',   ytd:-4.37,  y6:281.95,  y5:130.00,  y10:205.00,   sj:0},
+      {id:'gold',  n:1, name:'Gold',          sym:'XAU',  bg:'#B8892A',fg:'#fff', fp:'$4,492.70',   ytd:4.73,   y1:35.61, y5:134.95,   y10:138.20,   sj:0},
+      {id:'nvda',  n:2, name:'Nvidia',         sym:'NVDA', bg:'#76B900',fg:'#fff', fp:'$211.14',    ytd:14.41,  y1:61.79, y5:1820.00, y10:9540.00,  sj:0},
+      {id:'spx',   n:3, name:"S&P 500",        sym:'SPX',  bg:'#2B5BE0',fg:'#fff', fp:'$7,580.06',   ytd:10.11,  y1:28.69,  y5:83.40,   y10:183.00,   sj:0},
+      {id:'btc',   n:4, name:'Bitcoin',        sym:'BTC',  bg:'#F7931A',fg:'#fff', fp:'$73,893.85',  ytd:-30.19, y1:-39.00,  y5:190.00,  y10:15000.00, sj:0},
+      {id:'dxy',   n:5, name:'Dollar Index',   sym:'DXY',  bg:'#26A17B',fg:'#fff', fp:'$98.942',   ytd:0.91,  y1:-0.03,  y5:10.65,  y10:4.50,  sj:0},
     ];
 
     const CONTINENTS=[
       {
         emoji:'🌍', name:'Africa',
         desc:'Top picks from African markets',
-        assets:[],
+        assets:[
+          {id:'dangcem', n:'#', name:'Dangote Cement', sym:'DANGCEM', bg:'#C4622D',fg:'#fff', fp:'₦1,180.00', ytd:93.76, y1:168.18, y5:455.29, y10:615.00, sj:0},
+          {id:'nestle',  n:'#', name:'Nestlé Nigeria',  sym:'NESTLE',  bg:'#009FE3',fg:'#fff', fp:'₦3,125.00', ytd:59.60,  y1:96.48, y5:123.21, y10:890.00, sj:0},
+        ],
       },
       {
         emoji:'🌏', name:'Asia',
         desc:'Top picks from Asian markets',
         assets:[
-          {id:'tet',  n:'#', name:'$TET',  sym:'TET',  bg:'#26A17B',fg:'#fff',    fp:'$0.43',    ytd:-92.59, y6:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
-          {id:'tsmc', n:'#', name:'TSMC',  sym:'TSM',  bg:'#E31837',fg:'#fff',    fp:'$168.40',  ytd:12.80,  y6:82.40,   y5:95.30,   y10:520.00,  sj:0},
+          {id:'tet',  n:'#', name:'$TET',  sym:'TET',  bg:'#26A17B',fg:'#fff',    fp:'$0.43',    ytd:-92.59, y1:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
+          {id:'tsmc', n:'#', name:'TSMC',  sym:'TSM',  bg:'#E31837',fg:'#fff',    fp:'$446.81',  ytd:35.29,  y1:131.58,   y5:273.43,   y10:2095,  sj:0},
         ],
       },
       {
         emoji:'🌎', name:'Americas',
         desc:'Top picks from the Americas',
         assets:[
-          {id:'mstr',   n:'#', name:'MicroStrategy',  sym:'MSTR', bg:'#F7931A',fg:'#fff', fp:'$159.09',    ytd:1.23,   y6:1177.83, y5:1500.00, y10:5200.00,  sj:0},
-          {id:'tsla',   n:'#', name:'Tesla',           sym:'TSLA', bg:'#E84142',fg:'#fff', fp:'$435.79',    ytd:-0.52,  y6:682.81,  y5:310.00,  y10:1250.00,  sj:0},
-          {id:'nasdaq', n:'#', name:'Nasdaq Comp.',    sym:'NDX',  bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62', ytd:16.08,  y6:184.23,  y5:112.00,  y10:235.00,   sj:0},
+          {id:'mstr',   n:'#', name:'MicroStrategy',  sym:'MSTR', bg:'#F7931A',fg:'#fff', fp:'$159.09',    ytd:-1.23,   y1:-12.21, y5:179.94, y10:5200.00,  sj:0},
+          {id:'tsla',   n:'#', name:'Tesla',           sym:'TSLA', bg:'#E84142',fg:'#fff', fp:'$435.79',    ytd:-0.52,  y1:22.25,  y5:100.80,  y10:1250.00,  sj:0},
+          {id:'nasdaq', n:'#', name:'Nasdaq Comp.',    sym:'NDX',  bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62', ytd:16.08,  y1:184.23,  y5:112.00,  y10:235.00,   sj:0},
         ],
       },
       {
         emoji:'🌍', name:'Europe',
         desc:'Top picks from European markets',
         assets:[
-          {id:'eth',  n:'#', name:'Ethereum', sym:'ETH',  bg:'#627EEA',fg:'#fff', fp:'$2,013.93', ytd:-35.05, y6:1453.60, y5:420.00,  y10:8200.00,  sj:0},
-          {id:'lvmh', n:'#', name:'LVMH',     sym:'MC',   bg:'#2C1810',fg:'#D4AF37', fp:'$748.20', ytd:3.40,  y6:68.50,   y5:45.20,  y10:182.00,   sj:0},
+          {id:'eth',  n:'#', name:'Ethereum', sym:'ETH',  bg:'#627EEA',fg:'#fff', fp:'$2,013.93', ytd:-35.05, y1:-25.01, y5:-34.88,  y10:8200.00,  sj:0},
+          {id:'lvmh', n:'#', name:'LVMH',     sym:'MC',   bg:'#2C1810',fg:'#D4AF37', fp:'$748.20', ytd:3.40,  y1:0.49,   y5:45.20,  y10:182.00,   sj:0},
         ],
       },
       {
@@ -1575,7 +1670,7 @@ const P = {
       const livePrice=getLivePrice(a.id);
       const isManual=MANUAL_PRICES[a.id]!=null&&!cgPriceMap[a.id];
       const priceStr=livePrice!=null
-        ?fmtAP(livePrice)+(isManual?`<span title="Manually updated" style="font-size:.6rem;color:var(--t3);margin-left:3px;vertical-align:middle">✎</span>`:'')
+        ?fmtAP(livePrice,a.id)+(isManual?`<span title="Manually updated" style="font-size:.6rem;color:var(--t3);margin-left:3px;vertical-align:middle">✎</span>`:'')
         :loading?`<span style="display:inline-block;width:14px;height:14px;border:1.5px solid var(--bdr);border-top-color:var(--t3);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle"></span>`
         :a.fp;
       const currentPrice = livePrice!=null ? livePrice : parseFloat(a.fp.replace(/[^0-9.-]+/g,""));
@@ -1592,7 +1687,7 @@ const P = {
         <td><div class="al-cell">${logo(a.id,a.bg,a.fg,a.sym)}<div><div class="al-aname">${a.name}</div><div class="al-asym">${a.sym}</div></div></div></td>
         <td class="r al-price">${priceStr}</td>
         <td class="r">${pf(get('ytd',a.ytd))}</td>
-        <td class="r">${pf(get('y6',a.y6))}</td>
+        <td class="r">${pf(get('y1',a.y1))}</td>
         <td class="r">${pf(get('y5',a.y5))}</td>
         <td class="r">${pf(get('y10',a.y10))}</td>
         <td class="r">${pf(computedSinceJoined)}</td>
@@ -1602,7 +1697,7 @@ const P = {
     const th=`<thead><tr>
       <th style="width:28px">#</th><th>Asset</th>
       <th class="r">Price</th><th class="r">YTD</th>
-      <th class="r">2020 (6Y)</th><th class="r">5 Year</th>
+      <th class="r">1 Year</th><th class="r">5 Year</th>
       <th class="r">10 Year</th>
       <th class="r" style="color:var(--pur)">Since Joined</th>
     </tr></thead>`;
@@ -1728,6 +1823,7 @@ const P = {
         imgSvg:SHOWCASE_ICONS.truck,
         imgBg:'#E8EEFB',
         imgColor:'var(--blu)',
+        storefrontImg:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80',
         votes:142, totalVotes:189,
         lastQuarterWinner:'Taiwo Haulage Services.',
         comments:[
@@ -1744,6 +1840,7 @@ const P = {
         imgSvg:SHOWCASE_ICONS.warehouse,
         imgBg:'#E6F5EE',
         imgColor:'var(--grn)',
+        storefrontImg:'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80',
         votes:98, totalVotes:155,
         lastQuarterWinner:'SwiftMove Lagos',
         comments:[
@@ -1836,6 +1933,12 @@ const P = {
               </div>
             </div>
           </div>
+
+          <!-- Storefront image (shown if showcase has one) -->
+          ${showcase.storefrontImg?`
+          <div style="margin-bottom:14px;border-radius:var(--rsm);overflow:hidden;border:1px solid var(--bdr)">
+            <img src="${showcase.storefrontImg}" alt="${showcase.name} storefront" style="width:100%;height:180px;object-fit:cover;display:block">
+          </div>`:''}
 
           <!-- Vote poll -->
           <div style="background:var(--off);border-radius:var(--rmd);padding:14px 16px;margin-bottom:14px;border:1px solid var(--bdr)">
@@ -1935,6 +2038,59 @@ const P = {
     </div></div>`;
   },
 
+  _payBlock(){
+    return`<div class="pay-card" style="max-width:500px;margin:0 auto">
+      <!-- Free Trial CTA -->
+      ${!S.subStatus||S.subStatus===null?`
+      <div style="background:linear-gradient(135deg,#E6F5EE,#f0fff6);border:1.5px solid #B3DFCA;border-radius:var(--rmd);padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px">
+          <div style="font-weight:700;font-size:.9375rem;color:var(--grn);margin-bottom:4px;display:flex;align-items:center;gap:6px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+            Try Pro free for 30 days
+          </div>
+          <div style="font-size:.78rem;color:var(--t2);line-height:1.5">Full access, no payment needed. Cancel anytime before day 30.</div>
+        </div>
+        <button class="btn bc" id="trial-btn" onclick="A.startTrial()" style="white-space:nowrap;flex-shrink:0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          Start Free Trial
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <div style="flex:1;height:1px;background:var(--bdr)"></div>
+        <span style="font-size:.72rem;color:var(--t3)">or pay now</span>
+        <div style="flex:1;height:1px;background:var(--bdr)"></div>
+      </div>`:''}
+
+      <h3 style="font-family:var(--fd);font-size:1.2rem;margin-bottom:5px">Choose Payment Method</h3>
+      <p style="font-size:.8rem;color:var(--t2);margin-bottom:18px;line-height:1.6">$20/month — instant activation for card and bank payments.</p>
+      ${!S.user
+        ?`<div style="text-align:center;padding:14px;background:var(--surf);border-radius:var(--rsm);font-size:.875rem;color:var(--t2)"><button type="button" onclick="M.auth()" style="color:var(--t1);font-weight:500;cursor:pointer;background:none;border:none;font-family:var(--fb);font-size:.875rem;text-decoration:underline">Sign in first</button> to continue to payment.</div>`
+        :`<div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn bp" style="width:100%;justify-content:center;padding:13px;font-size:.9rem" onclick="PAY.withFlutterwave()">
+            <i data-lucide="credit-card" style="width:15px;height:15px"></i>Pay by Card or Bank Transfer
+          </button>
+          <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:13px;font-size:.9rem" onclick="PAY.withCrypto()">
+            <i data-lucide="bitcoin" style="width:15px;height:15px"></i>Pay with Crypto (USDT)
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin:16px 0">
+          <div style="flex:1;height:1px;background:var(--bdr)"></div>
+          <span style="font-size:.72rem;color:var(--t3)">or pay manually</span>
+          <div style="flex:1;height:1px;background:var(--bdr)"></div>
+        </div>
+        <details style="cursor:pointer">
+          <summary style="font-size:.8rem;font-weight:500;color:var(--t2);list-style:none;display:flex;align-items:center;gap:6px"><i data-lucide="chevron-down" style="width:13px;height:13px"></i>Manual bank/crypto transfer</summary>
+          <div style="margin-top:14px">
+            <div class="fg"><label>Payment Reference / TX Hash</label><input type="text" id="subref" placeholder="e.g. FLW-TXN-123 or 0x4c5d6e…"/></div>
+            <div class="fg"><label>Method Used</label><select id="submethod"><option value="">Select…</option><option value="bank">Bank Transfer</option><option value="usdt">USDT (TRC-20)</option><option value="btc">Bitcoin (BTC)</option></select></div>
+            <div class="ferr" id="suberr"></div>
+            <button class="btn bo" style="width:100%;justify-content:center;padding:11px" id="subbtn" onclick="A.submitSub()"><i data-lucide="send" style="width:14px;height:14px"></i>Submit Reference</button>
+          </div>
+        </details>
+        <p style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:14px;line-height:1.6">Card/bank payments activate instantly. Crypto activates after 1 confirmation. Non-refundable after access is granted.</p>`}
+    </div>`;
+  },
+
   subscribe(){
     const isActive=S.subStatus==='active';
     const isPending=S.subStatus==='pending';
@@ -1954,48 +2110,48 @@ const P = {
         <div class="sub-feat"><div class="sub-feat-i"><i data-lucide="star" style="width:18px;height:18px"></i></div><div class="sub-feat-t">Watchlist & Charts</div><div class="sub-feat-d">Track your favourites and access historical performance charts.</div></div>
       </div>
 
-      ${isActive?`<div style="max-width:480px;margin:0 auto;background:#E6F5EE;border:1px solid #B3DFCA;border-radius:var(--rlg);padding:28px;text-align:center">
+      ${S.subStatus==='trial'?`
+        <div style="max-width:500px;margin:0 auto;background:linear-gradient(135deg,#E6F5EE,#f0fff6);border:1.5px solid #B3DFCA;border-radius:var(--rlg);padding:28px;text-align:center">
+          <div style="width:52px;height:52px;background:var(--grn);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          </div>
+          <div style="font-family:var(--fd);font-size:1.3rem;margin-bottom:8px;color:var(--grn)">Your Free Trial is Active!</div>
+          ${S._trialDoc?.trialEnd?`
+          <div style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #B3DFCA;border-radius:100px;padding:6px 16px;font-size:.8125rem;font-weight:600;color:var(--grn);margin-bottom:14px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${Math.max(0,Math.ceil((new Date(S._trialDoc.trialEnd)-new Date())/(1000*60*60*24)))} days remaining
+          </div>`:''}
+          <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:20px">You have full Pro access — marketplace, open forum, 500+ live crypto assets, Datum List, and more. Upgrade before your trial ends to keep access.</p>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button class="btn bc" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Go to Marketplace</button>
+            <button class="btn bpur" onclick="PAY.withFlutterwave()"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade Now — $20/mo</button>
+          </div>
+        </div>`
+
+      :S.subStatus==='expired'?`
+        <div style="max-width:500px;margin:0 auto;background:#FDEAEA;border:1.5px solid #F0BFBF;border-radius:var(--rlg);padding:28px;text-align:center;margin-bottom:20px">
+          <i data-lucide="clock" style="width:28px;height:28px;color:var(--red);display:block;margin:0 auto 12px"></i>
+          <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px;color:var(--red)">Your Free Trial Has Ended</div>
+          <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:18px">Upgrade to Pro for $20/month to restore full access to the marketplace, forum, and 500+ crypto assets.</p>
+        </div>
+        ${P._payBlock()}`
+
+      :isActive?`
+        <div style="max-width:500px;margin:0 auto;background:#E6F5EE;border:1px solid #B3DFCA;border-radius:var(--rlg);padding:28px;text-align:center">
           <i data-lucide="check-circle" style="width:28px;height:28px;color:var(--grn);display:block;margin:0 auto 12px"></i>
           <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">You're already a Pro Member!</div>
           <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:18px">You have full access to all Pro features.</p>
           <button class="btn bc" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Go to Marketplace</button>
         </div>`
-      :isPending?`<div style="max-width:480px;margin:0 auto;background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rlg);padding:28px;text-align:center">
+
+      :isPending?`
+        <div style="max-width:500px;margin:0 auto;background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rlg);padding:28px;text-align:center">
           <i data-lucide="clock" style="width:28px;height:28px;color:var(--gld);display:block;margin:0 auto 12px"></i>
           <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">Payment Under Review</div>
-          <p style="font-size:.875rem;color:var(--t2);line-height:1.6">Your payment reference has been submitted and is being confirmed by our team. Access will be granted within 24 hours. Check back soon!</p>
+          <p style="font-size:.875rem;color:var(--t2);line-height:1.6">Your payment reference has been submitted and is being confirmed by our team. Access will be granted within 24 hours.</p>
         </div>`
-      :`<div class="pay-card">
-        <h3 style="font-family:var(--fd);font-size:1.35rem;margin-bottom:5px">Choose Payment Method</h3>
-        <p style="font-size:.8rem;color:var(--t2);margin-bottom:22px;line-height:1.6">$20/month — secure checkout, instant activation for card/bank payments.</p>
-        ${!S.user
-          ?`<div style="text-align:center;padding:14px;background:var(--surf);border-radius:var(--rsm);font-size:.875rem;color:var(--t2)"><a onclick="M.auth()" style="color:var(--t1);font-weight:500;cursor:pointer">Sign in first</a> to continue to payment.</div>`
-          :`<div style="display:flex;flex-direction:column;gap:12px">
-            <button class="btn bp" style="width:100%;justify-content:center;padding:14px;font-size:.9375rem" onclick="PAY.withFlutterwave()">
-              <i data-lucide="credit-card" style="width:16px;height:16px"></i>
-              Pay by Card or Bank Transfer
-            </button>
-            <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:14px;font-size:.9375rem" onclick="PAY.withCrypto()">
-              <i data-lucide="bitcoin" style="width:16px;height:16px"></i>
-              Pay with Crypto (USDT)
-            </button>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;margin:18px 0">
-            <div style="flex:1;height:1px;background:var(--bdr)"></div>
-            <span style="font-size:.72rem;color:var(--t3)">or pay manually</span>
-            <div style="flex:1;height:1px;background:var(--bdr)"></div>
-          </div>
-          <details style="cursor:pointer">
-            <summary style="font-size:.8rem;font-weight:500;color:var(--t2);list-style:none;display:flex;align-items:center;gap:6px"><i data-lucide="chevron-down" style="width:13px;height:13px"></i>Manual bank/crypto transfer + reference</summary>
-            <div style="margin-top:14px">
-              <div class="fg"><label>Payment Reference / TX Hash</label><input type="text" id="subref" placeholder="e.g. FLW-TXN-123 or 0x4c5d6e…"/></div>
-              <div class="fg"><label>Method Used</label><select id="submethod"><option value="">Select…</option><option value="bank">Bank Transfer</option><option value="usdt">USDT (TRC-20)</option><option value="btc">Bitcoin (BTC)</option></select></div>
-              <div class="ferr" id="suberr"></div>
-              <button class="btn bo" style="width:100%;justify-content:center;padding:11px" id="subbtn" onclick="A.submitSub()"><i data-lucide="send" style="width:14px;height:14px"></i>Submit Reference (manual review)</button>
-            </div>
-          </details>
-          <p style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:14px;line-height:1.6">Card/bank payments activate instantly. Crypto activates after 1 confirmation (~10 min). Non-refundable after access is granted.</p>`}
-      </div>`}
+
+      :P._payBlock()}
     </div>`;
   },
 };
@@ -2381,6 +2537,16 @@ const M = {
         <div class="fg"><label>Tagline <span style="font-weight:400;color:var(--t3)">(one sentence)</span></label><input type="text" id="wltagline" placeholder="e.g. States fastest..."/></div>
         <div class="fg"><label>Contact (WhatsApp, phone, or email)</label><input type="text" id="wlcontact" placeholder="e.g. +234..."/></div>
         <div class="fg"><label>Why should the community vote for you?</label><textarea id="wlwhy" rows="3" placeholder="Tell the community what makes your business stand out…"></textarea></div>
+        <div class="fg">
+          <label>Storefront / Business Photo <span style="font-weight:400;color:var(--t3)">(optional — shown on your showcase card)</span></label>
+          <div class="img-drop" id="wl-img-drop" onclick="document.getElementById('wl-img-input').click()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 6px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <div style="font-size:.78rem;color:var(--t3)">Click to add a storefront photo</div>
+            <div style="font-size:.68rem;color:var(--t3);margin-top:2px">JPG or PNG · Max 3MB</div>
+          </div>
+          <input type="file" id="wl-img-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="A.previewWlImg(this)"/>
+          <div id="wl-img-preview" style="margin-top:8px"></div>
+        </div>
         <div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px 13px;margin-bottom:16px;font-size:.78rem;color:#8a6820;line-height:1.5">
           <strong>Note:</strong> If voted as fan favourite, a 1% referral commission applies on connections made through the platform showcase.
         </div>
@@ -2456,8 +2622,14 @@ const A = {
       S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null};
       await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
       initOneSignal(S.user.id);
-      M.close();R.go('profile');
-      toast('Welcome back, '+S.user.name.split(' ')[0]+'!','ok');
+      M.close();
+      R.go('profile');
+      const welcomeMsg=S.subStatus==='trial'
+        ?'Welcome back! Your free trial is active.'
+        :S.subStatus==='expired'
+        ?'Welcome back! Your free trial has ended — upgrade to keep access.'
+        :'Welcome back, '+S.user.name.split(' ')[0]+'!';
+      toast(welcomeMsg,'ok');
     }catch(e){
       err.textContent='Login failed: '+(e.message.includes('401')||e.message.includes('invalid')?'Wrong email or password.':e.message);
       btn.disabled=false;btn.textContent='Sign In';
@@ -2479,7 +2651,11 @@ const A = {
       await DB.login(email,pwd);
       await DB.create('profiles',{userId:u.$id,name,email,type});
       S.user={id:u.$id,name,email,type,inits:initials(name),joinedAt:new Date().toISOString(),avatarId:null};
-      S.subscribed=false;S.subStatus=null;S.verifyStatus=null;S.myConnections=[];S.sentConnections=[];
+      S.subscribed=false;S.subStatus=null;S.verifyStatus=null;
+      S.myConnections=[];S.sentConnections=[];
+      S.notifications=[];S.notifPrefs={categories:[],pushEnabled:false};
+
+      // 1. Save notification preferences chosen at signup
       const signupCats=S._signupNotifCats||[];
       if(signupCats.length>0){
         try{
@@ -2489,8 +2665,27 @@ const A = {
         }catch(e){console.warn('signup notif prefs:',e.message);}
       }
       S._signupNotifCats=[];
-      await createNotif(u.$id,'welcome','Welcome to Toomuchcoin! 🎉','Here\'s how to get started — post a listing, explore the marketplace, or check live crypto prices.','market');
-      M.close();R.go('profile');
+
+      // 2. Load other data in parallel
+      await Promise.all([
+        loadWatchlist(),
+        loadSubscription(),
+        loadVerifyStatus(),
+        loadMyConnections(),
+        loadSentConnections(),
+      ]);
+
+      // 3. Welcome notification
+      await createNotif(u.$id,'welcome',
+        'Welcome to Toomuchcoin! 🎉',
+        'Explore the marketplace, check live crypto prices, and start trading. Upgrade to Pro or start a free 30-day trial anytime.',
+        'market'
+      );
+      await loadNotifications();
+
+      initOneSignal(u.$id);
+      M.close();
+      R.go('profile');
       await loadNotifications();
       M.welcomeGuide();
       toast('Account created! Welcome, '+name.split(' ')[0]+'.','ok');
@@ -2910,15 +3105,45 @@ const A = {
   },
   async submitCommission(id){
     const ref=document.getElementById('comm-ref-'+id)?.value?.trim();
-    if(!ref){toast('Please enter your payment reference.','err');return;}
+    if(!ref){toast('Paste your payment reference or transaction hash so we can verify your commission.','err');return;}
     const btn=document.getElementById('comm-btn-'+id);
     if(btn){btn.disabled=true;btn.textContent='Submitting…';}
     try{
       await DB.update('connections',id,{status:'comm_pending',commissionRef:ref});
+
+      // Calculate charity allocation (10% of commission)
+      const conn=(S.myConnections||[]).find(c=>c.id===id);
+      const commAmt=parseFloat((conn?.commissionAmt||'').replace(/[^0-9.]/g,'')||0);
+      const charityAmt=(commAmt*0.10).toFixed(2);
+      const charityShare=(commAmt*0.10/3).toFixed(2);
+      const CHARITIES=[
+        {name:'Feed the Future Africa',focus:'Food security across sub-Saharan Africa'},
+        {name:'Code for Kids Foundation',focus:'Digital literacy for underserved youth'},
+        {name:'Clean Water Initiative NG',focus:'Safe water access in rural Nigeria'},
+      ];
+
+      // Notify the seller about charity deduction
+      await createNotif(S.user.id,'deal',
+        'Thank you — your commission supports good causes',
+        '10% of your commission ($'+charityAmt+') is automatically allocated across our 3 supported charities: '+
+        CHARITIES.map(c=>c.name).join(', ')+'. Each receives $'+charityShare+'. Thank you for being part of something bigger.',
+        'profile',id
+      );
+
+      // Notify admin with charity breakdown
+      await createNotif(ADMIN_ID,'commission',
+        'Charity allocation — '+conn?.orderTitle,
+        'Commission ref: '+ref+' | Total commission: $'+commAmt.toFixed(2)+
+        ' | Charity pool (10%): $'+charityAmt+
+        ' | Per charity: $'+charityShare+
+        ' | Charities: '+CHARITIES.map(c=>c.name+' ('+c.focus+')').join(' · '),
+        'profile',id
+      );
+
       await loadMyConnections();render();
-      toast('Submitted! We will verify within 24 hours.','ok');
+      toast('Payment submitted! 10% ($'+charityAmt+') goes to our 3 supported charities. Thank you!','ok');
     }catch(e){
-      toast('Failed: '+e.message,'err');
+      toast('We couldn\'t record your payment right now. Please try again.','err');
       if(btn){btn.disabled=false;btn.textContent='I Have Paid';}
     }
   },
@@ -2929,6 +3154,40 @@ const A = {
       toast('Deal confirmed. Thank you!','ok');
     }catch(e){toast('Failed: '+e.message,'err');}
   },
+  async adminApproveWaitlist(id,bizName){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      await DB.update('connections',id,{status:'vendor_approved'});
+      // Find the connection to get submitter details
+      const all=S._adminConns||[];
+      const c=all.find(x=>x.id===id);
+      if(c){
+        await createNotif(c.fromUserId,'connection',
+          'Your business has been approved! 🎉',
+          bizName+' has been approved for the vendor showcase. The community will vote for you in the next quarterly poll. We\'ll notify you when voting opens.',
+          'market'
+        );
+        await pushNotif(c.fromUserId,'Business approved!',bizName+' is now on the vendor showcase waitlist. Voting opens next quarter.');
+      }
+      await A.adminLoadAll();
+      toast(bizName+' approved for showcase!','ok');
+    }catch(e){toast('Failed: '+e.message,'err');}
+  },
+
+  async adminRejectWaitlist(id,fromUserId,bizName){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      await DB.update('connections',id,{status:'vendor_rejected'});
+      await createNotif(fromUserId,'connection',
+        'Vendor submission update',
+        'Thank you for submitting '+bizName+'. Unfortunately your submission wasn\'t accepted at this time. You\'re welcome to resubmit with updated details.',
+        'market'
+      );
+      await A.adminLoadAll();
+      toast('Submission declined.','ok');
+    }catch(e){toast('Failed: '+e.message,'err');}
+  },
+
   async adminVerifyComm(id){
     if(S.user?.id!==ADMIN_ID) return;
     try{
@@ -3015,6 +3274,46 @@ const A = {
       render();
       await saveNotifPrefs();
       toast('Push notifications disabled.');
+    }
+  },
+
+  async startTrial(){
+    if(!S.user){M.auth();toast('Sign in first to start your free trial.');return;}
+    // Check they haven't already had a trial
+    const existing=await DB.list('subscription',[
+      Query.equal('userId',[S.user.id]),
+      Query.limit(5),
+    ]);
+    const alreadyUsed=existing.documents.some(d=>
+      d.status==='trial'||d.status==='expired'||d.status==='active'
+    );
+    if(alreadyUsed){
+      toast('You\'ve already used your free trial. Upgrade to Pro to continue.','err');
+      return;
+    }
+    const btn=document.getElementById('trial-btn');
+    if(btn){btn.disabled=true;btn.textContent='Activating…';}
+    const trialEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
+    try{
+      await DB.create('subscription',{
+        userId:S.user.id,status:'trial',plan:'trial',
+        amount:'0',reference:'FREE_TRIAL',
+        paymentMethod:'trial',trialEnd,
+      });
+      S.subStatus='trial';
+      S.subscribed=true;
+      S._trialDoc={status:'trial',trialEnd};
+      await createNotif(S.user.id,'subscription',
+        'Your 30-day free trial has started! 🎉',
+        'You now have full Pro access — marketplace, open forum, 500+ crypto assets, and Datum List. Your trial ends on '+new Date(trialEnd).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'. Upgrade anytime to keep access.',
+        'sub'
+      );
+      await loadNotifications();
+      render();
+      toast('Free trial activated! You have 30 days of full Pro access.','ok');
+    }catch(e){
+      toast('Something went wrong starting your trial. Please try again.','err');
+      if(btn){btn.disabled=false;btn.textContent='Start Free Trial';}
     }
   },
 
@@ -3170,6 +3469,25 @@ const A = {
       btn.disabled=false;btn.textContent='Notify Me at Launch';
     }
   },
+  previewWlImg(input){
+    const preview=document.getElementById('wl-img-preview');
+    const drop=document.getElementById('wl-img-drop');
+    if(!preview||!input.files[0]) return;
+    const url=URL.createObjectURL(input.files[0]);
+    preview.innerHTML=`<div style="position:relative;display:inline-block">
+      <img src="${url}" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);display:block">
+      <button onclick="A.clearWlImg()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">×</button>
+    </div>`;
+    if(drop) drop.className='img-drop has-imgs';
+  },
+  clearWlImg(){
+    const input=document.getElementById('wl-img-input');
+    const preview=document.getElementById('wl-img-preview');
+    const drop=document.getElementById('wl-img-drop');
+    if(input) input.value='';
+    if(preview) preview.innerHTML='';
+    if(drop) drop.className='img-drop';
+  },
   setVendorCat(cat){ S._vCat=cat; S._vCity=null; render(); },
   setVendorCity(city){ S._vCity=city||null; render(); },
   setVendorCountry(country){ S._vCountry=country; S._vCity=null; render(); },
@@ -3218,24 +3536,49 @@ const A = {
     const tagline=document.getElementById('wltagline')?.value?.trim();
     const contact=document.getElementById('wlcontact')?.value?.trim();
     const why=document.getElementById('wlwhy')?.value?.trim();
+    const imgInput=document.getElementById('wl-img-input');
     const err=document.getElementById('wlerr');
     const btn=document.getElementById('wlbtn');
-    if(!bizName){err.textContent='Please enter your business name.';return;}
-    if(!contact){err.textContent='Please provide a contact.';return;}
+    if(!bizName){err.textContent='What\'s your business called? Add a name so the community can find and vote for you.';return;}
+    if(!contact){err.textContent='Add a contact number or handle so customers can reach you if you win.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
+    let storefrontId='';
+    if(imgInput?.files[0]){
+      btn.textContent='Uploading photo…';
+      try{
+        const up=await _storage.createFile(BUCKET_ID,ID.unique(),imgInput.files[0]);
+        storefrontId=up.$id;
+      }catch(e){console.warn('storefront upload:',e.message);}
+    }
+    btn.textContent='Submitting…';
     try{
       await DB.create('connections',{
-        orderId:'vendor_waitlist',orderTitle:catLabel+' — '+city,
+        orderId:'vendor_waitlist',
+        orderTitle:catLabel+' — '+city,
         fromUserId:S.user.id,fromName:S.user.name,fromInitials:S.user.inits,
         toUserId:ADMIN_ID,toName:'Datum Admin',
-        message:bizName+(tagline?' | '+tagline:'')+(why?' | '+why:''),
-        contact,commission:'5% referral on showcase connections',
-        status:'pending',
+        message:JSON.stringify({
+          bizName,tagline:tagline||'',why:why||'',
+          category:catId,city,catLabel,
+          storefrontId:storefrontId||'',
+        }),
+        contact,
+        commission:'5% referral on showcase connections',
+        status:'vendor_waitlist',
       });
+      // Notify admin
+      await createNotif(ADMIN_ID,'connection',
+        'New vendor waitlist: '+bizName,
+        catLabel+' in '+city+' — '+S.user.name+' ('+contact+')'+(storefrontId?' · Has storefront photo':''),
+        'profile','vendor_waitlist',catId
+      );
       M.close();
-      toast(bizName+' added to the '+catLabel+' waitlist for '+city+'!','ok');
+      // Store locally so user sees their submission immediately
+      S._myWaitlistEntries=S._myWaitlistEntries||[];
+      S._myWaitlistEntries.push({bizName,tagline,catLabel,city,storefrontId,status:'pending',createdAt:new Date().toISOString()});
+      toast(bizName+' is now on the '+catLabel+' waitlist for '+city+'! The community will vote each quarter.','ok');
     }catch(e){
-      err.textContent='Failed: '+e.message;
+      err.textContent='We couldn\'t add you to the waitlist right now. Please try again.';
       btn.disabled=false;btn.textContent='Join the Waitlist';
     }
   },
