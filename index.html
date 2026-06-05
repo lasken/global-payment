@@ -3608,7 +3608,6 @@ const A = {
     toast('Vote cast! Results update at the end of the quarter.','ok');
   },
   async shareOrder(id,title){
-    // Build a clean slug from the listing title
     const slug=(title||'listing')
       .toLowerCase()
       .trim()
@@ -3713,7 +3712,7 @@ const PAY = {
     FlutterwaveCheckout({
       public_key   : TMC.FW_PUBLIC_KEY,
       tx_ref       : ref,
-      amount       : 5,
+      amount       : 20,
       currency     : 'USD',
       payment_options: 'card, banktransfer, ussd',
       customer: {
@@ -3732,7 +3731,7 @@ const PAY = {
               userId       : S.user.id,
               status       : 'active',
               plan         : 'monthly',
-              amount       : '5',
+              amount       : '20',
               reference    : data.transaction_id + '',
               paymentMethod: 'flutterwave',
             });
@@ -3816,7 +3815,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
       if(changed) localStorage.setItem('datum_user_baselines',JSON.stringify(baselines));
       render();
     })
-    .catch(()=>{}); // silently falls back to hardcoded values if fetch fails
+    .catch(()=>{}); 
   render();
   loadCoins();
   // Handle password reset deep link 
