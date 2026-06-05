@@ -11,7 +11,7 @@
   
   <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta property="og:description" content="Agentic Commerce: Your passport to trade and access the globe 🌎"/>
-  <meta property="og:image" content="https://toomuchcoin.com/og-preview.png"/>
+  <meta property="og:image" content="https://toomuchcoin.com/toomuchcoin.png"/>
   <meta property="og:type" content="website"/>
   <meta name="twitter:card" content="summary_large_image"/>
 
@@ -1015,7 +1015,7 @@ const P = {
       expired:{cls:'vstat-rejected',icon:'clock',col:'var(--red)',title:'Free Trial Ended',
         desc:'Your 30-day free trial has ended. Upgrade to Pro for $20/month to restore full access.'},
     }[S.subStatus]||{cls:'vstat-unverified',icon:'lock',col:'var(--t3)',title:'Free Plan',
-      desc:'Upgrade to Pro ($20/month) to unlock full marketplace, forum, and 500+ crypto assets.'};
+      desc:'Upgrade to Pro ($20/month) to unlock full marketplace, forum, and financial freedom.'};
 
     const vTag=S.verifyStatus==='verified'?`<span class="tag tg"><i data-lucide="check-circle" style="width:11px;height:11px"></i>Verified</span>`
       :S.verifyStatus==='pending'?`<span class="tag tgd"><i data-lucide="clock" style="width:11px;height:11px"></i>Pending Review</span>`
@@ -3389,7 +3389,7 @@ const A = {
       S._trialDoc={status:'trial',trialEnd};
       await createNotif(S.user.id,'subscription',
         'Your 30-day free trial has started! 🎉',
-        'You now have full Pro access — marketplace, open forum, 500+ crypto assets, and Datum List. Your trial ends on '+new Date(trialEnd).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'. Upgrade anytime to keep access.',
+        'You now have full Pro access — marketplace, open forum, financial freedom, and Datum List. Your trial ends on '+new Date(trialEnd).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'. Upgrade anytime to keep access.',
         'sub'
       );
       await loadNotifications();
@@ -3608,6 +3608,7 @@ const A = {
     toast('Vote cast! Results update at the end of the quarter.','ok');
   },
   async shareOrder(id,title){
+    // Build a clean slug from the listing title
     const slug=(title||'listing')
       .toLowerCase()
       .trim()
@@ -3712,7 +3713,7 @@ const PAY = {
     FlutterwaveCheckout({
       public_key   : TMC.FW_PUBLIC_KEY,
       tx_ref       : ref,
-      amount       : 20,
+      amount       : 5,
       currency     : 'USD',
       payment_options: 'card, banktransfer, ussd',
       customer: {
@@ -3731,7 +3732,7 @@ const PAY = {
               userId       : S.user.id,
               status       : 'active',
               plan         : 'monthly',
-              amount       : '20',
+              amount       : '5',
               reference    : data.transaction_id + '',
               paymentMethod: 'flutterwave',
             });
@@ -3815,7 +3816,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
       if(changed) localStorage.setItem('datum_user_baselines',JSON.stringify(baselines));
       render();
     })
-    .catch(()=>{}); 
+    .catch(()=>{}); // silently falls back to hardcoded values if fetch fails
   render();
   loadCoins();
   // Handle password reset deep link 
