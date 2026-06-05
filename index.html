@@ -472,16 +472,17 @@ const AW_DB_ID      = '6a1631ee00269fc986b8';
 const ADMIN_ID = '6a18343c00284eaee0af';
 
 const AW_COL = {
-  profiles     : 'profiles',
-  orders       : 'orders',
-  chat         : 'chat',
-  watchlist    : 'watchlist',
-  connections  : 'connections',
-  verifications: 'verifications',
-  subscription : 'subscription',
-  reviews      : 'reviews',
-  notifications: 'notifications',
-  notif_prefs  : 'notif_prefs',
+  profiles       : 'profiles',
+  orders         : 'orders',
+  chat           : 'chat',
+  watchlist      : 'watchlist',
+  connections    : 'connections',
+  verifications  : 'verifications',
+  subscription   : 'subscription',
+  reviews        : 'reviews',
+  notifications  : 'notifications',
+  notif_prefs    : 'notif_prefs',
+  vendor_waitlist: 'vendor_waitlist',
 };
 
 const { Client, Account, Databases, Storage, Query, ID } = Appwrite;
@@ -522,6 +523,7 @@ const S = {
 };
 
 let _rt = null;
+let _ntfrt = null;
 function startAR(){
   stopAR();
   _rt = setInterval(async()=>{
@@ -531,6 +533,15 @@ function startAR(){
   }, 20000);
 }
 function stopAR(){ if(_rt){clearInterval(_rt);_rt=null;} }
+function startNotifPoll(){
+  if(_ntfrt) clearInterval(_ntfrt);
+  _ntfrt=setInterval(async()=>{
+    if(!S.user) return;
+    await loadNotifications();
+    // Only re-render the nav badge — not the whole page
+    renderNav();
+  },30000);
+}
 
 function mapOrder(d){
   return {id:d.$id,userId:d.userId,userName:d.userName,userInitials:d.userInitials,
@@ -571,6 +582,20 @@ function toast(msg,type=''){
   const el=document.getElementById('toast');
   el.textContent=msg;el.className='toast'+(type?' '+type:'');el.classList.add('show');
   clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3200);
+}
+function playNotifSound(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.setValueAtTime(880,ctx.currentTime);
+    o.frequency.setValueAtTime(1100,ctx.currentTime+0.1);
+    g.gain.setValueAtTime(0.3,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+    o.start(ctx.currentTime);
+    o.stop(ctx.currentTime+0.4);
+  }catch(e){}
 }
 const COLORS=[
   ['#F7931A','#1A1916'],['#627EEA','#fff'],['#26A17B','#fff'],['#E84142','#fff'],
@@ -613,6 +638,7 @@ function initOneSignal(userId){
 
 async function loadNotifications(){
   if(!S.user) return;
+  const prevUnread=S.notifUnread||0;
   const r=await DB.list('notifications',[
     Query.equal('userId',[S.user.id]),
     Query.orderDesc('$createdAt'),
@@ -624,6 +650,8 @@ async function loadNotifications(){
     orderId:d.orderId||null, category:d.category||null,
   }));
   S.notifUnread=S.notifications.filter(n=>!n.read).length;
+  // Play sound if new unread notifications arrived
+  if(S.notifUnread>prevUnread) playNotifSound();
 }
 
 async function loadNotifPrefs(){
@@ -648,6 +676,8 @@ async function saveNotifPrefs(){
 async function createNotif(userId,type,title,body,link='',orderId='',category=''){
   try{
     await DB.create('notifications',{userId,type,title,body,link,read:false,orderId,category});
+    // Play sound if this notification is for the current logged-in user
+    if(S.user&&userId===S.user.id) playNotifSound();
   }catch(e){console.warn('notif create:',e.message);}
 }
 
@@ -1117,7 +1147,7 @@ const P = {
                     <div class="pfx" style="flex:1"><span class="pfx-sym">$</span><input type="number" id="deal-price-${c.id}" placeholder="0.00" min="0" step="0.01"/></div>
                     <button class="btn bc bsm" id="deal-btn-${c.id}" onclick="A.submitDealDone('${c.id}')">Confirm</button>
                   </div>
-                  <div style="font-size:.72rem;color:var(--t3);margin-top:5px">Platform commission = 2% of this amount</div>
+                  <div style="font-size:.72rem;color:var(--t3);margin-top:5px">Platform commission = 2% of this amount &nbsp;·&nbsp; <span style="color:var(--grn)">10% of that goes to charity</span></div>
                 </div>
               </div>`:''}
               ${c.status==='deal_done'?`<div style="margin-top:10px">
@@ -1206,21 +1236,31 @@ const P = {
         </div>
         ${(()=>{
           const all=S._adminConns||[];
-          if(!all.length) return`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:12px 0">Click "Load All" to fetch commission data.</p>`;
-
-          // Split vendor waitlist from deal commissions
-          const waitlist=all.filter(c=>c.status==='vendor_waitlist');
+          const waitlist=S._adminVendors||[];
+          if(!all.length&&!waitlist.length) return`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:12px 0">Click "Load All" to fetch data.</p>`;
           const pending=all.filter(c=>c.status==='deal_done'||c.status==='comm_pending');
           const totalPending=pending.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
           const paid=all.filter(c=>c.status==='comm_paid');
           const totalPaid=paid.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
 
+          const totalAll=all.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
           return`
-          <!-- Commission summary -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-            <div class="psc"><div class="psv" style="font-size:1.2rem;color:var(--red)">$${totalPending.toFixed(2)}</div><div class="psl">Outstanding</div></div>
-            <div class="psc"><div class="psv" style="font-size:1.2rem;color:var(--grn)">$${totalPaid.toFixed(2)}</div><div class="psl">Collected</div></div>
+          <!-- Commission summary — always visible -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+            <div class="psc">
+              <div class="psv" style="font-size:1.1rem;color:var(--red)">$${totalPending.toFixed(2)}</div>
+              <div class="psl">Outstanding</div>
+            </div>
+            <div class="psc">
+              <div class="psv" style="font-size:1.1rem;color:var(--grn)">$${totalPaid.toFixed(2)}</div>
+              <div class="psl">Collected</div>
+            </div>
+            <div class="psc">
+              <div class="psv" style="font-size:1.1rem;color:var(--t2)">$${totalAll.toFixed(2)}</div>
+              <div class="psl">All Time</div>
+            </div>
           </div>
+          ${all.length===0?`<div style="font-size:.8rem;color:var(--t3);text-align:center;padding:10px 0;border-bottom:1px solid var(--bdr);margin-bottom:12px">No commission records yet.</div>`:''}
 
           <!-- Vendor Waitlist section -->
           ${waitlist.length>0?`
@@ -2015,8 +2055,37 @@ const P = {
           </div>
         </div>
         ${S.user
-          ?`<button class="btn bp" onclick="M.vendorWaitlist('${selCat}','${selCity}','${cat.label}')"><i data-lucide="plus" style="width:14px;height:14px"></i>List My Business on Waitlist</button>`
+          ?`<button class="btn bp" onclick="M.vendorWaitlist('${selCat}','${selCity}','${cat.label}')"><i data-lucide="plus" style="width:14px;height:14px"></i>List My Business on Waitlist</button>
+           <button class="btn bg bsm" style="margin-top:8px" onclick="A.loadMyVendorSubmissions()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i>Check My Submissions</button>`
           :`<button class="btn bpur" onclick="M.auth()"><i data-lucide="user-plus" style="width:14px;height:14px"></i>Sign in to List Your Business</button>`}
+
+        ${(S._myVendorSubmissions&&S._myVendorSubmissions.length>0)?`
+        <div style="margin-top:20px;text-align:left">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:10px">My Submissions</div>
+          ${S._myVendorSubmissions.map(s=>{
+            const stMap={pending:'to',approved:'tg',rejected:'tn'};
+            const stLabel={
+              pending:'Under Review — we\'ll notify you soon',
+              approved:'Approved! You\'re on the showcase waitlist',
+              rejected:'Not accepted this time — you can resubmit',
+            };
+            const stIcon={pending:'clock',approved:'check-circle',rejected:'x-circle'};
+            return`<div class="cxcard" style="text-align:left">
+              <div class="cxhead">
+                <div style="flex:1">
+                  <div class="cxname">${s.bizName}</div>
+                  <div class="cxorder">${s.category} · ${s.city} &nbsp;•&nbsp; ${ago(s.createdAt)}</div>
+                </div>
+                <span class="tag ${stMap[s.status]||'tn'}">${s.status}</span>
+              </div>
+              <div style="margin-top:8px;display:flex;align-items:flex-start;gap:7px;font-size:.8rem;color:var(--t2);line-height:1.5">
+                <i data-lucide="${stIcon[s.status]||'clock'}" style="width:13px;height:13px;flex-shrink:0;margin-top:1px;color:${s.status==='approved'?'var(--grn)':s.status==='rejected'?'var(--red)':'var(--gld)'}"></i>
+                ${stLabel[s.status]||s.status}
+              </div>
+              ${s.status==='rejected'?`<button class="btn bo bsm" style="margin-top:8px" onclick="M.vendorWaitlist('${selCat}','${selCity}','${cat.label}')"><i data-lucide="refresh-cw" style="width:11px;height:11px"></i>Resubmit</button>`:''}
+            </div>`;
+          }).join('')}
+        </div>`:''}
       </div>`
 
       :`<!-- Prompt user to pick a city -->
@@ -2338,15 +2407,15 @@ const M = {
           <i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--gld);flex-shrink:0;margin-top:1px"></i>
           <div>
             <div class="comm-box-t">Platform Commission: ${commStr}</div>
-            <div class="comm-box-d">A 2% commission on the final agreed transaction value is payable to Datum upon deal completion. This is charged to the buyer/requester and must be settled before goods or services are released.</div>
+            <div class="comm-box-d">A 2% commission on the final agreed transaction value is payable to Datum upon deal completion. This is charged to the buyer/requester and must be settled before goods or services are released. <strong style="color:var(--grn)">10% of every commission goes directly to 3 global charities we support.</strong></div>
           </div>
         </div>
         <div class="cform">
           <div class="cformtitle">Send a Connection Request</div>
           <div class="fg"><label>Your message to ${order.userName.split(' ')[0]}</label><textarea id="cmsg" rows="3" placeholder="Introduce yourself and propose your terms…"></textarea></div>
           <div class="fg"><label>Your contact (WhatsApp, Telegram, phone, or email)</label><input type="text" id="ccontact" placeholder="e.g. +234 801 234 5678 or @handle"/></div>
-          <div style="font-size:.75rem;color:var(--t3);margin-bottom:14px;line-height:1.5;padding:8px 10px;background:var(--surf);border-radius:var(--rsm)">
-            By sending this request you acknowledge the platform commission of <strong>${commStr}</strong>, payable upon deal completion.
+          <div style="font-size:.72rem;color:var(--t3);margin-bottom:14px;line-height:1.5;padding:8px 10px;background:var(--surf);border-radius:var(--rsm)">
+            By sending this request you acknowledge the platform commission of <strong>${commStr}</strong>, payable upon deal completion. <span style="color:var(--grn)">10% of every commission is automatically donated across 3 global charities we support.</span>
           </div>
           <div class="ferr" id="cerr"></div>
           <div style="display:flex;gap:10px">
@@ -3154,30 +3223,27 @@ const A = {
       toast('Deal confirmed. Thank you!','ok');
     }catch(e){toast('Failed: '+e.message,'err');}
   },
-  async adminApproveWaitlist(id,bizName){
+  async adminApproveWaitlist(id,bizName,userId){
     if(S.user?.id!==ADMIN_ID) return;
     try{
-      await DB.update('connections',id,{status:'vendor_approved'});
-      // Find the connection to get submitter details
-      const all=S._adminConns||[];
-      const c=all.find(x=>x.id===id);
-      if(c){
-        await createNotif(c.fromUserId,'connection',
+      await DB.update('vendor_waitlist',id,{status:'approved'});
+      if(userId){
+        await createNotif(userId,'connection',
           'Your business has been approved! 🎉',
           bizName+' has been approved for the vendor showcase. The community will vote for you in the next quarterly poll. We\'ll notify you when voting opens.',
           'market'
         );
-        await pushNotif(c.fromUserId,'Business approved!',bizName+' is now on the vendor showcase waitlist. Voting opens next quarter.');
+        await pushNotif(userId,'Business approved! 🎉',bizName+' is now on the vendor showcase. Voting opens next quarter.');
       }
       await A.adminLoadAll();
       toast(bizName+' approved for showcase!','ok');
-    }catch(e){toast('Failed: '+e.message,'err');}
+    }catch(e){toast('Something went wrong. Please try again.','err');}
   },
 
   async adminRejectWaitlist(id,fromUserId,bizName){
     if(S.user?.id!==ADMIN_ID) return;
     try{
-      await DB.update('connections',id,{status:'vendor_rejected'});
+      await DB.update('vendor_waitlist',id,{status:'rejected'});
       await createNotif(fromUserId,'connection',
         'Vendor submission update',
         'Thank you for submitting '+bizName+'. Unfortunately your submission wasn\'t accepted at this time. You\'re welcome to resubmit with updated details.',
@@ -3205,12 +3271,30 @@ const A = {
   },
   async adminLoadAll(){
     if(S.user?.id!==ADMIN_ID) return;
+    // Load commission connections
     const r=await DB.list('connections',[Query.orderDesc('$createdAt'),Query.limit(200)]);
     S._adminConns=r.documents.map(d=>({
       id:d.$id,fromName:d.fromName,toName:d.toName,
       orderTitle:d.orderTitle,status:d.status,
       commissionAmt:d.commissionAmt,commissionRef:d.commissionRef,
       buyerConfirmed:d.buyerConfirmed,createdAt:d.$createdAt,
+    }));
+    // Load vendor waitlist separately
+    const vr=await DB.list('vendor_waitlist',[Query.orderDesc('$createdAt'),Query.limit(100)]);
+    S._adminVendors=vr.documents.map(d=>({
+      id:d.$id,
+      userId:d.userId,
+      userName:d.userName,
+      bizName:d.bizName,
+      tagline:d.tagline,
+      contact:d.contact,
+      why:d.why,
+      category:d.category,
+      city:d.city,
+      country:d.country,
+      storefrontId:d.storefrontId,
+      status:d.status,
+      createdAt:d.$createdAt,
     }));
     render();
     toast('Admin data refreshed.');
@@ -3491,6 +3575,21 @@ const A = {
   setVendorCat(cat){ S._vCat=cat; S._vCity=null; render(); },
   setVendorCity(city){ S._vCity=city||null; render(); },
   setVendorCountry(country){ S._vCountry=country; S._vCity=null; render(); },
+  async loadMyVendorSubmissions(){
+    if(!S.user) return;
+    const r=await DB.list('vendor_waitlist',[
+      Query.equal('userId',[S.user.id]),
+      Query.orderDesc('$createdAt'),
+      Query.limit(20),
+    ]);
+    S._myVendorSubmissions=r.documents.map(d=>({
+      id:d.$id,bizName:d.bizName,tagline:d.tagline,
+      category:d.category,city:d.city,country:d.country,
+      status:d.status,createdAt:d.$createdAt,
+      storefrontId:d.storefrontId,
+    }));
+    render();
+  },
   toggleSignupNotifCat(cat){
     S._signupNotifCats=S._signupNotifCats||[];
     const idx=S._signupNotifCats.indexOf(cat);
@@ -3552,30 +3651,32 @@ const A = {
     }
     btn.textContent='Submitting…';
     try{
-      await DB.create('connections',{
-        orderId:'vendor_waitlist',
-        orderTitle:catLabel+' — '+city,
-        fromUserId:S.user.id,fromName:S.user.name,fromInitials:S.user.inits,
-        toUserId:ADMIN_ID,toName:'Datum Admin',
-        message:JSON.stringify({
-          bizName,tagline:tagline||'',why:why||'',
-          category:catId,city,catLabel,
-          storefrontId:storefrontId||'',
-        }),
+      await DB.create('vendor_waitlist',{
+        userId:S.user.id,
+        userName:S.user.name,
+        userInitials:S.user.inits,
+        bizName,
+        tagline:tagline||'',
         contact,
-        commission:'5% referral on showcase connections',
-        status:'vendor_waitlist',
+        why:why||'',
+        category:catId,
+        city,
+        country:S._vCountry||'Nigeria',
+        storefrontId:storefrontId||'',
+        status:'pending',
       });
-      // Notify admin
       await createNotif(ADMIN_ID,'connection',
         'New vendor waitlist: '+bizName,
         catLabel+' in '+city+' — '+S.user.name+' ('+contact+')'+(storefrontId?' · Has storefront photo':''),
-        'profile','vendor_waitlist',catId
+        'profile','','vendor'
       );
       M.close();
-      // Store locally so user sees their submission immediately
       S._myWaitlistEntries=S._myWaitlistEntries||[];
-      S._myWaitlistEntries.push({bizName,tagline,catLabel,city,storefrontId,status:'pending',createdAt:new Date().toISOString()});
+      S._myWaitlistEntries.push({
+        bizName,tagline,catLabel,city,
+        storefrontId,status:'pending',
+        createdAt:new Date().toISOString()
+      });
       toast(bizName+' is now on the '+catLabel+' waitlist for '+city+'! The community will vote each quarter.','ok');
     }catch(e){
       err.textContent='We couldn\'t add you to the waitlist right now. Please try again.';
@@ -3694,6 +3795,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
     S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null};
     await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
     initOneSignal(S.user.id);
+    startNotifPoll();
   }
   // Load manual stock prices from prices.json (cache-busted each page load)
   fetch('prices.json?v='+Date.now())
