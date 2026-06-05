@@ -12,6 +12,8 @@
   <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta property="og:description" content="Agentic Commerce: Your passport to trade and access the globe 🌎"/>
   <meta property="og:image" content="https://toomuchcoin.com/toomuchcoin.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
   <meta property="og:type" content="website"/>
   <meta name="twitter:card" content="summary_large_image"/>
 
@@ -639,6 +641,7 @@ function initOneSignal(userId){
 async function loadNotifications(){
   if(!S.user) return;
   const prevUnread=S.notifUnread||0;
+  const prevIds=new Set((S.notifications||[]).map(n=>n.id));
   const r=await DB.list('notifications',[
     Query.equal('userId',[S.user.id]),
     Query.orderDesc('$createdAt'),
@@ -649,9 +652,11 @@ async function loadNotifications(){
     link:d.link||null, read:d.read||false, createdAt:d.$createdAt,
     orderId:d.orderId||null, category:d.category||null,
   }));
-  S.notifUnread=S.notifications.filter(n=>!n.read).length;
-  // Play sound if new unread notifications arrived
-  if(S.notifUnread>prevUnread) playNotifSound();
+  const newUnread=S.notifications.filter(n=>!n.read).length;
+  const hasNew=S.notifications.some(n=>!prevIds.has(n.id)&&!n.read);
+  S.notifUnread=newUnread;
+  // Play sound for any new unread notifications — including ones missed while away
+  if(hasNew||newUnread>prevUnread) playNotifSound();
 }
 
 async function loadNotifPrefs(){
@@ -959,6 +964,11 @@ const P = {
       <p class="l-ey">The unified commerce layer</p>
       <h1 class="l-h">Your passport to <em>trade & access</em> the globe. 🌎</h1>
       <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time financial markets — all in one place.</p>
+      <div style="margin-top:-40px;margin-bottom:48px;display:flex;align-items:center;gap:6px;font-size:.8125rem;color:var(--t3)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <a href="Toomuchcoin x Datum Whitepaper.pdf" download style="color:var(--t2);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">Download Whitepaper</a>
+        
+      </div>
       <div class="ggrid">
         <div class="gcard" onclick="R.acct()">
           <div class="gci id" style="background:var(--t1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>${S.user?'<polyline points="16 11 18 13 22 9" stroke="#4ade80" stroke-width="2"/>':''}</svg></div>
@@ -1355,6 +1365,10 @@ const P = {
         <button class="btn bo" onclick="A.logout()"><i data-lucide="log-out" style="width:14px;height:14px"></i>Sign Out</button>
         <button class="btn bg" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Marketplace</button>
         <button class="btn bg" onclick="R.go('crypto')"><i data-lucide="bar-chart-2" style="width:14px;height:14px"></i>Markets</button>
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:6px;font-size:.8125rem;color:var(--t3)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <a href="Toomuchcoin x Datum Whitepaper.pdf" download style="color:var(--t2);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">Download Whitepaper</a>
       </div>
     </div>`;
   },
@@ -2028,9 +2042,14 @@ const P = {
               <div style="font-weight:600;font-size:.875rem;color:var(--grn);margin-bottom:2px">Connect to Fan Favourite</div>
               <div style="font-size:.75rem;color:var(--t2);line-height:1.5">We link you directly to our trusted community partner.</div>
             </div>
-            <a href="${showcase.partnerLink}" target="_blank" rel="noopener" class="btn bc bsm">
-              <i data-lucide="external-link" style="width:12px;height:12px"></i>Connect Now
-            </a>
+            <div style="display:flex;gap:8px;align-items:center">
+              <a href="${showcase.partnerLink}" target="_blank" rel="noopener" class="btn bc bsm">
+                <i data-lucide="external-link" style="width:12px;height:12px"></i>Connect Now
+              </a>
+              <button class="btn bo bsm" onclick="A.shareVendor('${selCat}','${selCity}','${showcase.name.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}')">
+                <i data-lucide="share-2" style="width:12px;height:12px"></i>Share
+              </button>
+            </div>
           </div>
         </div>
       </div>`
@@ -2041,7 +2060,12 @@ const P = {
         <div style="width:52px;height:52px;background:${cat.color}18;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:${cat.color}">
           ${cat.svg.replace('width="20" height="20"','width="24" height="24"')}
         </div>
-        <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px">${cat.label} in ${selCity}</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:7px">
+          <div style="font-family:var(--fd);font-size:1.2rem">${cat.label} in ${selCity}</div>
+          <button class="btn bg bsm" onclick="A.shareVendor('${selCat}','${selCity}','')">
+            <i data-lucide="share-2" style="width:12px;height:12px"></i>Share
+          </button>
+        </div>
         <p style="font-size:.875rem;color:var(--t2);margin-bottom:6px;line-height:1.6;max-width:400px;margin-left:auto;margin-right:auto">
           No fan favourite has been crowned here yet. List your business to join the waitlist, the community votes every quarter to pick the one we showcase.
         </p>
@@ -2093,6 +2117,36 @@ const P = {
         <i data-lucide="map-pin" style="width:22px;height:22px;display:block;margin:0 auto 10px"></i>
         Select a city above to see the community fan favourite for ${cat.label}.
       </div>`}
+
+      ${selCity?`
+      <!-- Approved vendors list -->
+      <div style="margin-top:22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)">All Approved Vendors · ${selCity}</div>
+          <button class="btn bg bsm" onclick="A.loadApprovedVendors('${selCat}','${selCity}')">
+            <i data-lucide="refresh-cw" style="width:11px;height:11px"></i>Load Vendors
+          </button>
+        </div>
+        ${S._approvedVendors&&S._approvedVendors.length>0
+          ?S._approvedVendors.map(v=>{
+            const sfUrl=v.storefrontId?fileUrl(v.storefrontId):null;
+            return`<div class="cxcard" style="margin-bottom:10px">
+              ${sfUrl?`<img src="${sfUrl}" style="width:100%;height:100px;object-fit:cover;border-radius:var(--rsm);margin-bottom:10px;border:1px solid var(--bdr)">`:''}
+              <div class="cxhead">
+                <div style="flex:1;min-width:0">
+                  <div class="cxname">${v.bizName}</div>
+                  ${v.tagline?`<div class="cxorder" style="font-style:italic">"${v.tagline}"</div>`:''}
+                </div>
+                <span class="tag tg" style="font-size:.65rem">Approved</span>
+              </div>
+              <div style="font-size:.78rem;color:var(--t2);margin-top:6px;display:flex;align-items:center;gap:5px">
+                <i data-lucide="phone" style="width:11px;height:11px;color:var(--t3)"></i>${v.contact}
+              </div>
+            </div>`;
+          }).join('')
+          :`<div style="font-size:.8rem;color:var(--t3);text-align:center;padding:16px;background:var(--off);border-radius:var(--rsm)">Click "Load Vendors" to see approved businesses in ${selCity}.</div>`
+        }
+      </div>`:''}
 
     </div>`;
   },
@@ -3575,6 +3629,22 @@ const A = {
   setVendorCat(cat){ S._vCat=cat; S._vCity=null; render(); },
   setVendorCity(city){ S._vCity=city||null; render(); },
   setVendorCountry(country){ S._vCountry=country; S._vCity=null; render(); },
+  async loadApprovedVendors(catId,city){
+    const r=await DB.list('vendor_waitlist',[
+      Query.equal('category',[catId]),
+      Query.equal('city',[city]),
+      Query.equal('status',['approved']),
+      Query.orderDesc('$createdAt'),
+      Query.limit(20),
+    ]);
+    S._approvedVendors=r.documents.map(d=>({
+      id:d.$id,bizName:d.bizName,tagline:d.tagline,
+      contact:d.contact,userName:d.userName,
+      storefrontId:d.storefrontId,createdAt:d.$createdAt,
+    }));
+    render();
+  },
+
   async loadMyVendorSubmissions(){
     if(!S.user) return;
     const r=await DB.list('vendor_waitlist',[
@@ -3607,6 +3677,20 @@ const A = {
     render();
     toast('Vote cast! Results update at the end of the quarter.','ok');
   },
+  async shareVendor(catId,city,bizName){
+    const label={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music:'Music Services',entertainment:'Entertainment'}[catId]||catId;
+    const slug=city.toLowerCase().replace(/\s+/g,'-');
+    const url=window.location.origin+window.location.pathname+'?vendors='+catId+'&city='+slug;
+    const text=bizName
+      ?'Check out '+bizName+' — fan favourite for '+label+' in '+city+' on Toomuchcoin'
+      :'Find the best '+label+' in '+city+' on Toomuchcoin';
+    if(navigator.share){
+      try{await navigator.share({title:'Toomuchcoin Vendors',text,url});return;}catch(e){if(e.name==='AbortError')return;}
+    }
+    try{await navigator.clipboard.writeText(url);toast('Vendor link copied!','ok');}
+    catch(e){prompt('Copy this link to share:',url);}
+  },
+
   async shareOrder(id,title){
     // Build a clean slug from the listing title
     const slug=(title||'listing')
@@ -3819,8 +3903,18 @@ document.addEventListener('DOMContentLoaded', async()=>{
     .catch(()=>{}); // silently falls back to hardcoded values if fetch fails
   render();
   loadCoins();
-  // Handle password reset deep link 
+  // Resolve ?vendors= deep links
   const _qs=new URLSearchParams(window.location.search);
+  const _vCat=_qs.get('vendors');
+  const _vCity=_qs.get('city');
+  if(_vCat){
+    history.replaceState({},'',window.location.pathname);
+    S._vCat=_vCat;
+    S._vCity=_vCity?_vCity.replace(/-/g,' ').replace(/\b\w/g,l=>l.toUpperCase()):null;
+    S.page='market';S.mTab='vendors';
+    render();
+  }
+  // Resolve ?listing= deep links (supports both slug and raw id)
   if(_qs.get('reset')==='1'){
     const _rUserId=_qs.get('userId');
     const _rSecret=_qs.get('secret');
