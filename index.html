@@ -1020,11 +1020,11 @@ const P = {
       active:{cls:'vstat-verified',icon:'zap',col:'var(--pur)',title:'Pro Membership Active',
         desc:'Full access to all marketplace, forum, and 500+ crypto features.'},
       trial:{cls:'vstat-verified',icon:'gift',col:'var(--grn)',title:'Free Trial Active'+(trialDaysLeft!==null?' — '+trialDaysLeft+' day'+(trialDaysLeft===1?'':'s')+' remaining':''),
-        desc:'You\'re on a free 30-day Pro trial. Enjoy full access to all features. Upgrade before your trial ends to keep access.'},
+        desc:'You\'re on a free 7-day Pro trial. Enjoy full access to all features. Upgrade before your trial ends to keep access.'},
       pending:{cls:'vstat-pending',icon:'clock',col:'var(--gld)',title:'Payment Under Review',
         desc:'Your payment reference is being confirmed. Access granted within 24 hours.'},
       expired:{cls:'vstat-rejected',icon:'clock',col:'var(--red)',title:'Free Trial Ended',
-        desc:'Your 30-day free trial has ended. Upgrade to Pro for $20/month to restore full access.'},
+        desc:'Your 7-day free trial has ended. Upgrade to Pro for $20/month to restore full access.'},
     }[S.subStatus]||{cls:'vstat-unverified',icon:'lock',col:'var(--t3)',title:'Free Plan',
       desc:'Upgrade to Pro ($20/month) to unlock full marketplace, forum, and financial freedom.'};
 
@@ -1158,7 +1158,7 @@ const P = {
                     <div class="pfx" style="flex:1"><span class="pfx-sym">$</span><input type="number" id="deal-price-${c.id}" placeholder="0.00" min="0" step="0.01"/></div>
                     <button class="btn bc bsm" id="deal-btn-${c.id}" onclick="A.submitDealDone('${c.id}')">Confirm</button>
                   </div>
-                  <div style="font-size:.72rem;color:var(--t3);margin-top:5px">Platform commission = 2% of this amount &nbsp;·&nbsp; <span style="color:var(--grn)">10% of that goes to charity</span></div>
+                  <div style="font-size:.72rem;color:var(--t3);margin-top:5px">Platform commission = 1% of this amount &nbsp;·&nbsp; <span style="color:var(--grn)">10% of that goes to charity</span></div>
                 </div>
               </div>`:''}
               ${c.status==='deal_done'?`<div style="margin-top:10px">
@@ -1634,7 +1634,7 @@ const P = {
     const MANUAL_PRICES=S._manualPrices||{
       gold:3327.40, nvda:131.38, spx:5967.84, dxy:99.54,
       tsla:341.21, mstr:421.06, nasdaq:21419.92, lvmh:587.20, tsmc:187.43,
-      dangcem:1180.00, nestle:3125.90,
+      dangcem:1180.00,
     };
     // For crypto assets, always prefer live CoinGecko price from S.coins
     const cgPriceMap={
@@ -1649,7 +1649,7 @@ const P = {
       if(MANUAL_PRICES[id]!=null) return MANUAL_PRICES[id];
       return null;
     };
-    const NAIRA_IDS=['dangcem','nestle'];
+    const NAIRA_IDS=['dangcem',];
     const fmtAP=(p,id='')=>{
       if(p==null||isNaN(p))return'—';
       const sym=NAIRA_IDS.includes(id)?'₦':'$';
@@ -1664,8 +1664,8 @@ const P = {
     const logo=(id,bg,fg,sym)=>{
       if(id==='btc'){const c=S.coins.find(x=>x.id==='bitcoin');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
       if(id==='eth'){const c=S.coins.find(x=>x.id==='ethereum');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
-      if(['nvda','tsla','mstr','dangcem','nestle'].includes(id)){
-        const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR',dangcem:'DANGCEM',nestle:'NESTLE'}[id];
+      if(['nvda','tsla','mstr','dangcem',].includes(id)){
+        const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR',dangcem:'DANGCEM',}[id];
         return`<div class="al-ico" style="background:#fff;overflow:hidden"><img src="https://financialmodelingprep.com/image-stock/${s}.png" width="36" height="36" style="object-fit:contain;display:block" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=font-size:.65rem;font-weight:700;color:${fg}>${s}</span>'"></div>`;
       }
       return`<div class="al-ico" style="background:${bg};color:${fg}">${sym}</div>`;
@@ -1685,7 +1685,6 @@ const P = {
         desc:'Top picks from African markets',
         assets:[
           {id:'dangcem', n:'#', name:'Dangote Cement', sym:'DANGCEM', bg:'#C4622D',fg:'#fff', fp:'₦1,180.00', ytd:93.76, y1:168.18, y5:455.29, y10:615.00, sj:0},
-          {id:'nestle',  n:'#', name:'Nestlé Nigeria',  sym:'NESTLE',  bg:'#009FE3',fg:'#fff', fp:'₦3,125.00', ytd:59.60,  y1:96.48, y5:123.21, y10:890.00, sj:0},
         ],
       },
       {
@@ -2357,12 +2356,12 @@ const M = {
         <div class="fg">
           <label>Price / Budget</label>
           <div class="pfx"><span class="pfx-sym">$</span><input type="text" id="oprice" placeholder="0.00 or Negotiable"/></div>
-          <div style="font-size:.72rem;color:var(--t3);margin-top:5px"><i data-lucide="info" style="width:10px;height:10px;display:inline;vertical-align:-1px"></i> Price in USD. A 2% platform commission applies on completed deals.</div>
+          <div style="font-size:.72rem;color:var(--t3);margin-top:5px"><i data-lucide="info" style="width:10px;height:10px;display:inline;vertical-align:-1px"></i> Price in USD. A 1% platform commission applies on completed deals.</div>
         </div>
         <div class="fg"><label>Description</label><textarea id="odesc" rows="3" placeholder="Full details of your listing…"></textarea></div>
         <div class="fg">
           <label>Photos <span style="font-weight:400;color:var(--t3)">(optional · up to 3 · max 3MB each)</span></label>
-          <div class="img-drop" id="img-drop-zone" onclick="document.getElementById('oimgs').click()">
+          <div class="img-drop" id="img-drop-zone" onclick="document.getElementById('oimgs').click())">
             <i data-lucide="image" style="width:20px;height:20px;color:var(--t3);display:block;margin:0 auto 6px"></i>
             <div style="font-size:.78rem;color:var(--t3)">Click to add photos</div>
             <div style="font-size:.68rem;color:var(--t3);margin-top:2px">JPG, PNG or WebP</div>
@@ -2384,7 +2383,7 @@ const M = {
     const mine=S.user?.id===order.userId;
     const done=order.status==='filled'||order.status==='closed';
     const rawPx=parseFloat((order.price||'').replace(/[^0-9.]/g,''));
-    const commStr=!isNaN(rawPx)&&rawPx>0?`$${(rawPx*0.02).toFixed(2)} (2% of ${order.price})`:'2% of the agreed transaction value';
+    const commStr=!isNaN(rawPx)&&rawPx>0?`$${(rawPx*0.01).toFixed(2)} (1% of ${order.price})`:'1% of the agreed transaction value';
     const safeTitle=order.title.replace(/'/g,'&#39;');
     const safeName=order.userName.replace(/'/g,'&#39;');
     const safeComm=commStr.replace(/'/g,'&#39;');
@@ -2466,7 +2465,7 @@ const M = {
           <i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--gld);flex-shrink:0;margin-top:1px"></i>
           <div>
             <div class="comm-box-t">Platform Commission: ${commStr}</div>
-            <div class="comm-box-d">A 2% commission on the final agreed transaction value is payable to Datum upon deal completion. This is charged to the buyer/requester and must be settled before goods or services are released. <strong style="color:var(--grn)">10% of every commission goes directly to 3 global charities we support.</strong></div>
+            <div class="comm-box-d">A 1% commission on the final agreed transaction value is payable to Datum upon deal completion. This is charged to the buyer/requester and must be settled before goods or services are released. <strong style="color:var(--grn)">10% of every commission goes directly to 3 global charities we support.</strong></div>
           </div>
         </div>
         <div class="cform">
@@ -2806,7 +2805,7 @@ const A = {
       // 3. Welcome notification
       await createNotif(u.$id,'welcome',
         'Welcome to Toomuchcoin! 🎉',
-        'Explore the marketplace, check live crypto prices, and start trading. Upgrade to Pro or start a free 30-day trial anytime.',
+        'Explore the marketplace, check live crypto prices, and start trading. Upgrade to Pro or start a free 7-day trial anytime.',
         'market'
       );
       await loadNotifications();
