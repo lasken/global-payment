@@ -505,6 +505,15 @@ const DB = {
   update(col,id,d){ return _db.updateDocument(AW_DB_ID,AW_COL[col],id,d); },
 };
 
+// Capture referral source from URL on every page load
+const _urlParams=new URLSearchParams(window.location.search);
+const _refSource=_urlParams.get('ref')||_urlParams.get('utm_source')||sessionStorage.getItem('tmc_ref')||null;
+const _refAgent=_urlParams.get('agent')||_urlParams.get('utm_campaign')||sessionStorage.getItem('tmc_agent')||null;
+const _refPage=window.location.pathname+window.location.search;
+// Store in session so it survives page navigation before they sign up
+if(_refSource) sessionStorage.setItem('tmc_ref',_refSource);
+if(_refAgent) sessionStorage.setItem('tmc_agent',_refAgent);
+
 const S = {
   page:'land', user:null,
   mTab:'board', mFilter:'all',
@@ -1309,7 +1318,53 @@ const P = {
 
           <!-- Commission payments -->
           ${pending.length>0?`
-          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gld);margin:14px 0 8px;display:flex;align-items:center;gap:6px">
+          <button class="btn bg bsm" style="margin-bottom:14px" onclick="A.adminLoadSources()">
+          <i data-lucide="bar-chart-2" style="width:12px;height:12px"></i>View Signup Sources
+        </button>
+        ${S._adminSources?`
+        <div style="margin-bottom:16px;background:var(--off);border:1px solid var(--bdr);border-radius:var(--rmd);padding:14px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:10px">Signup Sources</div>
+          ${(()=>{
+            const counts={};
+            const agentCounts={};
+            S._adminSources.forEach(p=>{
+              const src=p.refSource||'direct';
+              counts[src]=(counts[src]||0)+1;
+              if(p.refAgent){agentCounts[p.refAgent]=(agentCounts[p.refAgent]||0)+1;}
+            });
+            const total=S._adminSources.length;
+            const srcEntries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+            const agentEntries=Object.entries(agentCounts).sort((a,b)=>b[1]-a[1]);
+            const srcColors={instagram:'#E1306C',twitter:'#1DA1F2',whatsapp:'#25D366',tiktok:'#010101',flyer:'var(--org)',email:'var(--blu)',direct:'var(--t3)'};
+            return`
+            <div style="margin-bottom:12px">
+              ${srcEntries.map(([src,count])=>{
+                const pct=Math.round((count/total)*100);
+                const col=srcColors[src]||'var(--pur)';
+                return`<div style="margin-bottom:8px">
+                  <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:3px">
+                    <span style="font-weight:600;text-transform:capitalize">${src}</span>
+                    <span style="color:var(--t2)">${count} signup${count!==1?'s':''} &nbsp;·&nbsp; ${pct}%</span>
+                  </div>
+                  <div style="background:var(--bdr);border-radius:100px;height:7px;overflow:hidden">
+                    <div style="height:100%;width:${pct}%;background:${col};border-radius:100px;transition:width .4s ease"></div>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>
+            ${agentEntries.length>0?`
+            <div style="border-top:1px solid var(--bdr);padding-top:10px;margin-top:4px">
+              <div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px">By Agent</div>
+              ${agentEntries.map(([agent,count])=>`
+              <div style="display:flex;justify-content:space-between;font-size:.78rem;padding:5px 0;border-bottom:1px solid var(--bdr)">
+                <span style="font-weight:500">${agent}</span>
+                <span class="tag tg" style="font-size:.65rem">${count} signup${count!==1?'s':''}</span>
+              </div>`).join('')}
+            </div>`:''}
+            <div style="font-size:.72rem;color:var(--t3);margin-top:10px">Total tracked signups: <strong>${total}</strong></div>`;
+          })()}
+        </div>`:''}
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gld);margin:14px 0 8px;display:flex;align-items:center;gap:6px">
             <i data-lucide="dollar-sign" style="width:11px;height:11px"></i>Commission Payments
           </div>
           ${pending.map(c=>`<div class="cxcard" style="border-color:${c.status==='comm_pending'?'var(--gld)':'var(--bdr)'}">
@@ -2776,7 +2831,17 @@ const A = {
     try{
       const u=await DB.register(email,pwd,name);
       await DB.login(email,pwd);
-      await DB.create('profiles',{userId:u.$id,name,email,type});
+      const _sr=sessionStorage.getItem('tmc_ref')||'direct';
+      const _sa=sessionStorage.getItem('tmc_agent')||'';
+      await DB.create('profiles',{
+        userId:u.$id,name,email,type,
+        refSource:_sr,
+        refAgent:_sa,
+        refLandingPage:window.location.href,
+      });
+      // Clear session ref after saving
+      sessionStorage.removeItem('tmc_ref');
+      sessionStorage.removeItem('tmc_agent');
       S.user={id:u.$id,name,email,type,inits:initials(name),joinedAt:new Date().toISOString(),avatarId:null};
       S.subscribed=false;S.subStatus=null;S.verifyStatus=null;
       S.myConnections=[];S.sentConnections=[];
@@ -3327,6 +3392,20 @@ const A = {
       toast('Commission verified and marked as paid.','ok');
     }catch(e){toast('Failed: '+e.message,'err');}
   },
+  async adminLoadSources(){
+    if(S.user?.id!==ADMIN_ID) return;
+    const r=await DB.list('profiles',[Query.orderDesc('$createdAt'),Query.limit(500)]);
+    S._adminSources=r.documents.map(d=>({
+      name:d.name,
+      refSource:d.refSource||'direct',
+      refAgent:d.refAgent||'',
+      refLandingPage:d.refLandingPage||'',
+      createdAt:d.$createdAt,
+    }));
+    render();
+    toast('Source data loaded.');
+  },
+
   async adminLoadAll(){
     if(S.user?.id!==ADMIN_ID) return;
     // Load commission connections
