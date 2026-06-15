@@ -3649,6 +3649,10 @@ const M = {
 
   createOrder(){
     if(!S.user){M.auth();toast('Please sign in to post a listing.');return;}
+    if(!S.subscribed){
+      const myListings=(S.orders||[]).filter(o=>o.userId===S.user.id).length;
+      if(myListings>=3){toast('You\'ve posted your 3 free listings. Upgrade to Pro to continue.');R.go('sub');return;}
+    }
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
         <div class="mhdr"><div><div class="mey">New Listing</div><h2 class="mtitle">Post an Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
@@ -3678,7 +3682,6 @@ const M = {
   },
 
   viewOrder(order){
-    if(!S.subscribed){M.subscribe();return;}
     const sc={open:'tg',negotiating:'to',filled:'tn',closed:'tn'};
     const tc={buy:'tb',sell:'tg',request:'to'};
     const catLabel={p2p:'P2P Crypto',logistics:'Logistics',goods:'Buy/Sell Goods',handyman:'Handyman'}[order.category]||order.category;
@@ -4220,7 +4223,10 @@ const A = {
   setFilter(f){ S.mFilter=f; render(); },
 
   async viewOrder(id){
-    if(!S.subscribed){M.subscribe();return;}
+    if(!S.subscribed){
+      const attempts=(S.sentConnections||[]).length;
+      if(attempts>=3){toast('You\'ve used your 3 free connects. Upgrade to Pro to continue.');R.go('sub');return;}
+    }
     const o=(S.orders||[]).find(x=>x.id===id);
     if(!o) return;
     S.viewedOrder=o;
@@ -4270,7 +4276,10 @@ const A = {
 
   connectOrder(id){
     if(!S.user){M.auth();toast('Please sign in to connect.');return;}
-    if(!S.subscribed){M.subscribe();return;}
+    if(!S.subscribed){
+      const attempts=(S.sentConnections||[]).length;
+      if(attempts>=3){toast('You\'ve used your 3 free connects. Upgrade to Pro to continue.');R.go('sub');return;}
+    }
     const o=(S.orders||[]).find(x=>x.id===id);
     if(!o) return;
     S.viewedOrder=o; M.viewOrder(o);
