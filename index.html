@@ -1850,6 +1850,12 @@ function KK_send(){
 }
 
 function render(){
+  // Preserve in-progress chat input across re-renders (e.g. background polling)
+  const _prevCinput=document.getElementById('cinput');
+  const _savedChatText=_prevCinput?_prevCinput.value:null;
+  const _savedCursor=_prevCinput?_prevCinput.selectionStart:null;
+  const _wasFocused=_prevCinput===document.activeElement;
+
   const root=document.getElementById('root');
   if     (S.page==='land')    root.innerHTML=P.land();
   else if(S.page==='profile') root.innerHTML=P.profile();
@@ -1875,6 +1881,18 @@ function render(){
   renderNav();lucide.createIcons();
   const feed=document.getElementById('cfeed');
   if(feed)feed.scrollTop=feed.scrollHeight;
+
+  // Restore chat input text/cursor/focus if it existed before this re-render
+  if(_savedChatText){
+    const newCinput=document.getElementById('cinput');
+    if(newCinput){
+      newCinput.value=_savedChatText;
+      if(_wasFocused){
+        newCinput.focus();
+        try{newCinput.setSelectionRange(_savedCursor,_savedCursor);}catch(e){}
+      }
+    }
+  }
 }
 function renderNav(){
   const el=document.getElementById('nact');
