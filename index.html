@@ -504,6 +504,7 @@
 
     @media(max-width:768px){
       .nav-blog-link{display:none!important}
+      .nav-sub-badge{display:none!important}
       #gnav{padding:0 16px}
       .ggrid{grid-template-columns:1fr}
       .gcard{padding:26px 22px}
@@ -1368,38 +1369,33 @@ async function createNotif(userId,type,title,body,link='',orderId='',category=''
 }
 
 async function notifyAllUsers(title,body,link=''){
+  let inAppCount=0;
+  let pushFailed=false;
+
+  // Step 1: in-app notifications — independent of push, must not be blocked by it
   try{
-    // Get all user profiles
     const r=await DB.list('profiles',[Query.limit(500)]);
     const userIds=r.documents.map(d=>d.userId).filter(Boolean);
-    // Create notifications in batches to avoid rate limiting
     for(const uid of userIds){
-      await DB.create('notifications',{
-        userId:uid,type:'zap',title,body,link,read:false,orderId:'',category:'platform'
-      }).catch(()=>{});
+      try{
+        await DB.create('notifications',{
+          userId:uid,type:'zap',title,body,link,read:false,orderId:'',category:'platform'
+        });
+        inAppCount++;
+      }catch(e){console.warn('notif create failed for',uid,e.message);}
     }
-    // Send push to ALL users via OneSignal (includes Chrome browser push)
-    await fetch('https://onesignal.com/api/v1/notifications',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Basic os_v2_app_au6cmkn62fdnvd2upl36aw4aaouxv7giwkju4wf7rvrewojsu4pvcvlqseei3qv6ipjx4hezg7ac57zygoj3pz7fyvmqdgncahex5ja'
-      },
-      body:JSON.stringify({
-        app_id:'053c2629-bed1-46da-8f54-7af7e05b8003',
-        included_segments:['Subscribed Users'],
-        headings:{en:title},
-        contents:{en:body},
-        url:link?`https://toomuchcoin.com?page=${link}`:'https://toomuchcoin.com',
-        android_sound:'notification',
-        ios_sound:'notification.wav',
-        priority:10,
-        ttl:86400,
-        chrome_web_icon:'https://toomuchcoin.com/toomuchcoin.png',
-        chrome_web_badge:'https://toomuchcoin.com/toomuchcoin.png',
-      }),
-    });
-  }catch(e){console.warn('notifyAllUsers:',e.message);}
+  }catch(e){
+    console.warn('notifyAllUsers — loading profiles failed:',e.message);
+  }
+
+  // Step 2: push via OneSignal — CANNOT be called directly from the browser (CORS).
+  // OneSignal's REST API requires a server-side request. Calling it from client JS
+  // will always fail with a CORS error, in production too, not just localhost.
+  // This needs an Appwrite Function (or any small backend) that holds the REST key
+  // and forwards the request server-side. Skipping the direct browser call for now.
+  pushFailed=true;
+
+  return{inAppCount,pushFailed};
 }
 
 async function pushNotif(userId,title,body,url=''){
@@ -1898,12 +1894,12 @@ function renderNav(){
   const el=document.getElementById('nact');
   if(S.user){
     const sub=S.subStatus==='active'
-      ?`<span class="tag tpur" style="font-size:.68rem;padding:2px 8px">Pro</span>`
+      ?`<span class="tag tpur nav-sub-badge" style="font-size:.68rem;padding:2px 8px">Pro</span>`
       :S.subStatus==='trial'
-      ?`<span class="tag tg" style="font-size:.68rem;padding:2px 8px">Trial</span>`
+      ?`<span class="tag tg nav-sub-badge" style="font-size:.68rem;padding:2px 8px">Trial</span>`
       :S.subStatus==='expired'
-      ?`<span class="tag tr" style="font-size:.68rem;padding:2px 8px;cursor:pointer" onclick="R.go('sub')">Trial Ended</span>`
-      :`<span class="tag tn" style="font-size:.68rem;padding:2px 8px;cursor:pointer" onclick="R.go('sub')">Free</span>`;
+      ?`<span class="tag tr nav-sub-badge" style="font-size:.68rem;padding:2px 8px;cursor:pointer" onclick="R.go('sub')">Trial Ended</span>`
+      :`<span class="tag tn nav-sub-badge" style="font-size:.68rem;padding:2px 8px;cursor:pointer" onclick="R.go('sub')">Free</span>`;
     const bell=`<div style="position:relative;cursor:pointer" onclick="A.toggleNotifPanel()">
       <div style="width:34px;height:34px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;transition:var(--ease)" onmouseover="this.style.background='var(--bdr)'" onmouseout="this.style.background='var(--surf)'">
         <i data-lucide="bell" style="width:17px;height:17px;color:var(--t2)"></i>
@@ -4932,9 +4928,13 @@ const A = {
     if(!body){err.textContent='Please write a message.';return;}
     btn.disabled=true;btn.textContent='Sending to all users…';
     try{
-      await notifyAllUsers(title,body,link);
+      const result=await notifyAllUsers(title,body,link);
       M.close();
-      toast('Announcement sent to all users!','ok');
+      if(result.inAppCount>0){
+        toast('In-app notification sent to '+result.inAppCount+' users. (Push notifications need a backend — see admin notes.)','ok');
+      }else{
+        toast('Could not send notifications — check console for details.','err');
+      }
     }catch(e){
       err.textContent='Something went wrong. Please try again.';
       btn.disabled=false;btn.textContent='Send to All Users';
