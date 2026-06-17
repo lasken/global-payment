@@ -1015,6 +1015,10 @@ function kkStopSpeaking(){
   kkUpdateUI();
 }
 
+function kkVoiceComingSoon(){
+  toast('Voice input is coming soon — for now, please type your question.','notif');
+}
+
 function kkStartListening(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){toast('Voice input isn\'t supported in this browser. Please type instead.','err');return;}
@@ -1124,7 +1128,7 @@ function kkClose(){
   kkStopListening();
   const panel=document.getElementById('kk-panel');
   if(panel){panel.style.animation='kkSlideIn .3s cubic-bezier(.4,0,.2,1) reverse';setTimeout(()=>panel.remove(),280);}
-  if(KK.wakeWord) setTimeout(()=>kkStartWakeWord(),500);
+  // Wake word disabled — coming soon
   kkUpdateFab();
 }
 
@@ -3494,18 +3498,18 @@ const P = {
 
       <!-- Wake word + stop button -->
       <div style="padding:6px 20px 0;display:flex;align-items:center;justify-content:center;gap:12px;flex-shrink:0;flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer">
-          <div onclick="KK.wakeWord=!KK.wakeWord;kkSaveLocal();if(KK.wakeWord)kkStartWakeWord();else kkStopWakeWord();render()" style="width:32px;height:18px;border-radius:100px;background:${KK.wakeWord?'var(--pur)':'rgba(255,255,255,.15)'};position:relative;transition:background .2s;flex-shrink:0">
-            <div style="position:absolute;top:3px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s;transform:${KK.wakeWord?'translateX(17px)':'translateX(3px)'}"></div>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer" onclick="kkVoiceComingSoon()">
+          <div style="width:32px;height:18px;border-radius:100px;background:rgba(255,255,255,.15);position:relative;transition:background .2s;flex-shrink:0;opacity:.5">
+            <div style="position:absolute;top:3px;width:12px;height:12px;border-radius:50%;background:#fff;transform:translateX(3px)"></div>
           </div>
-          <span style="font-size:.72rem;color:rgba(255,255,255,.4)">Always listen for "KayKay"</span>
+          <span style="font-size:.72rem;color:rgba(255,255,255,.3)">Always listen for "KayKay" — coming soon</span>
         </label>
         ${KK.speaking?`<button onclick="kkStopSpeaking()" style="font-size:.7rem;color:rgba(255,255,255,.5);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:4px 10px;cursor:pointer;font-family:var(--fb)">Stop speaking</button>`:''}
       </div>
 
       <!-- Input bar -->
       <div style="padding:10px 16px 28px;flex-shrink:0;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.2)">
-        <button class="kk-page-mic" onclick="KK.listening?kkStopListening():kkStartContinuous()" style="width:42px;height:42px;border-radius:50%;background:${KK.listening?'linear-gradient(135deg,#DC2626,#EF4444)':'linear-gradient(135deg,#7C3AED,#4F46E5)'};border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;${KK.listening?'animation:kkPulse 1.2s infinite':''}">
+        <button class="kk-page-mic" onclick="kkVoiceComingSoon()" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;opacity:.55">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </button>
         <input style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:100px;padding:11px 18px;color:#fff;font-size:.875rem;font-family:var(--fb);outline:none;transition:border .2s" placeholder="Ask KayKay anything…" id="kk-input" onkeydown="if(event.key==='Enter')KK_send()" onfocus="this.style.borderColor='rgba(124,58,237,.6)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
@@ -5639,9 +5643,10 @@ document.addEventListener('DOMContentLoaded', async()=>{
     s.textContent='@keyframes kkDot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}';
     document.head.appendChild(s);
   }
-  if(S.user&&KK.wakeWord){
-    setTimeout(()=>kkStartWakeWord(),2000);
-  }
+  // Voice/wake-word temporarily disabled — coming soon
+  // if(S.user&&KK.wakeWord){
+  //   setTimeout(()=>kkStartWakeWord(),2000);
+  // }
   const _qs=new URLSearchParams(window.location.search);
   const _vCat=_qs.get('vendors');
   const _vCity=_qs.get('city');
