@@ -342,6 +342,10 @@
     .csendbtn{width:38px;height:38px;border-radius:var(--rsm);background:var(--t1);color:var(--white);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--ease)}
     .csendbtn:hover{background:#333028}
     .chat-empty{text-align:center;padding:40px;color:var(--t3);font-size:.875rem}
+    .mention-item{display:flex;align-items:center;gap:9px;padding:9px 13px;cursor:pointer;transition:background .12s}
+    .mention-item:hover,.mention-item.active{background:var(--off)}
+    .mention-avat{width:26px;height:26px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:var(--t2);flex-shrink:0}
+    .mention-tag{color:var(--blu);font-weight:600}
 
     #pg-crypto{padding:40px 24px;max-width:1080px;margin:0 auto}
     .csubnav{display:flex;gap:4px;margin-bottom:26px;background:var(--surf);border-radius:var(--rmd);padding:4px;max-width:fit-content;width:100%}
@@ -490,6 +494,7 @@
     .blog-post-body strong{color:var(--t1)}
     .blog-post-body a{color:var(--org);text-decoration:underline}
     .blog-post-body blockquote{border-left:3px solid var(--org);padding:10px 18px;background:var(--off);border-radius:0 var(--rsm) var(--rsm) 0;margin:20px 0;font-style:italic}
+    #mention-dropdown{max-height:260px!important}
     @media(max-width:768px){.blog-grid{grid-template-columns:1fr}}
     /* ── End Blog ── */
     .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--t1);color:var(--white);padding:11px 20px;border-radius:var(--rmd);font-size:.875rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .28s,transform .28s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 48px)}
@@ -1215,7 +1220,7 @@ async function _silentOrders(){
 async function _silentChat(){
   const r=await DB.list('chat',[Query.orderAsc('$createdAt'),Query.limit(200)]);
   S.msgs=r.documents.map(d=>({id:d.$id,userId:d.userId,userName:d.userName,
-    inits:d.initials,text:d.text,own:S.user?.id===d.userId,ts:d.$createdAt}));
+    inits:d.initials,text:d.text,own:S.user?.id===d.userId,ts:d.$createdAt,tagged:d.tagged||[]}));
   S.lastRefresh=new Date(); render();
 }
 
@@ -1461,7 +1466,7 @@ async function loadChat(){
   S.msgsLoading=true;render();
   const r=await DB.list('chat',[Query.orderAsc('$createdAt'),Query.limit(200)]);
   S.msgs=r.documents.map(d=>({id:d.$id,userId:d.userId,userName:d.userName,
-    inits:d.initials,text:d.text,own:S.user?.id===d.userId,ts:d.$createdAt}));
+    inits:d.initials,text:d.text,own:S.user?.id===d.userId,ts:d.$createdAt,tagged:d.tagged||[]}));
   S.msgsLoading=false;S.lastRefresh=new Date();render();
 }
 async function loadWatchlist(){
@@ -2540,13 +2545,14 @@ const P = {
             <div class="cavat">${m.inits}</div>
             <div class="cbwrap">
               ${!m.own?`<div class="csender">${m.userName}</div>`:''}
-              <div class="cbub">${m.text}</div>
+              <div class="cbub">${(m.text||'').replace(/@([A-Za-z0-9_]+)/g,'<span class="mention-tag">@$1</span>')}</div>
               <div class="ctime">${ago(m.ts)}</div>
             </div>
           </div>`).join('')}
       </div>
-      <div class="chat-ibar">
-        <input type="text" id="cinput" placeholder="${S.user?'Share a thought with the forum…':'Sign in to join the conversation…'}" ${!S.user?'disabled':''} onkeydown="if(event.key==='Enter')A.sendMsg()"/>
+      <div class="chat-ibar" style="position:relative;flex-wrap:wrap">
+        <div id="mention-dropdown" style="display:none;position:absolute;bottom:100%;left:14px;right:14px;background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);box-shadow:var(--s3);max-height:180px;overflow-y:auto;margin-bottom:6px;z-index:20"></div>
+        <input type="text" id="cinput" placeholder="${S.user?'Share a thought… use @ to tag someone':'Sign in to join the conversation…'}" ${!S.user?'disabled':''} oninput="A.checkMention(this)" onkeydown="A.chatKeydown(event)"/>
         <button class="csendbtn" onclick="A.sendMsg()" ${!S.user?'disabled':''}><i data-lucide="send" style="width:15px;height:15px"></i></button>
       </div>
     </div>`;
@@ -4221,7 +4227,7 @@ const A = {
     if(t==='forum'&&!S.subscribed){M.subscribe();return;}
     S.mTab=t;
     if(t==='board') loadOrders();
-    if(t==='forum') loadChat();
+    if(t==='forum'){loadChat();A._loadAllUsersForMention();}
     render();
   },
   setFilter(f){ S.mFilter=f; render(); },
@@ -4392,17 +4398,38 @@ const A = {
     const inp=document.getElementById('cinput');
     const txt=inp?.value?.trim();
     if(!txt||!S.user) return;
+    A.hideMentionDropdown();
     inp.value='';
     const now=new Date().toISOString();
+
+    // Resolve @mentions against the full platform user list
+    const knownUsers=await A._loadAllUsersForMention();
+    const mentionRegex=/@([A-Za-z0-9_]+(?:\s[A-Za-z0-9_]+)?)/g;
+    const taggedIds=new Set();
+    let match;
+    while((match=mentionRegex.exec(txt))!==null){
+      const nameGuess=match[1].toLowerCase();
+      const found=knownUsers.find(u=>u.name.toLowerCase().startsWith(nameGuess)||u.name.toLowerCase().split(' ')[0]===nameGuess);
+      if(found&&found.userId!==S.user.id) taggedIds.add(found.userId);
+    }
+    const taggedArr=[...taggedIds];
+
     if(!S.msgs)S.msgs=[];
-    S.msgs.push({id:'l'+Date.now(),userId:S.user.id,userName:S.user.name,inits:S.user.inits,text:txt,own:true,ts:now});
+    S.msgs.push({id:'l'+Date.now(),userId:S.user.id,userName:S.user.name,inits:S.user.inits,text:txt,own:true,ts:now,tagged:taggedArr});
     render();
-    DB.create('chat',{userId:S.user.id,userName:S.user.name,initials:S.user.inits,text:txt})
+    DB.create('chat',{userId:S.user.id,userName:S.user.name,initials:S.user.inits,text:txt,tagged:taggedArr})
       .catch(e=>console.warn('chat:',e.message));
+
     (async()=>{
       try{
+        // Notify tagged users directly first
+        for(const uid of taggedArr){
+          await createNotif(uid,'reply',S.user.name+' tagged you in the forum','"'+txt.slice(0,90)+(txt.length>90?'…':'')+'"','market');
+          await pushNotif(uid,S.user.name+' tagged you','"'+txt.slice(0,100)+'"','https://toomuchcoin.com?page=market');
+        }
+        // Existing reply-detection notif for others (skip anyone already tagged)
         const msgs=S.msgs||[];
-        const replied=new Set();
+        const replied=new Set(taggedArr);
         for(const m of msgs){
           if(m.userId===S.user.id||replied.has(m.userId)) continue;
           if(txt.toLowerCase().includes(m.userName.split(' ')[0].toLowerCase())||
@@ -4414,6 +4441,130 @@ const A = {
         }
       }catch(e){console.warn('reply notif:',e.message);}
     })();
+  },
+
+  // Cache of all platform users for @mention lookup — loaded once, reused
+  async _loadAllUsersForMention(forceReload=false){
+    if(S._allUsersCache&&!forceReload) return S._allUsersCache;
+    try{
+      let all=[];
+      let lastId=null;
+      for(let page=0;page<10;page++){ // safety cap: up to 1000 users (10 x 100)
+        const queries=[Query.limit(100)];
+        if(lastId) queries.push(Query.cursorAfter(lastId));
+        const r=await DB.list('profiles',queries);
+        if(!r.documents.length) break;
+        all=all.concat(r.documents);
+        lastId=r.documents[r.documents.length-1].$id;
+        if(r.documents.length<100) break; // last page
+      }
+      console.log('[mention] loaded',all.length,'profile documents from Appwrite');
+      S._allUsersCache=all.map(d=>({
+        userId:d.userId,
+        name:d.name,
+        inits:initials(d.name),
+      })).filter(u=>u.userId&&u.name);
+      console.log('[mention] usable users after filter:',S._allUsersCache.length);
+      return S._allUsersCache;
+    }catch(e){
+      console.warn('mention user load:',e.message);
+      return[];
+    }
+  },
+
+  chatKeydown(e){
+    const dd=document.getElementById('mention-dropdown');
+    const isOpen=dd&&dd.style.display==='block';
+    if(isOpen){
+      const items=[...dd.querySelectorAll('.mention-item')];
+      let idx=items.findIndex(i=>i.classList.contains('active'));
+      if(e.key==='ArrowDown'){
+        e.preventDefault();
+        idx=(idx+1)%items.length;
+        items.forEach(i=>i.classList.remove('active'));
+        items[idx]?.classList.add('active');
+        return;
+      }
+      if(e.key==='ArrowUp'){
+        e.preventDefault();
+        idx=idx<=0?items.length-1:idx-1;
+        items.forEach(i=>i.classList.remove('active'));
+        items[idx]?.classList.add('active');
+        return;
+      }
+      if(e.key==='Enter'||e.key==='Tab'){
+        const active=items.find(i=>i.classList.contains('active'))||items[0];
+        if(active){
+          e.preventDefault();
+          active.click();
+          return;
+        }
+      }
+      if(e.key==='Escape'){A.hideMentionDropdown();return;}
+    }
+    if(e.key==='Enter'&&!isOpen) A.sendMsg();
+  },
+
+  async checkMention(inp){
+    const val=inp.value;
+    const cursor=inp.selectionStart;
+    const upToCursor=val.slice(0,cursor);
+    const atMatch=upToCursor.match(/@([A-Za-z0-9_]*)$/);
+    const dd=document.getElementById('mention-dropdown');
+    if(!atMatch||!dd){A.hideMentionDropdown();return;}
+    const query=atMatch[1].toLowerCase();
+    const atStart=cursor-atMatch[0].length;
+
+    // Show a tiny loading state on first open while the user list loads
+    if(!S._allUsersCache){
+      dd.innerHTML=`<div style="padding:12px 14px;font-size:.78rem;color:var(--t3)">Loading users…</div>`;
+      dd.style.display='block';
+      dd._atStart=atStart;
+    }
+
+    const allUsers=await A._loadAllUsersForMention();
+    // Guard against the input changing while the fetch was in flight
+    if(document.activeElement!==inp) return;
+    const reCheck=inp.value.slice(0,inp.selectionStart).match(/@([A-Za-z0-9_]*)$/);
+    if(!reCheck){A.hideMentionDropdown();return;}
+
+    const users=allUsers.filter(u=>u.userId!==S.user?.id);
+    const q2=reCheck[1].toLowerCase();
+    const filtered=q2?users.filter(u=>u.name.toLowerCase().includes(q2)):users;
+
+    if(filtered.length===0){
+      dd.innerHTML=`<div style="padding:12px 14px;font-size:.78rem;color:var(--t3)">No matching users</div>`;
+      dd.style.display='block';
+      return;
+    }
+    dd.innerHTML=filtered.slice(0,30).map((u,i)=>`
+      <div class="mention-item ${i===0?'active':''}" onclick="A.pickMention('${u.userId}','${u.name.replace(/'/g,"\\'")}')">
+        <div class="mention-avat">${u.inits}</div>
+        <span style="font-size:.8125rem;font-weight:500">${u.name}</span>
+      </div>`).join('');
+    dd.style.display='block';
+    dd._atStart=cursor-reCheck[0].length;
+  },
+
+  pickMention(userId,name){
+    const inp=document.getElementById('cinput');
+    const dd=document.getElementById('mention-dropdown');
+    if(!inp||!dd) return;
+    const start=dd._atStart??0;
+    const cursor=inp.selectionStart;
+    const before=inp.value.slice(0,start);
+    const after=inp.value.slice(cursor);
+    const firstName=name.split(' ')[0];
+    inp.value=before+'@'+firstName+' '+after;
+    const newPos=(before+'@'+firstName+' ').length;
+    inp.focus();
+    inp.setSelectionRange(newPos,newPos);
+    A.hideMentionDropdown();
+  },
+
+  hideMentionDropdown(){
+    const dd=document.getElementById('mention-dropdown');
+    if(dd) dd.style.display='none';
   },
 
   async submitSub(){
