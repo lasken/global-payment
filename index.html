@@ -553,7 +553,6 @@
 
 const TMC = window.TMC_CONFIG || {};
 const _hasFwKey  = !!(TMC.FW_PUBLIC_KEY  && !TMC.FW_PUBLIC_KEY.includes('YOUR_'));
-const _hasFnId   = !!(TMC.APPWRITE_FN_ID && !TMC.APPWRITE_FN_ID.includes('your_'));
 
 const AW_ENDPOINT   = 'https://cloud.appwrite.io/v1';
 const AW_PROJECT_ID = '6a163159003bd203c63f';
@@ -577,12 +576,27 @@ const AW_COL = {
   blog           : 'blog',
 };
 
-const { Client, Account, Databases, Storage, Query, ID } = Appwrite;
+const { Client, Account, Databases, Storage, Functions, Query, ID } = Appwrite;
 const _cl  = new Client().setEndpoint(AW_ENDPOINT).setProject(AW_PROJECT_ID);
 const _acc = new Account(_cl);
 const _db      = new Databases(_cl);
 const _storage = new Storage(_cl);
+const _fn      = new Functions(_cl);
 const BUCKET_ID = '6a1c20600034ef4c775c';
+
+async function callPushFunction(payload){
+  const fnId=(window.TMC_CONFIG||{}).PUSH_FN_ID;
+  if(!fnId){console.warn('PUSH_FN_ID not set in config.js — push notifications disabled');return{success:false};}
+  try{
+    const execution=await _fn.createExecution(fnId, JSON.stringify(payload), false);
+    const result=JSON.parse(execution.responseBody||'{}');
+    if(!result.success) console.warn('Push function returned failure:',result);
+    return result;
+  }catch(e){
+    console.warn('Push function call failed:',e.message);
+    return{success:false,message:e.message};
+  }
+}
 
 const DB = {
   me()            { return _acc.get().catch(()=>null) },
@@ -853,11 +867,9 @@ async function kkAsk(userText){
     // will be checked as fallback below
   }
 
-  // Try Groq first, fall back to Gemini
-  const groqKey=(window.TMC_CONFIG||{}).GROQ_API_KEY;
-  const geminiKey=(window.TMC_CONFIG||{}).GEMINI_API_KEY;
+  const kkFnId=(window.TMC_CONFIG||{}).KAYKAY_FN_ID;
 
-  if(!groqKey&&!geminiKey){
+  if(!kkFnId){
     const fallback=kkLocalFallback(userText);
     KK.loading=false;
     kkAddMsg('kk',fallback);
@@ -867,53 +879,19 @@ async function kkAsk(userText){
   }
 
   const callAI=async()=>{
-    if(groqKey){
-      // Groq — OpenAI-compatible format, much faster and smarter
-      const groqMessages=[
-        {role:'system', content:kkSystemPrompt()},
-        ...KK.history.slice(-12).filter(m=>m.text&&m.text.length>0).map(m=>({
-          role:m.role==='user'?'user':'assistant',
-          content:m.text,
-        })),
-        {role:'user', content:userText},
-      ];
-      const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':'Bearer '+groqKey,
-        },
-        body:JSON.stringify({
-          model:'llama-3.3-70b-versatile',
-          messages:groqMessages,
-          temperature:0.7,
-          max_tokens:400,
-          top_p:0.9,
-        }),
-      });
-      if(!res.ok){const e=await res.text();throw new Error('groq_'+res.status+'_'+e.slice(0,80));}
-      const data=await res.json();
-      return data.choices?.[0]?.message?.content?.trim()||null;
-    } else {
-      // Fallback to Gemini
-      const gemMessages=[
-        {role:'user',parts:[{text:kkSystemPrompt()}]},
-        {role:'model',parts:[{text:'Understood. I am KayKay, ready to assist.'}]},
-        ...KK.history.slice(-10).filter(m=>m.text).map(m=>({
-          role:m.role==='user'?'user':'model',
-          parts:[{text:m.text}],
-        })),
-        {role:'user',parts:[{text:userText}]},
-      ];
-      const res=await fetch(`${KK_GEMINI_URL}?key=${geminiKey}`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:gemMessages,generationConfig:{temperature:0.7,maxOutputTokens:300}}),
-      });
-      if(!res.ok) throw new Error('gemini_'+res.status);
-      const data=await res.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||null;
-    }
+    const conversationMessages=KK.history.slice(-12)
+      .filter(m=>m.text&&m.text.length>0)
+      .map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}));
+    conversationMessages.push({role:'user',content:userText});
+
+    const execution=await _fn.createExecution(
+      kkFnId,
+      JSON.stringify({systemPrompt:kkSystemPrompt(),messages:conversationMessages}),
+      false
+    );
+    const result=JSON.parse(execution.responseBody||'{}');
+    if(!result.success) throw new Error(result.message||'kaykay_relay_failed');
+    return result.reply||null;
   };
 
   try{
@@ -1370,9 +1348,8 @@ async function createNotif(userId,type,title,body,link='',orderId='',category=''
 
 async function notifyAllUsers(title,body,link=''){
   let inAppCount=0;
-  let pushFailed=false;
 
-  // Step 1: in-app notifications — independent of push, must not be blocked by it
+  // Step 1: in-app notifications for every user
   try{
     const r=await DB.list('profiles',[Query.limit(500)]);
     const userIds=r.documents.map(d=>d.userId).filter(Boolean);
@@ -1388,41 +1365,18 @@ async function notifyAllUsers(title,body,link=''){
     console.warn('notifyAllUsers — loading profiles failed:',e.message);
   }
 
-  // Step 2: push via OneSignal — CANNOT be called directly from the browser (CORS).
-  // OneSignal's REST API requires a server-side request. Calling it from client JS
-  // will always fail with a CORS error, in production too, not just localhost.
-  // This needs an Appwrite Function (or any small backend) that holds the REST key
-  // and forwards the request server-side. Skipping the direct browser call for now.
-  pushFailed=true;
+  // Step 2: push to everyone via the Appwrite Function (server-side, no CORS issue)
+  const pushResult=await callPushFunction({
+    title,body,
+    segment:'Subscribed Users',
+    url:link?`https://toomuchcoin.com?page=${link}`:'https://toomuchcoin.com',
+  });
 
-  return{inAppCount,pushFailed};
+  return{inAppCount,pushSuccess:pushResult.success===true};
 }
 
 async function pushNotif(userId,title,body,url=''){
-  try{
-    await fetch('https://onesignal.com/api/v1/notifications',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Basic os_v2_app_au6cmkn62fdnvd2upl36aw4aaouxv7giwkju4wf7rvrewojsu4pvcvlqseei3qv6ipjx4hezg7ac57zygoj3pz7fyvmqdgncahex5ja'
-      },
-      body:JSON.stringify({
-        app_id:'053c2629-bed1-46da-8f54-7af7e05b8003',
-        filters:[{field:'external_user_id',value:userId}],
-        headings:{en:title},
-        contents:{en:body},
-        url:url||'https://toomuchcoin.com',
-        android_sound:'notification',
-        ios_sound:'notification.wav',
-        android_channel_id:'',
-        priority:10,
-        ttl:86400,
-        chrome_web_icon:'https://toomuchcoin.com/toomuchcoin.png',
-        chrome_web_badge:'https://toomuchcoin.com/toomuchcoin.png',
-        web_push_topic:title.slice(0,32),
-      }),
-    });
-  }catch(e){console.warn('push:',e.message);}
+  await callPushFunction({userId,title,body,url});
 }
 
 async function markAllRead(){
@@ -4930,8 +4884,10 @@ const A = {
     try{
       const result=await notifyAllUsers(title,body,link);
       M.close();
-      if(result.inAppCount>0){
-        toast('In-app notification sent to '+result.inAppCount+' users. (Push notifications need a backend — see admin notes.)','ok');
+      if(result.inAppCount>0&&result.pushSuccess){
+        toast('Announcement sent to '+result.inAppCount+' users, in-app and push!','ok');
+      }else if(result.inAppCount>0){
+        toast('In-app notification sent to '+result.inAppCount+' users. Push failed — check function logs.','err');
       }else{
         toast('Could not send notifications — check console for details.','err');
       }
