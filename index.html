@@ -24,7 +24,9 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://checkout.flutterwave.com/v3.js"></script>
-  <script src="config-v2.js" onerror="console.warn('config.js not found')"></script>
+  <script src="config-v2.js" onerror="console.warn('config-v2.js not found')"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
   <script src="prices.json" onerror="console.warn('Error in loading prices')"></script>
   <style>
     :root{
@@ -476,7 +478,6 @@
     .kk-locked-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(79,70,229,.3));border:2px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;animation:kkBreath 3s ease-in-out infinite}
     @media(max-width:768px){.kk-panel{max-width:100%;border-radius:20px 20px 0 0;height:88vh;bottom:0}.kk-fab{bottom:80px;right:16px}.kk-panel-hdr{padding:14px 14px 0}.kk-settings-bar{padding:6px 12px 0;gap:4px}.kk-sel{font-size:.65rem;padding:4px 8px}.kk-hdr-sel{display:none!important}}
     /* ── End KayKay ── */
-    /* ── Blog ── */
     .blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;margin-top:28px}
     .blog-card{background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rlg);overflow:hidden;cursor:pointer;transition:var(--ease);display:flex;flex-direction:column}
     .blog-card:hover{border-color:var(--bdr2);transform:translateY(-3px);box-shadow:var(--s3)}
@@ -494,9 +495,28 @@
     .blog-post-body strong{color:var(--t1)}
     .blog-post-body a{color:var(--org);text-decoration:underline}
     .blog-post-body blockquote{border-left:3px solid var(--org);padding:10px 18px;background:var(--off);border-radius:0 var(--rsm) var(--rsm) 0;margin:20px 0;font-style:italic}
+    .blog-post-body h1{font-family:var(--fd);font-size:1.9rem;color:var(--t1);margin:36px 0 14px}
+    .blog-post-body ul,.blog-post-body ol{margin:0 0 18px 22px}
+    .blog-post-body li{margin-bottom:8px;line-height:1.7}
+    .blog-post-body img{max-width:100%;border-radius:var(--rmd);margin:20px 0;display:block}
+    .blog-post-body iframe{max-width:100%;border-radius:var(--rmd);margin:20px 0;aspect-ratio:16/9;width:100%}
+    .blog-post-body u{text-decoration:underline}
+    .blog-post-body .ql-align-center{text-align:center}
+    .blog-post-body .ql-align-right{text-align:right}
     #mention-dropdown{max-height:260px!important}
     @media(max-width:768px){.blog-grid{grid-template-columns:1fr}}
-    /* ── End Blog ── */
+    /* ── Rich Text Editor (Quill) ── */
+    .ql-toolbar.ql-snow{border:1.5px solid var(--bdr);border-radius:var(--rsm) var(--rsm) 0 0;background:var(--off)}
+    .ql-container.ql-snow{border:1.5px solid var(--bdr);border-top:none;border-radius:0 0 var(--rsm) var(--rsm);font-family:var(--fb);font-size:.9rem;min-height:320px}
+    .ql-editor{min-height:320px;line-height:1.7}
+    .ql-editor h1{font-family:var(--fd);font-size:1.8rem}
+    .ql-editor h2{font-family:var(--fd);font-size:1.5rem}
+    .ql-editor h3{font-family:var(--fd);font-size:1.2rem}
+    .ql-editor blockquote{border-left:3px solid var(--org);padding-left:14px;color:var(--t2)}
+    .ql-editor img{max-width:100%;border-radius:var(--rsm);margin:8px 0}
+    .ql-editor iframe{max-width:100%;border-radius:var(--rsm);margin:8px 0}
+    .ql-snow .ql-tooltip{z-index:2000}
+    /* ── End Editor ── */
     .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--t1);color:var(--white);padding:11px 20px;border-radius:var(--rmd);font-size:.875rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .28s,transform .28s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 48px)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .toast.ok{background:var(--grn)}
@@ -570,10 +590,10 @@ const AW_COL = {
   reviews        : 'reviews',
   notifications  : 'notifications',
   notif_prefs    : 'notif_prefs',
-  vendor_waitlist: 'vendor_waitlist',
   coupons        : 'coupons',
   kaykay_prefs   : 'kaykay_prefs',
   blog           : 'blog',
+  vendors        : 'vendors',
 };
 
 const { Client, Account, Databases, Storage, Functions, Query, ID } = Appwrite;
@@ -708,7 +728,7 @@ const KK_LOCAL={
     listing     :'To post a listing, go to the marketplace and tap the "Post Listing" button. Fill in the title, category, price, and description.',
     charity     :'10% of every platform commission is split equally across Feed the Future Africa, Code for Kids Foundation, and Clean Water Initiative NG.',
     watchlist   :'Your watchlist is in the Markets section. Star any asset to add it. You can view all your starred assets under the Watchlist tab.',
-    showcase    :'The vendor showcase is a community-voted fan favourite for each city and category. Voting happens every quarter. You can submit your business to the waitlist from the Vendors tab.',
+    showcase    :'The vendor directory is open for any business to join. Customers can browse and vote anytime, and the most-voted business in each category and city gets the featured Community Pick spot.',
   },
 };
 function startAR(){
@@ -1151,7 +1171,6 @@ function kkUpdatePanel(){
     if(KK.loading) feed.innerHTML+=`<div class="kk-msg kk"><div class="kk-bubble" style="display:flex;gap:5px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s .4s infinite"></span></div></div>`;
     feed.scrollTop=feed.scrollHeight;
   }
-  // Update mic button
   const mic=document.getElementById('kk-mic');
   if(mic) mic.className='kk-mic'+(KK.listening?' active':'');
 }
@@ -1219,6 +1238,13 @@ function fmtpct(n){if(n==null||isNaN(n))return'—';return(n>=0?'+':'')+Number(n
 function fileUrl(fileId){
   if(!fileId) return null;
   return `${AW_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${AW_PROJECT_ID}`;
+}
+function vendorWaLink(whatsapp,bizName,category){
+  if(!whatsapp) return null;
+  const cleanNum=whatsapp.replace(/[^0-9]/g,'');
+  const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music:'Music Services',entertainment:'Entertainment'}[category]||category||'your business';
+  const msg=`Hi ${bizName}, I found you on Toomuchcoin and I'm interested in ${catLabel}. Can you tell me more?`;
+  return `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
 }
 function toast(msg,type=''){
   const el=document.getElementById('toast');
@@ -1365,7 +1391,7 @@ async function notifyAllUsers(title,body,link=''){
     console.warn('notifyAllUsers — loading profiles failed:',e.message);
   }
 
-  // Step 2: push to everyone via the Appwrite Function (server-side, no CORS issue)
+  // Step 2: push to everyone via the Appwrite Function 
   const pushResult=await callPushFunction({
     title,body,
     segment:'Subscribed Users',
@@ -1636,7 +1662,6 @@ function kkUpdateUI(){
 
 function kkUpdatePageInPlace(){
   // Update only the dynamic elements without re-rendering the whole page
-  // This prevents the white flash during listening
   const avatar=document.getElementById('kk-avatar');
   if(avatar){
     avatar.className='kk-avatar';
@@ -2206,8 +2231,7 @@ const P = {
         </div>
         ${(()=>{
           const all=S._adminConns||[];
-          const waitlist=S._adminVendors||[];
-          if(!all.length&&!waitlist.length) return`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:12px 0">Click "Load All" to fetch data.</p>`;
+          if(!all.length) return`<p style="font-size:.875rem;color:var(--t3);text-align:center;padding:12px 0">Click "Load All" to fetch data.</p>`;
           const pending=all.filter(c=>c.status==='deal_done'||c.status==='comm_pending');
           const totalPending=pending.reduce((s,c)=>s+parseFloat((c.commissionAmt||'').replace(/[^0-9.]/g,'')||0),0);
           const paid=all.filter(c=>c.status==='comm_paid');
@@ -2242,50 +2266,8 @@ const P = {
             </button>
           </div>
 
-          <!-- Vendor Waitlist section -->
-          ${waitlist.length>0?`
-          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pur);margin:14px 0 8px;display:flex;align-items:center;gap:6px">
-            <i data-lucide="map-pin" style="width:11px;height:11px"></i>Vendor Waitlist (${waitlist.length})
-          </div>
-          ${waitlist.map(c=>{
-            let info={bizName:c.fromName,tagline:'',category:'',city:'',storefrontId:''};
-            try{info=JSON.parse(c.message)||info;}catch(e){}
-            const sfUrl=info.storefrontId?fileUrl(info.storefrontId):null;
-            return`<div class="cxcard" style="border-color:var(--pur)22">
-              <div class="cxhead">
-                <div style="flex:1;min-width:0">
-                  <div class="cxname">${info.bizName||c.fromName}</div>
-                  <div class="cxorder">${info.catLabel||''} · ${info.city||''} &nbsp;•&nbsp; ${ago(c.createdAt)}</div>
-                </div>
-                <span class="tag tpur" style="font-size:.65rem">Waitlist</span>
-              </div>
-              ${info.tagline?`<div style="font-size:.78rem;color:var(--t2);margin:5px 0;font-style:italic">"${info.tagline}"</div>`:''}
-              ${sfUrl?`<img src="${sfUrl}" style="width:100%;height:100px;object-fit:cover;border-radius:var(--rsm);margin:6px 0;border:1px solid var(--bdr)">`:''}
-              <div style="font-size:.78rem;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:5px">
-                <i data-lucide="phone" style="width:11px;height:11px;color:var(--t3)"></i>${c.contact}
-                &nbsp;•&nbsp; Submitted by: <strong>${c.fromName}</strong>
-              </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn bc bsm" onclick="A.adminApproveWaitlist('${c.id}','${(info.bizName||'').replace(/'/g,'\\\'')}')" >
-                  <i data-lucide="check" style="width:11px;height:11px"></i>Approve for Showcase
-                </button>
-                <button class="btn bo bsm" onclick="A.adminRejectWaitlist('${c.id}','${c.fromUserId}','${(info.bizName||'').replace(/'/g,'\\\'')}')" >
-                  <i data-lucide="x" style="width:11px;height:11px"></i>Decline
-                </button>
-              </div>
-            </div>`;
-          }).join('')}`:''}
-
           <!-- Commission payments -->
           ${pending.length>0?`
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-            <button class="btn bg bsm" onclick="A.adminLoadSources()">
-              <i data-lucide="bar-chart-2" style="width:12px;height:12px"></i>View Signup Sources
-            </button>
-            <button class="btn bpur bsm" onclick="A.adminAnnounce()">
-              <i data-lucide="megaphone" style="width:12px;height:12px"></i>Announce to All Users
-            </button>
-          </div>
         ${S._adminSources?`
         <div style="margin-bottom:16px;background:var(--off);border:1px solid var(--bdr);border-radius:var(--rmd);padding:14px">
           <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:10px">Signup Sources</div>
@@ -2469,7 +2451,8 @@ const P = {
         <div class="ogrid">
           ${list.map(o=>`
           <div class="ocard ${(o.status==='filled'||o.status==='closed')?'oresolved':''}">
-            ${(()=>{const fid=(o.imageId||'').split(',').filter(Boolean)[0];return fid?`<div class="oavat" style="overflow:hidden;padding:0;background:var(--surf);flex-shrink:0"><img src="${fileUrl(fid)}" class="oimg-thumb" onerror="this.parentNode.innerHTML='${o.userInitials}';this.parentNode.removeAttribute('style')"></div>`:`<div class="oavat">${o.userInitials}</div>`;})()}
+            <div class="oavat">${o.userInitials}</div>
+            ${(()=>{const fid=(o.imageId||'').split(',').filter(Boolean)[0];return fid?`<div style="width:64px;height:64px;border-radius:var(--rsm);overflow:hidden;flex-shrink:0;background:var(--surf);border:1px solid var(--bdr)"><img src="${fileUrl(fid)}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.parentNode.style.display='none'"></div>`:'';})()}
             <div class="obody">
               <div class="otop">
                 <span class="ottl">${o.title}</span>
@@ -2904,59 +2887,13 @@ const P = {
       'China':['Shanghai','Beijing','Shenzhen','Guangzhou','Chengdu','Hangzhou','Wuhan'],
     };
 
-    // Mock fan-favorite showcase data (to be replaced with real DB data)
-    const SHOWCASE_ICONS={
-      truck:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
-      warehouse:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-      store:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M3 7v13a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7"/><path d="M9 21V11h6v10"/></svg>`,
-      restaurant:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h1v5"/></svg>`,
-      hotel:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M3 22h18"/><path d="M9 22v-6h6v6"/><rect x="10" y="9" width="4" height="4" rx="0.5"/></svg>`,
-      cafe:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
-      airline:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-4 1-4.5 2.5L11 8 4.8 6.2C4.3 6 3.7 6.3 3.5 6.8c-.2.6.1 1.2.6 1.5L8 11l-2 2H4l-1 1 3 2 2 3 1-1v-2l2-2 3.5 3.8c.4.4.9.6 1.4.5.7-.1 1.1-.8 1.1-1.5l-.2-.6z"/></svg>`,
-    };
-    const SHOWCASES={
-      logistics_Ibadan:{
-        name:'Datum Haulage Services',
-        tagline:'Ibadan\'s most trusted door-to-door logistics partner',
-        imgSvg:SHOWCASE_ICONS.truck,
-        imgBg:'#E8EEFB',
-        imgColor:'var(--blu)',
-        storefrontImg:'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80',
-        votes:142, totalVotes:189,
-        lastQuarterWinner:'Taiwo Haulage Services.',
-        comments:[
-          {user:'Kenny.',text:'Delivered my goods from Lagos in record time. Highly recommended!',stars:5},
-          {user:'Deji L.',text:'Very professional drivers, packaging was intact.',stars:5},
-          {user:'Easekid.',text:'Fair pricing, will use again.',stars:4},
-        ],
-        partnerLink:'https://wa.me/2349138476421',
-        nextVoteDate:'July 1, 2026',
-      },
-      logistics_Lagos:{
-        name:'Datum Logistics Lagos',
-        tagline:'Same-day delivery across all Lagos mainland and island routes',
-        imgSvg:SHOWCASE_ICONS.warehouse,
-        imgBg:'#E6F5EE',
-        imgColor:'var(--grn)',
-        storefrontImg:'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80',
-        votes:98, totalVotes:155,
-        lastQuarterWinner:'SwiftMove Lagos',
-        comments:[
-          {user:'Chioma B.',text:'Best tracking system I\'ve used in Lagos.',stars:5},
-          {user:'Femi D.',text:'On-time every single time.',stars:4},
-        ],
-        partnerLink:'https://wa.me/2349138476421',
-        nextVoteDate:'July 1, 2026',
-      },
-    };
-
     const selCat=S._vCat||null;
     const selCity=S._vCity||null;
     const selCountry=S._vCountry||'Nigeria';
 
     if(!selCat){
       return`<div style="animation:pup .28s ease">
-        <p style="font-size:.875rem;color:var(--t2);margin-bottom:20px">Discover local businesses and services by category. Each city features a community-voted fan favourite.</p>
+        <p style="font-size:.875rem;color:var(--t2);margin-bottom:20px">Discover local businesses and services by category. Browse the directory, then vote for your favourite each quarter.</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
           ${VENDOR_CATS.map(c=>`
           <div onclick="A.setVendorCat('${c.id}')" style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:18px 16px;cursor:pointer;transition:var(--ease);display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px"
@@ -2973,10 +2910,7 @@ const P = {
 
     const cat=VENDOR_CATS.find(c=>c.id===selCat);
     const cities=selCountry==='Nigeria'?NIGERIA:(GLOBAL[selCountry]||[]);
-    const showcaseKey=selCity?`${selCat}_${selCity}`:null;
-    const showcase=showcaseKey?SHOWCASES[showcaseKey]:null;
-    const userVoted=S._vVoted&&S._vVoted[showcaseKey];
-    const pct=showcase?Math.round((showcase.votes/showcase.totalVotes)*100):0;
+    const isAdmin=S.user?.id===ADMIN_ID;
 
     return`<div style="animation:pup .28s ease">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
@@ -3004,194 +2938,100 @@ const P = {
         </div>
       </div>
 
-      ${selCity&&showcase?`
-      <!-- FAN FAVOURITE SHOWCASE -->
-      <div style="border:2px solid var(--gld);border-radius:var(--rlg);overflow:hidden;margin-bottom:22px;background:var(--white)">
-        <div style="background:linear-gradient(135deg,#FBF4E6,#fff8ed);padding:16px 20px;border-bottom:1px solid #E8D9B0;display:flex;align-items:center;gap:10px">
-          <div style="width:34px;height:34px;border-radius:50%;background:var(--gld);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
-          </div>
-          <div style="flex:1">
-            <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gld)">Community Fan Favourite · ${selCity}</div>
-            <div style="font-size:.72rem;color:var(--t3);margin-top:1px">Voted by the Datum community · Next vote: ${showcase.nextVoteDate}</div>
-          </div>
-          <span class="tag tgd" style="font-size:.68rem"><i data-lucide="star" style="width:10px;height:10px"></i>Showcase</span>
-        </div>
-
-        <div style="padding:20px">
-          <!-- Business card -->
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
-            <div style="width:68px;height:68px;border-radius:var(--rmd);background:${showcase.imgBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--bdr);color:${showcase.imgColor}">${showcase.imgSvg}</div>
-            <div>
-              <div style="font-family:var(--fd);font-size:1.15rem;margin-bottom:3px">${showcase.name}</div>
-              <div style="font-size:.8125rem;color:var(--t2);line-height:1.5">${showcase.tagline}</div>
-              <div style="font-size:.72rem;color:var(--t3);margin-top:5px;display:flex;align-items:center;gap:5px">
-                <i data-lucide="trophy" style="width:11px;height:11px;color:var(--gld)"></i>
-                Last quarter winner: <strong style="color:var(--t2)">${showcase.lastQuarterWinner}</strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- Storefront image (shown if showcase has one) -->
-          ${showcase.storefrontImg?`
-          <div style="margin-bottom:14px;border-radius:var(--rsm);overflow:hidden;border:1px solid var(--bdr)">
-            <img src="${showcase.storefrontImg}" alt="${showcase.name} storefront" style="width:100%;height:180px;object-fit:cover;display:block">
-          </div>`:''}
-
-          <!-- Vote poll -->
-          <div style="background:var(--off);border-radius:var(--rmd);padding:14px 16px;margin-bottom:14px;border:1px solid var(--bdr)">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <div style="font-weight:600;font-size:.875rem;display:flex;align-items:center;gap:6px">
-                <i data-lucide="bar-chart-2" style="width:14px;height:14px;color:var(--pur)"></i>
-                Community Vote — Q${Math.ceil((new Date().getMonth()+1)/3)} ${new Date().getFullYear()}
-              </div>
-              <span style="font-size:.72rem;color:var(--t3)">${showcase.totalVotes} votes cast</span>
-            </div>
-            <div style="background:var(--bdr);border-radius:100px;height:10px;overflow:hidden;margin-bottom:6px">
-              <div style="height:100%;width:${pct}%;background:var(--gld);border-radius:100px;transition:width .5s ease"></div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;font-size:.78rem">
-              <span style="color:var(--t2)">${showcase.votes} votes for ${showcase.name.split(' ').slice(0,2).join(' ')}</span>
-              <span style="font-weight:600;color:var(--gld)">${pct}%</span>
-            </div>
-            <div style="margin-top:10px">
-              ${userVoted
-                ?`<div style="font-size:.78rem;color:var(--grn);display:flex;align-items:center;gap:5px"><i data-lucide="check-circle" style="width:12px;height:12px"></i>You voted this quarter — results update monthly.</div>`
-                :S.user
-                  ?`<button class="btn bc bsm" onclick="A.castVote('${showcaseKey}')"><i data-lucide="thumbs-up" style="width:12px;height:12px"></i>Vote for ${showcase.name.split(' ').slice(0,2).join(' ')}</button>`
-                  :`<button class="btn bo bsm" onclick="M.auth()"><i data-lucide="lock" style="width:12px;height:12px"></i>Sign in to vote</button>`}
-            </div>
-          </div>
-
-          <!-- Community comments -->
-          <div style="margin-bottom:14px">
-            <div style="font-weight:600;font-size:.875rem;margin-bottom:10px;display:flex;align-items:center;gap:6px">
-              <i data-lucide="message-circle" style="width:14px;height:14px;color:var(--t3)"></i>
-              Community Posts
-            </div>
-            ${showcase.comments.map(c=>`
-            <div style="border:1px solid var(--bdr);border-radius:var(--rsm);padding:11px 13px;margin-bottom:8px;background:var(--white)">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-                <div style="width:26px;height:26px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--t2)">${c.user.split(' ').map(w=>w[0]).join('')}</div>
-                <div style="font-weight:500;font-size:.8125rem">${c.user}</div>
-                <div style="color:var(--gld);font-size:.8rem;margin-left:auto">${'★'.repeat(c.stars)}${'☆'.repeat(5-c.stars)}</div>
-              </div>
-              <div style="font-size:.8125rem;color:var(--t2);line-height:1.55">"${c.text}"</div>
-            </div>`).join('')}
-          </div>
-
-          <!-- Connect to fan favourite -->
-          <div style="background:linear-gradient(135deg,#E6F5EE,#f0fff6);border:1.5px solid #B3DFCA;border-radius:var(--rmd);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <div style="flex:1;min-width:160px">
-              <div style="font-weight:600;font-size:.875rem;color:var(--grn);margin-bottom:2px">Connect to Fan Favourite</div>
-              <div style="font-size:.75rem;color:var(--t2);line-height:1.5">We link you directly to our trusted community partner.</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <a href="${showcase.partnerLink}" target="_blank" rel="noopener" class="btn bc bsm">
-                <i data-lucide="external-link" style="width:12px;height:12px"></i>Connect Now
-              </a>
-              <button class="btn bo bsm" onclick="A.shareVendor('${selCat}','${selCity}','${showcase.name.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}')">
-                <i data-lucide="share-2" style="width:12px;height:12px"></i>Share
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>`
-
-      :selCity?`
-      <!-- No showcase yet for this city — waitlist / nomination -->
-      <div style="border:2px dashed var(--bdr2);border-radius:var(--rlg);padding:32px 24px;text-align:center;margin-bottom:22px">
-        <div style="width:52px;height:52px;background:${cat.color}18;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:${cat.color}">
-          ${cat.svg.replace('width="20" height="20"','width="24" height="24"')}
-        </div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:7px">
-          <div style="font-family:var(--fd);font-size:1.2rem">${cat.label} in ${selCity}</div>
-          <button class="btn bg bsm" onclick="A.shareVendor('${selCat}','${selCity}','')">
-            <i data-lucide="share-2" style="width:12px;height:12px"></i>Share
-          </button>
-        </div>
-        <p style="font-size:.875rem;color:var(--t2);margin-bottom:6px;line-height:1.6;max-width:400px;margin-left:auto;margin-right:auto">
-          No fan favourite has been crowned here yet. List your business to join the waitlist, the community votes every quarter to pick the one we showcase.
-        </p>
-        <div style="background:var(--off);border-radius:var(--rsm);padding:11px 14px;margin:14px auto;max-width:420px;font-size:.78rem;color:var(--t2);line-height:1.6;text-align:left">
-          <div style="font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:5px"><i data-lucide="info" style="width:12px;height:12px;color:var(--pur)"></i>How the Showcase Works</div>
-          <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
-            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">Businesses join the waitlist by submitting their details below.</div></div>
-            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">The community nominates and votes for their favourite each quarter.</div></div>
-            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">The winner is showcased with their storefront, curated reviews, and a direct connect link.</div></div>
-            <div style="display:flex;align-items:flex-start;gap:9px"><div style="width:20px;height:20px;border-radius:50%;background:var(--pur);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</div><div style="font-size:.78rem;color:var(--t2);line-height:1.5">A fresh vote is held every quarter — any waitlisted business can win.</div></div>
-          </div>
-        </div>
-        ${S.user
-          ?`<button class="btn bp" onclick="M.vendorWaitlist('${selCat}','${selCity}','${cat.label}')"><i data-lucide="plus" style="width:14px;height:14px"></i>List My Business on Waitlist</button>
-           <button class="btn bg bsm" style="margin-top:8px" onclick="A.loadMyVendorSubmissions()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i>Check My Submissions</button>`
-          :`<button class="btn bpur" onclick="M.auth()"><i data-lucide="user-plus" style="width:14px;height:14px"></i>Sign in to List Your Business</button>`}
-
-        ${(S._myVendorSubmissions&&S._myVendorSubmissions.length>0)?`
-        <div style="margin-top:20px;text-align:left">
-          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:10px">My Submissions</div>
-          ${S._myVendorSubmissions.map(s=>{
-            const stMap={pending:'to',approved:'tg',rejected:'tn'};
-            const stLabel={
-              pending:'Under Review — we\'ll notify you soon',
-              approved:'Approved! You\'re on the showcase waitlist',
-              rejected:'Not accepted this time — you can resubmit',
-            };
-            const stIcon={pending:'clock',approved:'check-circle',rejected:'x-circle'};
-            return`<div class="cxcard" style="text-align:left">
-              <div class="cxhead">
-                <div style="flex:1">
-                  <div class="cxname">${s.bizName}</div>
-                  <div class="cxorder">${s.category} · ${s.city} &nbsp;•&nbsp; ${ago(s.createdAt)}</div>
-                </div>
-                <span class="tag ${stMap[s.status]||'tn'}">${s.status}</span>
-              </div>
-              <div style="margin-top:8px;display:flex;align-items:flex-start;gap:7px;font-size:.8rem;color:var(--t2);line-height:1.5">
-                <i data-lucide="${stIcon[s.status]||'clock'}" style="width:13px;height:13px;flex-shrink:0;margin-top:1px;color:${s.status==='approved'?'var(--grn)':s.status==='rejected'?'var(--red)':'var(--gld)'}"></i>
-                ${stLabel[s.status]||s.status}
-              </div>
-              ${s.status==='rejected'?`<button class="btn bo bsm" style="margin-top:8px" onclick="M.vendorWaitlist('${selCat}','${selCity}','${cat.label}')"><i data-lucide="refresh-cw" style="width:11px;height:11px"></i>Resubmit</button>`:''}
-            </div>`;
-          }).join('')}
-        </div>`:''}
-      </div>`
-
-      :`<!-- Prompt user to pick a city -->
+      ${!selCity?`
       <div style="background:var(--off);border-radius:var(--rmd);padding:20px;text-align:center;color:var(--t3);font-size:.875rem;border:1.5px dashed var(--bdr)">
         <i data-lucide="map-pin" style="width:22px;height:22px;display:block;margin:0 auto 10px"></i>
-        Select a city above to see the community fan favourite for ${cat.label}.
-      </div>`}
+        Select a city above to browse ${cat.label} vendors.
+      </div>`:`
 
-      ${selCity?`
-      <!-- Approved vendors list -->
-      <div style="margin-top:22px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)">All Approved Vendors · ${selCity}</div>
-          <button class="btn bg bsm" onclick="A.loadApprovedVendors('${selCat}','${selCity}')">
-            <i data-lucide="refresh-cw" style="width:11px;height:11px"></i>Load Vendors
-          </button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div style="font-weight:600;font-size:.95rem">${cat.label} in ${selCity}</div>
+        ${S.user?`<button class="btn bp bsm" onclick="M.vendorSubmit('${selCat}','${selCity}','${cat.label}',false)"><i data-lucide="plus" style="width:12px;height:12px"></i>List My Business</button>`:`<button class="btn bo bsm" onclick="M.auth()"><i data-lucide="user-plus" style="width:12px;height:12px"></i>Sign in to list your business</button>`}
+      </div>
+
+      <div id="vendor-directory-root">
+        ${P._vendorDirectoryBody(selCat,selCity,isAdmin)}
+      </div>
+      `}
+    </div>`;
+  },
+
+  _vendorDirectoryBody(catId,city,isAdmin){
+    const loading=S._vendorDirLoading;
+    const list=S._vendorDirectory||[];
+    if(loading){
+      return`<div style="text-align:center;padding:48px;color:var(--t3)"><div class="spin"></div><br>Loading vendors…</div>`;
+    }
+    if(list.length===0){
+      return`<div style="border:2px dashed var(--bdr2);border-radius:var(--rlg);padding:36px 24px;text-align:center">
+        <div style="width:48px;height:48px;background:var(--surf);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--t3)"><i data-lucide="store" style="width:20px;height:20px"></i></div>
+        <div style="font-family:var(--fd);font-size:1.1rem;color:var(--t2);margin-bottom:6px">No vendors listed here yet</div>
+        <p style="font-size:.8125rem;color:var(--t3)">Be the first to add your business in this category and city.</p>
+      </div>`;
+    }
+    const pick=list.find(v=>v.isCommunityPick);
+    const rest=list.filter(v=>!v.isCommunityPick);
+    return`
+      ${pick?P._vendorPickCard(pick):''}
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:${pick?'18px':'0'}">
+        ${rest.map(v=>P._vendorCard(v,isAdmin)).join('')}
+      </div>`;
+  },
+
+  _vendorPickCard(v){
+    const logoUrl=v.logoId?fileUrl(v.logoId):null;
+    const posterUrl=v.posterIds?.[0]?fileUrl(v.posterIds[0]):null;
+    const waLink=vendorWaLink(v.whatsapp,v.bizName,v.category);
+    return`<div style="border:2px solid var(--gld);border-radius:var(--rlg);overflow:hidden;background:var(--white)">
+      <div style="background:linear-gradient(135deg,#FBF4E6,#fff8ed);padding:14px 18px;border-bottom:1px solid #E8D9B0;display:flex;align-items:center;gap:10px">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--gld);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
         </div>
-        ${S._approvedVendors&&S._approvedVendors.length>0
-          ?S._approvedVendors.map(v=>{
-            const sfUrl=v.storefrontId?fileUrl(v.storefrontId):null;
-            return`<div class="cxcard" style="margin-bottom:10px">
-              ${sfUrl?`<img src="${sfUrl}" style="width:100%;height:100px;object-fit:cover;border-radius:var(--rsm);margin-bottom:10px;border:1px solid var(--bdr)">`:''}
-              <div class="cxhead">
-                <div style="flex:1;min-width:0">
-                  <div class="cxname">${v.bizName}</div>
-                  ${v.tagline?`<div class="cxorder" style="font-style:italic">"${v.tagline}"</div>`:''}
-                </div>
-                <span class="tag tg" style="font-size:.65rem">Approved</span>
-              </div>
-              <div style="font-size:.78rem;color:var(--t2);margin-top:6px;display:flex;align-items:center;gap:5px">
-                <i data-lucide="phone" style="width:11px;height:11px;color:var(--t3)"></i>${v.contact}
-              </div>
-            </div>`;
-          }).join('')
-          :`<div style="font-size:.8rem;color:var(--t3);text-align:center;padding:16px;background:var(--off);border-radius:var(--rsm)">Click "Load Vendors" to see approved businesses in ${selCity}.</div>`
-        }
-      </div>`:''}
+        <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gld)">Community Pick</div>
+        <span class="tag tgd" style="font-size:.65rem;margin-left:auto">${v.votes||0} votes</span>
+      </div>
+      ${posterUrl?`<img src="${posterUrl}" style="width:100%;height:180px;object-fit:cover;display:block">`:''}
+      <div style="padding:18px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          ${logoUrl?`<img src="${logoUrl}" style="width:48px;height:48px;border-radius:var(--rsm);object-fit:cover;border:1px solid var(--bdr);flex-shrink:0">`:`<div style="width:48px;height:48px;border-radius:var(--rsm);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t3)"><i data-lucide="store" style="width:18px;height:18px"></i></div>`}
+          <div>
+            <div style="font-family:var(--fd);font-size:1.15rem">${v.bizName}</div>
+            ${v.tagline?`<div style="font-size:.8rem;color:var(--t2)">${v.tagline}</div>`:''}
+          </div>
+        </div>
+        ${v.about?`<div style="font-size:.8125rem;color:var(--t2);line-height:1.6;margin-bottom:12px">${v.about}</div>`:''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${waLink?`<a href="${waLink}" target="_blank" rel="noopener" class="btn bc bsm"><i data-lucide="message-circle" style="width:12px;height:12px"></i>WhatsApp</a>`:''}
+          <button class="btn bo bsm" onclick="A.openVendorProfile('${v.id}')"><i data-lucide="eye" style="width:12px;height:12px"></i>View Profile</button>
+        </div>
+      </div>
+    </div>`;
+  },
 
+  _vendorCard(v,isAdmin){
+    const logoUrl=v.logoId?fileUrl(v.logoId):null;
+    const posterUrl=v.posterIds?.[0]?fileUrl(v.posterIds[0]):null;
+    const userVoted=(v.voterIds||[]).includes(S.user?.id);
+    const statusTag=v.status==='pending'?`<span class="tag tgd" style="font-size:.65rem">Under Review</span>`:'';
+    return`<div class="cxcard" style="display:flex;gap:12px;align-items:flex-start">
+      ${posterUrl?`<img src="${posterUrl}" style="width:80px;height:80px;border-radius:var(--rsm);object-fit:cover;flex-shrink:0;border:1px solid var(--bdr)">`
+        :logoUrl?`<img src="${logoUrl}" style="width:80px;height:80px;border-radius:var(--rsm);object-fit:cover;flex-shrink:0;border:1px solid var(--bdr)">`
+        :`<div style="width:80px;height:80px;border-radius:var(--rsm);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t3)"><i data-lucide="store" style="width:22px;height:22px"></i></div>`}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+          <span style="font-weight:600;font-size:.9rem">${v.bizName}</span>
+          ${statusTag}
+          ${v.priceRange?`<span style="font-size:.72rem;color:var(--t3)">${v.priceRange}</span>`:''}
+        </div>
+        ${v.tagline?`<div style="font-size:.78rem;color:var(--t2);margin-bottom:8px">${v.tagline}</div>`:''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn bo bsm" onclick="A.openVendorProfile('${v.id}')"><i data-lucide="eye" style="width:11px;height:11px"></i>View</button>
+          ${S.user?`<button class="btn ${userVoted?'bg':'bpur'} bsm" ${userVoted?'disabled':''} onclick="A.voteVendor('${v.id}')">
+            <i data-lucide="thumbs-up" style="width:11px;height:11px"></i>${userVoted?'Voted':'Vote'} (${v.votes||0})
+          </button>`:''}
+          ${isAdmin&&v.status==='pending'?`<button class="btn bc bsm" onclick="A.adminApproveVendor('${v.id}')"><i data-lucide="check" style="width:11px;height:11px"></i>Approve</button><button class="btn bo bsm" onclick="A.adminRejectVendor('${v.id}')"><i data-lucide="x" style="width:11px;height:11px"></i>Reject</button>`:''}
+        </div>
+      </div>
     </div>`;
   },
 
@@ -3297,7 +3137,7 @@ const P = {
           const isLocked=!S.subscribed&&S.subStatus!=='trial';
           return`<div class="blog-card" onclick="A.openBlogPost('${post.id}')">
             ${imgUrl
-              ?`<img src="${imgUrl}" class="blog-card-img" alt="${post.title}" onerror="this.style.display='none'">`
+              ?`<div class="blog-card-img" style="display:flex;align-items:center;justify-content:center;background:var(--surf)"><img src="${imgUrl}" style="width:100%;height:100%;object-fit:contain" alt="${post.title}" onerror="this.parentNode.style.display='none'"></div>`
               :`<div class="blog-card-img-placeholder"><i data-lucide="pen-line" style="width:32px;height:32px"></i></div>`}
             <div class="blog-card-body">
               ${post.tags?.length?`<div class="blog-card-tags">${post.tags.map(t=>`<span class="tag tn" style="font-size:.68rem">${t}</span>`).join('')}</div>`:''}
@@ -3321,7 +3161,8 @@ const P = {
     if(!post) return`<div style="padding:80px 24px;text-align:center;color:var(--t3)" class="page"><div class="spin"></div></div>`;
     const isLocked=!S.subscribed&&S.subStatus!=='trial';
     const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
-    const bodyHtml=post.body
+    const looksLikeHtml=/<[a-z][\s\S]*>/i.test(post.body||'');
+    const bodyHtml=looksLikeHtml?post.body:(post.body||'')
       .replace(/^## (.+)$/gm,'<h2>$1</h2>')
       .replace(/^### (.+)$/gm,'<h3>$1</h3>')
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
@@ -3329,10 +3170,10 @@ const P = {
       .replace(/\n\n/g,'</p><p>')
       .replace(/^(?!<[h|b])/,'<p>')
       +'</p>';
-    return`<div style="max-width:780px;margin:0 auto;padding:40px 24px 80px" class="page">
-      <button class="back" onclick="R.go('blog')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Blog</button>
+    return`<div style="max-width:780px;margin:0 auto;padding:80px 24px 80px" class="page">
+      <button class="back" style="margin-top:0" onclick="R.go('blog')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Blog</button>
 
-      ${imgUrl?`<img src="${imgUrl}" style="width:100%;height:320px;object-fit:cover;border-radius:var(--rlg);margin-bottom:28px;display:block" alt="${post.title}">`:''}
+      ${imgUrl?`<div style="width:100%;max-height:380px;border-radius:var(--rlg);margin-bottom:28px;overflow:hidden;background:var(--surf);display:flex;align-items:center;justify-content:center"><img src="${imgUrl}" style="width:100%;height:auto;max-height:380px;object-fit:contain;display:block" alt="${post.title}"></div>`:''}
 
       ${post.tags?.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${post.tags.map(t=>`<span class="tag tn" style="font-size:.72rem">${t}</span>`).join('')}</div>`:''}
 
@@ -3722,8 +3563,16 @@ const M = {
         </div>
         `:''}
         ${(()=>{
-          const imgs=(order.imageIds||'').split(',').filter(Boolean);
-          return imgs.length?`<div class="order-gallery">${imgs.map(id=>`<img src="${fileUrl(id)}" alt="Listing photo" onclick="window.open('${fileUrl(id)}','_blank')" onerror="this.style.display='none'">`).join('')}</div>`:'';
+          const imgs=(order.imageId||'').split(',').filter(Boolean);
+          if(!imgs.length) return '';
+          const hero=imgs[0];
+          const rest=imgs.slice(1);
+          return`<div style="margin-bottom:18px">
+            <img src="${fileUrl(hero)}" alt="Listing photo" style="width:100%;height:220px;object-fit:cover;border-radius:var(--rmd);display:block;cursor:pointer;border:1px solid var(--bdr)" onclick="window.open('${fileUrl(hero)}','_blank')" onerror="this.style.display='none'">
+            ${rest.length?`<div style="display:grid;grid-template-columns:repeat(${Math.min(rest.length,3)},1fr);gap:8px;margin-top:8px">
+              ${rest.map(id=>`<img src="${fileUrl(id)}" alt="Listing photo" style="width:100%;height:90px;object-fit:cover;border-radius:var(--rsm);display:block;cursor:pointer;border:1px solid var(--bdr)" onclick="window.open('${fileUrl(id)}','_blank')" onerror="this.style.display='none'">`).join('')}
+            </div>`:''}
+          </div>`;
         })()}
         <div class="odh">
           <div class="odtags">
@@ -3821,6 +3670,106 @@ const M = {
     window.wgNext=()=>{step=Math.min(step+1,steps.length-1);show();};
     window.wgPrev=()=>{step=Math.max(step-1,0);show();};
     show();
+  },
+
+  vendorSubmit(catId,city,catLabel,isAdminAdd=false){
+    if(!S.user){M.auth();return;}
+    const heading=isAdminAdd?'Add Vendor (Admin)':'List My Business';
+    const subnote=isAdminAdd
+      ?'This vendor will be added directly to the live directory — no review needed since you\'re adding it yourself.'
+      :'Your business joins the directory immediately for browsing. To win the featured "Community Pick" spot for '+catLabel+' in '+city+', the community votes — any listed business can win.';
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal modal-lg" style="max-width:640px">
+        <div class="mhdr">
+          <div><div class="mey">${isAdminAdd?'Admin Tools':'Vendor Directory'}</div><h2 class="mtitle">${heading}</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+        <div style="background:var(--off);border-radius:var(--rsm);padding:11px 14px;margin-bottom:20px;font-size:.8rem;color:var(--t2);line-height:1.6">${subnote}</div>
+
+        <div class="fg"><label>Business Name</label><input type="text" id="vs-name" placeholder="e.g. Taiwo Haulage Services"/></div>
+        <div class="fg"><label>Tagline <span style="font-weight:400;color:var(--t3)">(short one-liner)</span></label><input type="text" id="vs-tagline" placeholder="e.g. Ibadan's fastest door-to-door delivery"/></div>
+        <div class="fg"><label>About <span style="font-weight:400;color:var(--t3)">(tell customers what you do)</span></label><textarea id="vs-about" rows="4" placeholder="Describe your business, what makes you different, what customers can expect…"></textarea></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>Category</label>
+            <select id="vs-cat">
+              <option value="logistics" ${catId==='logistics'?'selected':''}>Logistics</option>
+              <option value="restaurant" ${catId==='restaurant'?'selected':''}>Restaurant</option>
+              <option value="airline" ${catId==='airline'?'selected':''}>Airline</option>
+              <option value="cafe" ${catId==='cafe'?'selected':''}>Café</option>
+              <option value="spa" ${catId==='spa'?'selected':''}>Spa & Wellness</option>
+              <option value="hotel" ${catId==='hotel'?'selected':''}>Hotel</option>
+              <option value="mechanic" ${catId==='mechanic'?'selected':''}>Auto Mechanic</option>
+              <option value="plumbing" ${catId==='plumbing'?'selected':''}>Plumbing & HVAC</option>
+              <option value="convenience" ${catId==='convenience'?'selected':''}>Convenience Store</option>
+              <option value="spotlight" ${catId==='spotlight'?'selected':''}>Secret Insider Spotlight</option>
+              <option value="music" ${catId==='music'?'selected':''}>Music Services</option>
+              <option value="entertainment" ${catId==='entertainment'?'selected':''}>Entertainment</option>
+            </select>
+          </div>
+          <div class="fg"><label>Price Range <span style="font-weight:400;color:var(--t3)">(optional)</span></label>
+            <select id="vs-price">
+              <option value="">Not specified</option>
+              <option value="$">$ — Budget friendly</option>
+              <option value="$$">$$ — Mid-range</option>
+              <option value="$$$">$$$ — Premium</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>City</label><input type="text" id="vs-city" value="${city||''}" placeholder="e.g. Ibadan"/></div>
+          <div class="fg"><label>Country</label><input type="text" id="vs-country" value="${S._vCountry||'Nigeria'}" placeholder="e.g. Nigeria"/></div>
+        </div>
+
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin:22px 0 12px;padding-top:14px;border-top:1px solid var(--bdr)">Contact & Links</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>WhatsApp Number</label><input type="text" id="vs-whatsapp" placeholder="e.g. 2348012345678"/></div>
+          <div class="fg"><label>Phone <span style="font-weight:400;color:var(--t3)">(optional)</span></label><input type="text" id="vs-phone" placeholder="e.g. +234 801 234 5678"/></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>Website <span style="font-weight:400;color:var(--t3)">(optional)</span></label><input type="text" id="vs-website" placeholder="https://…"/></div>
+          <div class="fg"><label>Instagram <span style="font-weight:400;color:var(--t3)">(optional)</span></label><input type="text" id="vs-instagram" placeholder="@yourhandle"/></div>
+        </div>
+        <div class="fg"><label>Email <span style="font-weight:400;color:var(--t3)">(optional)</span></label><input type="email" id="vs-email" placeholder="you@business.com"/></div>
+
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin:22px 0 12px;padding-top:14px;border-top:1px solid var(--bdr)">Extra Details</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>Operating Hours <span style="font-weight:400;color:var(--t3)">(optional)</span></label><input type="text" id="vs-hours" placeholder="e.g. Mon-Sat, 8am-6pm"/></div>
+          <div class="fg"><label>Years Active <span style="font-weight:400;color:var(--t3)">(optional)</span></label><input type="text" id="vs-years" placeholder="e.g. 5 years"/></div>
+        </div>
+
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin:22px 0 12px;padding-top:14px;border-top:1px solid var(--bdr)">Visuals</div>
+
+        <div class="fg">
+          <label>Logo <span style="font-weight:400;color:var(--t3)">(optional, square image works best)</span></label>
+          <div class="img-drop" onclick="document.getElementById('vs-logo-input').click()">
+            <i data-lucide="image" style="width:18px;height:18px;color:var(--t3);display:block;margin:0 auto 6px"></i>
+            <div style="font-size:.76rem;color:var(--t3)">Click to upload logo</div>
+          </div>
+          <input type="file" id="vs-logo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="A.previewVendorLogo(this)"/>
+          <div id="vs-logo-preview" style="margin-top:8px"></div>
+        </div>
+
+        <div class="fg">
+          <label>Posters / Gallery <span style="font-weight:400;color:var(--t3)">(up to 6 images, captions optional)</span></label>
+          <div class="img-drop" onclick="document.getElementById('vs-posters-input').click()">
+            <i data-lucide="images" style="width:18px;height:18px;color:var(--t3);display:block;margin:0 auto 6px"></i>
+            <div style="font-size:.76rem;color:var(--t3)">Click to add photos</div>
+          </div>
+          <input type="file" id="vs-posters-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="A.previewVendorPosters(this)"/>
+          <div id="vs-posters-list" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+
+        <div class="ferr" id="vs-err"></div>
+        <button class="btn bp" id="vs-btn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitVendorListing('${isAdminAdd}')">
+          <i data-lucide="send" style="width:14px;height:14px"></i>${isAdminAdd?'Add to Directory':'Submit My Business'}
+        </button>
+      </div>
+    </div>`);
+    S._vendorPosterFiles=[];
   },
 
   contactSupport(){
@@ -3932,42 +3881,6 @@ const M = {
     </div>`);
   },
 
-  vendorWaitlist(catId,city,catLabel){
-    if(!S.user){M.auth();return;}
-    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
-      <div class="modal">
-        <div class="mhdr">
-          <div><div class="mey">Vendor Waitlist</div><h2 class="mtitle">List My Business</h2></div>
-          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
-        </div>
-        <div style="background:var(--off);border-radius:var(--rsm);padding:11px 14px;margin-bottom:18px;font-size:.8rem;color:var(--t2);line-height:1.6">
-          <strong style="color:var(--t1)">How this works:</strong> Your listing joins the community waitlist for <strong>${catLabel}</strong> in <strong>${city}</strong>. Every quarter, the community votes for their favourite, the winner gets a featured showcase slot with photos, reviews, and a direct connect link. A new vote is held each quarter, so there's always a chance to win.
-        </div>
-        <div class="fg"><label>Business Name</label><input type="text" id="wlbizname" placeholder="e.g. Businessname..."/></div>
-        <div class="fg"><label>Tagline <span style="font-weight:400;color:var(--t3)">(one sentence)</span></label><input type="text" id="wltagline" placeholder="e.g. States fastest..."/></div>
-        <div class="fg"><label>Contact (WhatsApp, phone, or email)</label><input type="text" id="wlcontact" placeholder="e.g. +234..."/></div>
-        <div class="fg"><label>Why should the community vote for you?</label><textarea id="wlwhy" rows="3" placeholder="Tell the community what makes your business stand out…"></textarea></div>
-        <div class="fg">
-          <label>Storefront / Business Photo <span style="font-weight:400;color:var(--t3)">(optional — shown on your showcase card)</span></label>
-          <div class="img-drop" id="wl-img-drop" onclick="document.getElementById('wl-img-input').click()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 6px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <div style="font-size:.78rem;color:var(--t3)">Click to add a storefront photo</div>
-            <div style="font-size:.68rem;color:var(--t3);margin-top:2px">JPG or PNG · Max 3MB</div>
-          </div>
-          <input type="file" id="wl-img-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="A.previewWlImg(this)"/>
-          <div id="wl-img-preview" style="margin-top:8px"></div>
-        </div>
-        <div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px 13px;margin-bottom:16px;font-size:.78rem;color:#8a6820;line-height:1.5">
-          <strong>Note:</strong> If voted as fan favourite, a 1% referral commission applies on connections made through the platform showcase.
-        </div>
-        <div class="ferr" id="wlerr"></div>
-        <button class="btn bp" id="wlbtn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitVendorWaitlist('${catId}','${city}','${catLabel}')">
-          <i data-lucide="send" style="width:14px;height:14px"></i>Join the Waitlist
-        </button>
-      </div>
-    </div>`);
-  },
-
   newBlogPost(){
     if(S.user?.id!==ADMIN_ID) return;
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
@@ -3990,8 +3903,10 @@ const M = {
           <div id="bp-img-preview" style="margin-top:8px"></div>
         </div>
         <div class="fg">
-          <label>Body (supports markdown: ## heading, **bold**, > blockquote)</label>
-          <textarea id="bp-body" rows="12" placeholder="Write your post here…" style="font-family:monospace;font-size:.8rem"></textarea>
+          <label>Body</label>
+          <div id="bp-editor-toolbar"></div>
+          <div id="bp-editor" style="background:#fff"></div>
+          <input type="file" id="bp-inline-img" accept="image/jpeg,image/png,image/webp" style="display:none"/>
         </div>
         <div class="fg">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
@@ -4005,6 +3920,7 @@ const M = {
         </button>
       </div>
     </div>`);
+    A.initBlogEditor('');
   },
 
   editBlogPost(id){
@@ -4019,7 +3935,12 @@ const M = {
         <div class="fg"><label>Title</label><input type="text" id="bp-title" value="${post.title?.replace(/"/g,'&quot;')||''}"/></div>
         <div class="fg"><label>Excerpt</label><input type="text" id="bp-excerpt" value="${post.excerpt?.replace(/"/g,'&quot;')||''}"/></div>
         <div class="fg"><label>Tags (comma separated)</label><input type="text" id="bp-tags" value="${(post.tags||[]).join(', ')}"/></div>
-        <div class="fg"><label>Body</label><textarea id="bp-body" rows="12" style="font-family:monospace;font-size:.8rem">${post.body||''}</textarea></div>
+        <div class="fg">
+          <label>Body</label>
+          <div id="bp-editor-toolbar"></div>
+          <div id="bp-editor" style="background:#fff"></div>
+          <input type="file" id="bp-inline-img" accept="image/jpeg,image/png,image/webp" style="display:none"/>
+        </div>
         <div class="ferr" id="bp-err"></div>
         <div style="display:flex;gap:10px">
           <button class="btn bp" id="bp-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.updateBlogPost('${id}')">
@@ -4031,6 +3952,7 @@ const M = {
         </div>
       </div>
     </div>`);
+    A.initBlogEditor(post.body||'');
   },
 
   verifyForm(){
@@ -4370,7 +4292,6 @@ const A = {
     inp.value='';
     const now=new Date().toISOString();
 
-    // Resolve @mentions against the full platform user list
     const knownUsers=await A._loadAllUsersForMention();
     const mentionRegex=/@([A-Za-z0-9_]+(?:\s[A-Za-z0-9_]+)?)/g;
     const taggedIds=new Set();
@@ -4491,7 +4412,6 @@ const A = {
     }
 
     const allUsers=await A._loadAllUsersForMention();
-    // Guard against the input changing while the fetch was in flight
     if(document.activeElement!==inp) return;
     const reCheck=inp.value.slice(0,inp.selectionStart).match(/@([A-Za-z0-9_]*)$/);
     if(!reCheck){A.hideMentionDropdown();return;}
@@ -4795,36 +4715,6 @@ const A = {
       toast('Deal confirmed. Thank you!','ok');
     }catch(e){toast('Failed: '+e.message,'err');}
   },
-  async adminApproveWaitlist(id,bizName,userId){
-    if(S.user?.id!==ADMIN_ID) return;
-    try{
-      await DB.update('vendor_waitlist',id,{status:'approved'});
-      if(userId){
-        await createNotif(userId,'connection',
-          'Your business has been approved! 🎉',
-          bizName+' has been approved for the vendor showcase. The community will vote for you in the next quarterly poll. We\'ll notify you when voting opens.',
-          'market'
-        );
-        await pushNotif(userId,'Business approved! 🎉',bizName+' is now on the vendor showcase. Voting opens next quarter.');
-      }
-      await A.adminLoadAll();
-      toast(bizName+' approved for showcase!','ok');
-    }catch(e){toast('Something went wrong. Please try again.','err');}
-  },
-
-  async adminRejectWaitlist(id,fromUserId,bizName){
-    if(S.user?.id!==ADMIN_ID) return;
-    try{
-      await DB.update('vendor_waitlist',id,{status:'rejected'});
-      await createNotif(fromUserId,'connection',
-        'Vendor submission update',
-        'Thank you for submitting '+bizName+'. Unfortunately your submission wasn\'t accepted at this time. You\'re welcome to resubmit with updated details.',
-        'market'
-      );
-      await A.adminLoadAll();
-      toast('Submission declined.','ok');
-    }catch(e){toast('Failed: '+e.message,'err');}
-  },
 
   async adminVerifyComm(id){
     if(S.user?.id!==ADMIN_ID) return;
@@ -4920,23 +4810,6 @@ const A = {
       orderTitle:d.orderTitle,status:d.status,
       commissionAmt:d.commissionAmt,commissionRef:d.commissionRef,
       buyerConfirmed:d.buyerConfirmed,createdAt:d.$createdAt,
-    }));
-    // Load vendor waitlist separately
-    const vr=await DB.list('vendor_waitlist',[Query.orderDesc('$createdAt'),Query.limit(100)]);
-    S._adminVendors=vr.documents.map(d=>({
-      id:d.$id,
-      userId:d.userId,
-      userName:d.userName,
-      bizName:d.bizName,
-      tagline:d.tagline,
-      contact:d.contact,
-      why:d.why,
-      category:d.category,
-      city:d.city,
-      country:d.country,
-      storefrontId:d.storefrontId,
-      status:d.status,
-      createdAt:d.$createdAt,
     }));
     render();
     toast('Admin data refreshed.');
@@ -5249,6 +5122,349 @@ const A = {
     </div>`;
     if(drop) drop.className='img-drop has-imgs';
   },
+  async openVendorProfile(vendorId){
+    let v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+    if(!v){
+      // Fallback: fetch directly if not in current local list (e.g. opened from a deep link)
+      try{
+        const d=await _db.getDocument(AW_DB_ID,AW_COL.vendors,vendorId);
+        v={
+          id:d.$id, userId:d.userId, submittedByAdmin:d.submittedByAdmin,
+          bizName:d.bizName, about:d.about, tagline:d.tagline,
+          category:d.category, city:d.city, country:d.country,
+          logoId:d.logoId, posterIds:d.posterIds||[], posterCaptions:d.posterCaptions||[],
+          whatsapp:d.whatsapp, website:d.website, instagram:d.instagram,
+          phone:d.phone, email:d.email, hours:d.hours,
+          priceRange:d.priceRange, yearsActive:d.yearsActive,
+          status:d.status, votes:d.votes||0, voterIds:d.voterIds||[],
+          isCommunityPick:d.isCommunityPick||false,
+          createdAt:d.$createdAt,
+        };
+      }catch(e){toast('Could not load this vendor.','err');return;}
+    }
+
+    const logoUrl=v.logoId?fileUrl(v.logoId):null;
+    const posters=(v.posterIds||[]).map((id,i)=>({url:fileUrl(id),caption:v.posterCaptions?.[i]||''}));
+    const heroPoster=posters[0]||null;
+    const restPosters=posters.slice(1);
+    const waLink=vendorWaLink(v.whatsapp,v.bizName,v.category);
+    const userVoted=(v.voterIds||[]).includes(S.user?.id);
+    const isAdmin=S.user?.id===ADMIN_ID;
+    const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music:'Music Services',entertainment:'Entertainment'}[v.category]||v.category;
+
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal modal-lg" style="max-width:680px;padding:0;overflow-y:auto;overflow-x:hidden;max-height:92vh">
+
+        ${heroPoster?`
+        <div style="position:relative">
+          <img src="${heroPoster.url}" style="width:100%;height:240px;object-fit:cover;display:block">
+          <button class="mclose" onclick="M.close()" style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,.5);color:#fff">
+            <i data-lucide="x" style="width:15px;height:15px"></i>
+          </button>
+          ${v.isCommunityPick?`<div style="position:absolute;top:14px;left:14px;background:var(--gld);color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:100px;display:flex;align-items:center;gap:5px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#fff" stroke="none"><circle cx="12" cy="8" r="6"/></svg>Community Pick
+          </div>`:''}
+          ${heroPoster.caption?`<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.65),transparent);padding:24px 16px 10px;color:#fff;font-size:.78rem">${heroPoster.caption}</div>`:''}
+        </div>`:`
+        <div style="padding:24px 24px 0;display:flex;justify-content:flex-end">
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>`}
+
+        <div style="padding:24px">
+          <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+            ${logoUrl?`<img src="${logoUrl}" style="width:58px;height:58px;border-radius:var(--rmd);object-fit:cover;border:1px solid var(--bdr);flex-shrink:0">`:`<div style="width:58px;height:58px;border-radius:var(--rmd);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t3)"><i data-lucide="store" style="width:24px;height:24px"></i></div>`}
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--fd);font-size:1.4rem;line-height:1.2">${v.bizName}</div>
+              ${v.tagline?`<div style="font-size:.85rem;color:var(--t2);margin-top:3px">${v.tagline}</div>`:''}
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px">
+                <span class="tag tn">${catLabel}</span>
+                <span class="tag tn">${v.city}${v.country?', '+v.country:''}</span>
+                ${v.priceRange?`<span class="tag tn">${v.priceRange}</span>`:''}
+                ${v.status==='pending'?`<span class="tag tgd">Under Review</span>`:''}
+              </div>
+            </div>
+          </div>
+
+          ${v.about?`<div style="font-size:.875rem;color:var(--t2);line-height:1.7;margin-bottom:18px">${v.about}</div>`:''}
+
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+            ${S.user?`<button class="btn ${userVoted?'bg':'bpur'} bsm" ${userVoted?'disabled':''} onclick="A.voteVendor('${v.id}');M.close()">
+              <i data-lucide="thumbs-up" style="width:12px;height:12px"></i>${userVoted?'You voted':'Vote for this business'} (${v.votes||0})
+            </button>`:`<button class="btn bo bsm" onclick="M.auth()"><i data-lucide="lock" style="width:12px;height:12px"></i>Sign in to vote</button>`}
+            ${isAdmin&&v.status==='pending'?`<button class="btn bc bsm" onclick="A.adminApproveVendor('${v.id}');M.close()"><i data-lucide="check" style="width:12px;height:12px"></i>Approve</button>`:''}
+          </div>
+
+          <div style="background:var(--off);border-radius:var(--rmd);padding:16px;margin-bottom:20px">
+            <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Contact</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              ${waLink?`<a href="${waLink}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:9px;color:var(--t1);text-decoration:none;font-size:.85rem">
+                <div style="width:28px;height:28px;border-radius:50%;background:#E6F5EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--grn)"><i data-lucide="message-circle" style="width:13px;height:13px"></i></div>
+                WhatsApp
+              </a>`:''}
+              ${v.phone?`<div style="display:flex;align-items:center;gap:9px;font-size:.85rem">
+                <div style="width:28px;height:28px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t2)"><i data-lucide="phone" style="width:13px;height:13px"></i></div>
+                ${v.phone}
+              </div>`:''}
+              ${v.email?`<a href="mailto:${v.email}" style="display:flex;align-items:center;gap:9px;color:var(--t1);text-decoration:none;font-size:.85rem">
+                <div style="width:28px;height:28px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t2)"><i data-lucide="mail" style="width:13px;height:13px"></i></div>
+                ${v.email}
+              </a>`:''}
+              ${v.website?`<a href="${v.website.startsWith('http')?v.website:'https://'+v.website}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:9px;color:var(--t1);text-decoration:none;font-size:.85rem">
+                <div style="width:28px;height:28px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t2)"><i data-lucide="globe" style="width:13px;height:13px"></i></div>
+                ${v.website.replace(/^https?:\/\//,'')}
+              </a>`:''}
+              ${v.instagram?`<a href="${v.instagram.startsWith('http')?v.instagram:'https://instagram.com/'+v.instagram.replace('@','')}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:9px;color:var(--t1);text-decoration:none;font-size:.85rem">
+                <div style="width:28px;height:28px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t2)"><i data-lucide="instagram" style="width:13px;height:13px"></i></div>
+                ${v.instagram.startsWith('@')?v.instagram:'@'+v.instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//,'')}
+              </a>`:''}
+            </div>
+          </div>
+
+          ${(v.hours||v.yearsActive)?`
+          <div style="display:grid;grid-template-columns:${v.hours&&v.yearsActive?'1fr 1fr':'1fr'};gap:10px;margin-bottom:20px">
+            ${v.hours?`<div style="background:var(--surf);border-radius:var(--rsm);padding:11px 14px">
+              <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:3px">Hours</div>
+              <div style="font-size:.8125rem;font-weight:500">${v.hours}</div>
+            </div>`:''}
+            ${v.yearsActive?`<div style="background:var(--surf);border-radius:var(--rsm);padding:11px 14px">
+              <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:3px">Years Active</div>
+              <div style="font-size:.8125rem;font-weight:500">${v.yearsActive}</div>
+            </div>`:''}
+          </div>`:''}
+
+          ${restPosters.length>0?`
+          <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Gallery</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            ${restPosters.map(p=>`
+            <div>
+              <img src="${p.url}" style="width:100%;height:130px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);display:block;cursor:pointer" onclick="window.open('${p.url}','_blank')">
+              ${p.caption?`<div style="font-size:.72rem;color:var(--t3);margin-top:5px;line-height:1.4">${p.caption}</div>`:''}
+            </div>`).join('')}
+          </div>`:''}
+        </div>
+      </div>
+    </div>`);
+  },
+  previewVendorLogo(input){
+    const preview=document.getElementById('vs-logo-preview');
+    if(!preview||!input.files[0]) return;
+    const url=URL.createObjectURL(input.files[0]);
+    preview.innerHTML=`<div style="position:relative;display:inline-block">
+      <img src="${url}" style="width:88px;height:88px;object-fit:cover;border-radius:var(--rmd);border:1px solid var(--bdr);display:block">
+      <button onclick="A.clearVendorLogo()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">×</button>
+    </div>`;
+  },
+  clearVendorLogo(){
+    const input=document.getElementById('vs-logo-input');
+    const preview=document.getElementById('vs-logo-preview');
+    if(input) input.value='';
+    if(preview) preview.innerHTML='';
+  },
+
+  previewVendorPosters(input){
+    const newFiles=Array.from(input.files||[]);
+    if(!newFiles.length) return;
+    S._vendorPosterFiles=S._vendorPosterFiles||[];
+    const room=6-S._vendorPosterFiles.length;
+    if(room<=0){toast('Maximum 6 photos allowed.','err');input.value='';return;}
+    const toAdd=newFiles.slice(0,room);
+    if(newFiles.length>room) toast('Only added '+toAdd.length+' — 6 photo limit reached.','notif');
+    toAdd.forEach(file=>{
+      S._vendorPosterFiles.push({file,caption:'',url:URL.createObjectURL(file)});
+    });
+    input.value='';
+    A.renderVendorPosterList();
+  },
+
+  renderVendorPosterList(){
+    const list=document.getElementById('vs-posters-list');
+    if(!list) return;
+    const items=S._vendorPosterFiles||[];
+    if(items.length===0){list.innerHTML='';return;}
+    list.innerHTML=items.map((item,i)=>`
+      <div style="display:flex;gap:10px;align-items:flex-start;background:var(--off);border:1px solid var(--bdr);border-radius:var(--rsm);padding:8px">
+        <img src="${item.url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--bdr)">
+        <div style="flex:1;min-width:0">
+          <input type="text" placeholder="Caption (optional)" value="${item.caption.replace(/"/g,'&quot;')}" oninput="A.updateVendorPosterCaption(${i},this.value)" style="font-size:.78rem;padding:7px 10px">
+        </div>
+        <button onclick="A.removeVendorPoster(${i})" style="width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0;margin-top:2px">×</button>
+      </div>`).join('');
+  },
+
+  updateVendorPosterCaption(idx,val){
+    if(!S._vendorPosterFiles||!S._vendorPosterFiles[idx]) return;
+    S._vendorPosterFiles[idx].caption=val;
+  },
+
+  removeVendorPoster(idx){
+    if(!S._vendorPosterFiles) return;
+    S._vendorPosterFiles.splice(idx,1);
+    A.renderVendorPosterList();
+  },
+  async submitVendorListing(isAdminAddStr){
+    const isAdminAdd=isAdminAddStr==='true'&&S.user?.id===ADMIN_ID;
+    const bizName=document.getElementById('vs-name')?.value?.trim();
+    const tagline=document.getElementById('vs-tagline')?.value?.trim();
+    const about=document.getElementById('vs-about')?.value?.trim();
+    const category=document.getElementById('vs-cat')?.value;
+    const priceRange=document.getElementById('vs-price')?.value||'';
+    const city=document.getElementById('vs-city')?.value?.trim();
+    const country=document.getElementById('vs-country')?.value?.trim();
+    const whatsapp=document.getElementById('vs-whatsapp')?.value?.trim();
+    const phone=document.getElementById('vs-phone')?.value?.trim();
+    const website=document.getElementById('vs-website')?.value?.trim();
+    const instagram=document.getElementById('vs-instagram')?.value?.trim();
+    const email=document.getElementById('vs-email')?.value?.trim();
+    const hours=document.getElementById('vs-hours')?.value?.trim();
+    const years=document.getElementById('vs-years')?.value?.trim();
+    const err=document.getElementById('vs-err');
+    const btn=document.getElementById('vs-btn');
+
+    if(!bizName){err.textContent='Please add a business name.';return;}
+    if(!category){err.textContent='Please select a category.';return;}
+    if(!city){err.textContent='Please add a city.';return;}
+    if(!country){err.textContent='Please add a country.';return;}
+    if(!whatsapp&&!phone&&!email){err.textContent='Please add at least one way for customers to reach you — WhatsApp, phone, or email.';return;}
+
+    btn.disabled=true;btn.textContent='Uploading…';
+
+    let logoId='';
+    const logoInput=document.getElementById('vs-logo-input');
+    if(logoInput?.files[0]){
+      try{
+        const up=await _storage.createFile(BUCKET_ID,ID.unique(),logoInput.files[0]);
+        logoId=up.$id;
+      }catch(e){console.warn('logo upload:',e.message);}
+    }
+
+    const posterFiles=S._vendorPosterFiles||[];
+    const posterIds=[];
+    const posterCaptions=[];
+    if(posterFiles.length){
+      btn.textContent='Uploading photos…';
+      for(const item of posterFiles){
+        try{
+          const up=await _storage.createFile(BUCKET_ID,ID.unique(),item.file);
+          posterIds.push(up.$id);
+          posterCaptions.push(item.caption||'');
+        }catch(e){console.warn('poster upload:',e.message);}
+      }
+    }
+
+    btn.textContent='Saving…';
+    try{
+      const doc=await DB.create('vendors',{
+        userId:S.user.id,
+        submittedByAdmin:isAdminAdd,
+        bizName, about:about||'', tagline:tagline||'',
+        category, city, country,
+        logoId, posterIds, posterCaptions,
+        whatsapp:whatsapp||'', website:website||'', instagram:instagram||'',
+        phone:phone||'', email:email||'',
+        hours:hours||'', priceRange:priceRange||'', yearsActive:years||'',
+        status:isAdminAdd?'approved':'pending',
+        votes:0, voterIds:[], isCommunityPick:false,
+      });
+
+      M.close();
+      S._vendorPosterFiles=[];
+
+      if(isAdminAdd){
+        toast(bizName+' added directly to the directory!','ok');
+      }else{
+        toast(bizName+' submitted! It\'s now live in the directory while we review it.','ok');
+        await createNotif(ADMIN_ID,'connection',
+          'New vendor submission: '+bizName,
+          category+' in '+city+' — submitted by '+S.user.name,
+          'profile','',  'vendor'
+        );
+      }
+
+      // Refresh the directory view if currently on the vendors tab
+      if(S.page==='market'&&S.mTab==='vendors'){
+        await A.loadVendorDirectory(category,city);
+      }
+      render();
+    }catch(e){
+      err.textContent='Something went wrong submitting your listing. Please try again.';
+      btn.disabled=false;btn.textContent=isAdminAdd?'Add to Directory':'Submit My Business';
+    }
+  },
+  
+  async voteVendor(vendorId){
+    if(!S.user){M.auth();return;}
+    const list=S._vendorDirectory||[];
+    const v=list.find(x=>x.id===vendorId);
+    if(!v) return;
+    if((v.voterIds||[]).includes(S.user.id)){toast('You already voted for this business.','notif');return;}
+
+    const newVoterIds=[...(v.voterIds||[]),S.user.id];
+    const newVotes=(v.votes||0)+1;
+    try{
+      await DB.update('vendors',vendorId,{votes:newVotes,voterIds:newVoterIds});
+      v.votes=newVotes;
+      v.voterIds=newVoterIds;
+      toast('Vote cast for '+v.bizName+'!','ok');
+
+      // Recalculate Community Pick for this category+city — highest votes wins the pinned slot
+      await A.recalcCommunityPick(v.category,v.city);
+      await A.loadVendorDirectory(v.category,v.city);
+    }catch(e){
+      toast('Could not register your vote. Please try again.','err');
+    }
+  },
+
+  async recalcCommunityPick(category,city){
+    try{
+      const r=await DB.list('vendors',[
+        Query.equal('category',[category]),
+        Query.equal('city',[city]),
+        Query.equal('status',['approved']),
+        Query.orderDesc('votes'),
+        Query.limit(50),
+      ]);
+      const docs=r.documents;
+      if(!docs.length) return;
+      const topVotes=docs[0].votes||0;
+      if(topVotes<=0) return; // no votes yet, nobody should be pinned
+      const winnerId=docs[0].$id;
+      await Promise.all(docs.map(d=>{
+        const shouldBePick=d.$id===winnerId;
+        if(d.isCommunityPick!==shouldBePick){
+          return DB.update('vendors',d.$id,{isCommunityPick:shouldBePick}).catch(()=>{});
+        }
+        return Promise.resolve();
+      }));
+    }catch(e){console.warn('recalcCommunityPick:',e.message);}
+  },
+  async adminApproveVendor(vendorId){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      await DB.update('vendors',vendorId,{status:'approved'});
+      const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+      if(v){
+        v.status='approved';
+        await createNotif(v.userId,'connection','Your business listing is approved!',v.bizName+' is now fully live in the Toomuchcoin vendor directory.','market');
+        await pushNotif(v.userId,'Listing approved!',v.bizName+' is now live in the directory.');
+      }
+      toast('Vendor approved.','ok');
+      render();
+    }catch(e){toast('Failed: '+e.message,'err');}
+  },
+
+  async adminRejectVendor(vendorId){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      await DB.update('vendors',vendorId,{status:'rejected'});
+      const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+      if(v){
+        await createNotif(v.userId,'connection','Listing update',v.bizName+' was not approved for the directory. You\'re welcome to edit and resubmit.','market');
+      }
+      toast('Vendor listing rejected.','ok');
+      if(S._vCat&&S._vCity) await A.loadVendorDirectory(S._vCat,S._vCity);
+      render();
+    }catch(e){toast('Failed: '+e.message,'err');}
+  },
   clearWlImg(){
     const input=document.getElementById('wl-img-input');
     const preview=document.getElementById('wl-img-preview');
@@ -5270,9 +5486,53 @@ const A = {
       toast('Copied!','ok');
     }catch(e){ toast('Couldn\'t copy — please copy manually.','err'); }
   },
-  setVendorCat(cat){ S._vCat=cat; S._vCity=null; render(); },
-  setVendorCity(city){ S._vCity=city||null; render(); },
-  setVendorCountry(country){ S._vCountry=country; S._vCity=null; render(); },
+  setVendorCat(cat){ S._vCat=cat; S._vCity=null; S._vendorDirectory=null; render(); },
+  setVendorCity(city){
+    S._vCity=city||null;
+    S._vendorDirectory=null;
+    render();
+    if(city) A.loadVendorDirectory(S._vCat,city);
+  },
+  setVendorCountry(country){ S._vCountry=country; S._vCity=null; S._vendorDirectory=null; render(); },
+
+  async loadVendorDirectory(catId,city){
+    S._vendorDirLoading=true;
+    const root=document.getElementById('vendor-directory-root');
+    if(root) root.innerHTML=`<div style="text-align:center;padding:48px;color:var(--t3)"><div class="spin"></div><br>Loading vendors…</div>`;
+    try{
+      const r=await DB.list('vendors',[
+        Query.equal('category',[catId]),
+        Query.equal('city',[city]),
+        Query.orderDesc('votes'),
+        Query.limit(100),
+      ]);
+      const all=r.documents.map(d=>({
+        id:d.$id, userId:d.userId, submittedByAdmin:d.submittedByAdmin,
+        bizName:d.bizName, about:d.about, tagline:d.tagline,
+        category:d.category, city:d.city, country:d.country,
+        logoId:d.logoId, posterIds:d.posterIds||[], posterCaptions:d.posterCaptions||[],
+        whatsapp:d.whatsapp, website:d.website, instagram:d.instagram,
+        phone:d.phone, email:d.email, hours:d.hours,
+        priceRange:d.priceRange, yearsActive:d.yearsActive,
+        status:d.status, votes:d.votes||0, voterIds:d.voterIds||[],
+        isCommunityPick:d.isCommunityPick||false,
+        createdAt:d.$createdAt,
+      }));
+      // Show approved vendors to everyone; show pending vendors too (with "Under Review" badge) per the open-directory model,
+      // but hide rejected ones entirely
+      S._vendorDirectory=all.filter(v=>v.status!=='rejected');
+    }catch(e){
+      console.warn('loadVendorDirectory:',e.message);
+      S._vendorDirectory=[];
+    }
+    S._vendorDirLoading=false;
+    const root2=document.getElementById('vendor-directory-root');
+    if(root2){
+      const isAdmin=S.user?.id===ADMIN_ID;
+      root2.innerHTML=P._vendorDirectoryBody(catId,city,isAdmin);
+      lucide.createIcons();
+    }
+  },
   async loadApprovedVendors(catId,city){
     const r=await DB.list('vendor_waitlist',[
       Query.equal('category',[catId]),
@@ -5289,20 +5549,115 @@ const A = {
     render();
   },
 
-  async loadMyVendorSubmissions(){
-    if(!S.user) return;
-    const r=await DB.list('vendor_waitlist',[
-      Query.equal('userId',[S.user.id]),
-      Query.orderDesc('$createdAt'),
-      Query.limit(20),
-    ]);
-    S._myVendorSubmissions=r.documents.map(d=>({
-      id:d.$id,bizName:d.bizName,tagline:d.tagline,
-      category:d.category,city:d.city,country:d.country,
-      status:d.status,createdAt:d.$createdAt,
-      storefrontId:d.storefrontId,
-    }));
-    render();
+  async loadVendorDirectory(catId,city){
+    S._vendorDirLoading=true;
+    const root=document.getElementById('vendor-directory-root');
+    if(root) root.innerHTML=`<div style="text-align:center;padding:48px;color:var(--t3)"><div class="spin"></div><br>Loading vendors…</div>`;
+    try{
+      const r=await DB.list('vendors',[
+        Query.equal('category',[catId]),
+        Query.equal('city',[city]),
+        Query.orderDesc('votes'),
+        Query.limit(100),
+      ]);
+      const all=r.documents.map(d=>({
+        id:d.$id, userId:d.userId, submittedByAdmin:d.submittedByAdmin,
+        bizName:d.bizName, about:d.about, tagline:d.tagline,
+        category:d.category, city:d.city, country:d.country,
+        logoId:d.logoId, posterIds:d.posterIds||[], posterCaptions:d.posterCaptions||[],
+        whatsapp:d.whatsapp, website:d.website, instagram:d.instagram,
+        phone:d.phone, email:d.email, hours:d.hours,
+        priceRange:d.priceRange, yearsActive:d.yearsActive,
+        status:d.status, votes:d.votes||0, voterIds:d.voterIds||[],
+        isCommunityPick:d.isCommunityPick||false,
+        createdAt:d.$createdAt,
+      }));
+      S._vendorDirectory=all.filter(v=>v.status!=='rejected');
+    }catch(e){
+      console.warn('loadVendorDirectory:',e.message);
+      S._vendorDirectory=[];
+    }
+    S._vendorDirLoading=false;
+    const root2=document.getElementById('vendor-directory-root');
+    if(root2){
+      const isAdmin=S.user?.id===ADMIN_ID;
+      root2.innerHTML=P._vendorDirectoryBody(catId,city,isAdmin);
+      lucide.createIcons();
+    }
+  },
+
+  async voteVendor(vendorId){
+    if(!S.user){M.auth();return;}
+    const list=S._vendorDirectory||[];
+    const v=list.find(x=>x.id===vendorId);
+    if(!v) return;
+    if((v.voterIds||[]).includes(S.user.id)){toast('You already voted for this business.','notif');return;}
+
+    const newVoterIds=[...(v.voterIds||[]),S.user.id];
+    const newVotes=(v.votes||0)+1;
+    try{
+      await DB.update('vendors',vendorId,{votes:newVotes,voterIds:newVoterIds});
+      v.votes=newVotes;
+      v.voterIds=newVoterIds;
+      toast('Vote cast for '+v.bizName+'!','ok');
+      await A.recalcCommunityPick(v.category,v.city);
+      await A.loadVendorDirectory(v.category,v.city);
+    }catch(e){
+      toast('Could not register your vote. Please try again.','err');
+    }
+  },
+
+  async recalcCommunityPick(category,city){
+    try{
+      const r=await DB.list('vendors',[
+        Query.equal('category',[category]),
+        Query.equal('city',[city]),
+        Query.equal('status',['approved']),
+        Query.orderDesc('votes'),
+        Query.limit(50),
+      ]);
+      const docs=r.documents;
+      if(!docs.length) return;
+      const topVotes=docs[0].votes||0;
+      if(topVotes<=0) return;
+      const winnerId=docs[0].$id;
+      await Promise.all(docs.map(d=>{
+        const shouldBePick=d.$id===winnerId;
+        if(d.isCommunityPick!==shouldBePick){
+          return DB.update('vendors',d.$id,{isCommunityPick:shouldBePick}).catch(()=>{});
+        }
+        return Promise.resolve();
+      }));
+    }catch(e){console.warn('recalcCommunityPick:',e.message);}
+  },
+
+  async adminApproveVendor(vendorId){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      await DB.update('vendors',vendorId,{status:'approved'});
+      const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+      if(v){
+        v.status='approved';
+        await createNotif(v.userId,'connection','Your business listing is approved!',v.bizName+' is now fully live in the Toomuchcoin vendor directory.','market');
+        await pushNotif(v.userId,'Listing approved!',v.bizName+' is now live in the directory.');
+      }
+      toast('Vendor approved.','ok');
+      render();
+    }catch(e){toast('Failed: '+e.message,'err');}
+  },
+
+  async adminRejectVendor(vendorId){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      await DB.update('vendors',vendorId,{status:'rejected'});
+      const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+      if(v){
+        await createNotif(v.userId,'connection','Listing update',v.bizName+' was not approved for the directory. You\'re welcome to edit and resubmit.','market');
+      }
+      toast('Vendor listing rejected.','ok');
+      if(S._vCat&&S._vCity) await A.loadVendorDirectory(S._vCat,S._vCity);
+      render();
+    }catch(e){toast('Failed: '+e.message,'err');}
   },
   toggleSignupNotifCat(cat){
     S._signupNotifCats=S._signupNotifCats||[];
@@ -5314,6 +5669,49 @@ const A = {
       if(btnCat===cat) btn.classList.toggle('on', S._signupNotifCats.includes(cat));
     });
   },
+  initBlogEditor(initialHtml){
+    setTimeout(()=>{
+      if(window._bpQuill){try{window._bpQuill=null;}catch(e){}}
+      const toolbarOpts=[
+        [{header:[1,2,3,false]}],
+        ['bold','italic','underline','strike'],
+        [{color:[]},{background:[]}],
+        [{list:'ordered'},{list:'bullet'}],
+        ['blockquote','link'],
+        ['image','video'],
+        ['clean'],
+      ];
+      window._bpQuill=new Quill('#bp-editor',{
+        theme:'snow',
+        modules:{toolbar:{container:toolbarOpts,handlers:{image:A.quillImageHandler}}},
+        placeholder:'Write your post here… use the toolbar to add headers, formatting, images, and videos.',
+      });
+      if(initialHtml) window._bpQuill.root.innerHTML=initialHtml;
+    },50);
+  },
+
+  quillImageHandler(){
+    const input=document.getElementById('bp-inline-img');
+    if(!input) return;
+    input.value='';
+    input.onchange=async()=>{
+      const file=input.files[0];
+      if(!file) return;
+      if(file.size>4*1024*1024){toast('Image must be under 4MB','err');return;}
+      const quill=window._bpQuill;
+      const range=quill?.getSelection(true);
+      toast('Uploading image…');
+      try{
+        const up=await _storage.createFile(BUCKET_ID,ID.unique(),file);
+        const url=fileUrl(up.$id);
+        quill.insertEmbed(range?.index??quill.getLength(),'image',url,'user');
+        quill.setSelection((range?.index??0)+1);
+        toast('Image inserted!','ok');
+      }catch(e){toast('Upload failed: '+e.message,'err');}
+    };
+    input.click();
+  },
+
   previewBlogImg(input){
     const preview=document.getElementById('bp-img-preview');
     if(!preview||!input.files[0]) return;
@@ -5327,7 +5725,7 @@ const A = {
     const slug=document.getElementById('bp-slug')?.value?.trim()||title?.toLowerCase().replace(/[^a-z0-9]+/g,'-');
     const excerpt=document.getElementById('bp-excerpt')?.value?.trim();
     const tagsRaw=document.getElementById('bp-tags')?.value||'';
-    const body=document.getElementById('bp-body')?.value?.trim();
+    const body=window._bpQuill?window._bpQuill.root.innerHTML.trim():'';
     const published=document.getElementById('bp-published')?.checked||false;
     const imgInput=document.getElementById('bp-img');
     const err=document.getElementById('bp-err');
@@ -5486,59 +5884,6 @@ const A = {
     }
     try{ await navigator.clipboard.writeText(url); toast('Link copied!','ok'); }
     catch(e){ prompt('Copy this link to share:',url); }
-  },
-  async submitVendorWaitlist(catId,city,catLabel){
-    const bizName=document.getElementById('wlbizname')?.value?.trim();
-    const tagline=document.getElementById('wltagline')?.value?.trim();
-    const contact=document.getElementById('wlcontact')?.value?.trim();
-    const why=document.getElementById('wlwhy')?.value?.trim();
-    const imgInput=document.getElementById('wl-img-input');
-    const err=document.getElementById('wlerr');
-    const btn=document.getElementById('wlbtn');
-    if(!bizName){err.textContent='What\'s your business called? Add a name so the community can find and vote for you.';return;}
-    if(!contact){err.textContent='Add a contact number or handle so customers can reach you if you win.';return;}
-    btn.disabled=true;btn.textContent='Submitting…';
-    let storefrontId='';
-    if(imgInput?.files[0]){
-      btn.textContent='Uploading photo…';
-      try{
-        const up=await _storage.createFile(BUCKET_ID,ID.unique(),imgInput.files[0]);
-        storefrontId=up.$id;
-      }catch(e){console.warn('storefront upload:',e.message);}
-    }
-    btn.textContent='Submitting…';
-    try{
-      await DB.create('vendor_waitlist',{
-        userId:S.user.id,
-        userName:S.user.name,
-        userInitials:S.user.inits,
-        bizName,
-        tagline:tagline||'',
-        contact,
-        why:why||'',
-        category:catId,
-        city,
-        country:S._vCountry||'Nigeria',
-        storefrontId:storefrontId||'',
-        status:'pending',
-      });
-      await createNotif(ADMIN_ID,'connection',
-        'New vendor waitlist: '+bizName,
-        catLabel+' in '+city+' — '+S.user.name+' ('+contact+')'+(storefrontId?' · Has storefront photo':''),
-        'profile','','vendor'
-      );
-      M.close();
-      S._myWaitlistEntries=S._myWaitlistEntries||[];
-      S._myWaitlistEntries.push({
-        bizName,tagline,catLabel,city,
-        storefrontId,status:'pending',
-        createdAt:new Date().toISOString()
-      });
-      toast(bizName+' is now on the '+catLabel+' waitlist for '+city+'! The community will vote each quarter.','ok');
-    }catch(e){
-      err.textContent='We couldn\'t add you to the waitlist right now. Please try again.';
-      btn.disabled=false;btn.textContent='Join the Waitlist';
-    }
   },
 
   toggleWatch(id){
@@ -5782,7 +6127,6 @@ document.addEventListener('DOMContentLoaded', async()=>{
     S.page='market';S.mTab='vendors';
     render();
   }
-  // Resolve ?listing= deep links (supports both slug and raw id)
   if(_qs.get('reset')==='1'){
     const _rUserId=_qs.get('userId');
     const _rSecret=_qs.get('secret');
@@ -5791,7 +6135,6 @@ document.addEventListener('DOMContentLoaded', async()=>{
       M.resetPassword(_rUserId,_rSecret);
     }
   }
-  // Resolve ?blog= deep links
   const _blogParam=_qs.get('blog');
   if(_blogParam){
     history.replaceState({},'',window.location.pathname);
