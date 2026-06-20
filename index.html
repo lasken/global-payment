@@ -478,6 +478,7 @@
     .kk-locked-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(79,70,229,.3));border:2px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;animation:kkBreath 3s ease-in-out infinite}
     @media(max-width:768px){.kk-panel{max-width:100%;border-radius:20px 20px 0 0;height:88vh;bottom:0}.kk-fab{bottom:80px;right:16px}.kk-panel-hdr{padding:14px 14px 0}.kk-settings-bar{padding:6px 12px 0;gap:4px}.kk-sel{font-size:.65rem;padding:4px 8px}.kk-hdr-sel{display:none!important}}
     /* ── End KayKay ── */
+    /* ── Blog ── */
     .blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;margin-top:28px}
     .blog-card{background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rlg);overflow:hidden;cursor:pointer;transition:var(--ease);display:flex;flex-direction:column}
     .blog-card:hover{border-color:var(--bdr2);transform:translateY(-3px);box-shadow:var(--s3)}
@@ -517,6 +518,7 @@
     .ql-editor iframe{max-width:100%;border-radius:var(--rsm);margin:8px 0}
     .ql-snow .ql-tooltip{z-index:2000}
     /* ── End Editor ── */
+    /* ── End Blog ── */
     .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--t1);color:var(--white);padding:11px 20px;border-radius:var(--rmd);font-size:.875rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .28s,transform .28s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 48px)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .toast.ok{background:var(--grn)}
@@ -1171,6 +1173,7 @@ function kkUpdatePanel(){
     if(KK.loading) feed.innerHTML+=`<div class="kk-msg kk"><div class="kk-bubble" style="display:flex;gap:5px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s .4s infinite"></span></div></div>`;
     feed.scrollTop=feed.scrollHeight;
   }
+  // Update mic button
   const mic=document.getElementById('kk-mic');
   if(mic) mic.className='kk-mic'+(KK.listening?' active':'');
 }
@@ -1391,7 +1394,7 @@ async function notifyAllUsers(title,body,link=''){
     console.warn('notifyAllUsers — loading profiles failed:',e.message);
   }
 
-  // Step 2: push to everyone via the Appwrite Function 
+  // Step 2: push to everyone via the Appwrite Function (server-side, no CORS issue)
   const pushResult=await callPushFunction({
     title,body,
     segment:'Subscribed Users',
@@ -1662,6 +1665,7 @@ function kkUpdateUI(){
 
 function kkUpdatePageInPlace(){
   // Update only the dynamic elements without re-rendering the whole page
+  // This prevents the white flash during listening
   const avatar=document.getElementById('kk-avatar');
   if(avatar){
     avatar.className='kk-avatar';
@@ -3003,6 +3007,7 @@ const P = {
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           ${waLink?`<a href="${waLink}" target="_blank" rel="noopener" class="btn bc bsm"><i data-lucide="message-circle" style="width:12px;height:12px"></i>WhatsApp</a>`:''}
           <button class="btn bo bsm" onclick="A.openVendorProfile('${v.id}')"><i data-lucide="eye" style="width:12px;height:12px"></i>View Profile</button>
+          <button class="btn bg bsm" onclick="A.shareVendorProfile('${v.id}','${v.bizName.replace(/'/g,"\\'")}','${v.category}','${v.city}')"><i data-lucide="share-2" style="width:12px;height:12px"></i></button>
         </div>
       </div>
     </div>`;
@@ -3029,6 +3034,7 @@ const P = {
           ${S.user?`<button class="btn ${userVoted?'bg':'bpur'} bsm" ${userVoted?'disabled':''} onclick="A.voteVendor('${v.id}')">
             <i data-lucide="thumbs-up" style="width:11px;height:11px"></i>${userVoted?'Voted':'Vote'} (${v.votes||0})
           </button>`:''}
+          <button class="btn bg bsm" onclick="A.shareVendorProfile('${v.id}','${v.bizName.replace(/'/g,"\\'")}','${v.category}','${v.city}')"><i data-lucide="share-2" style="width:11px;height:11px"></i></button>
           ${isAdmin&&v.status==='pending'?`<button class="btn bc bsm" onclick="A.adminApproveVendor('${v.id}')"><i data-lucide="check" style="width:11px;height:11px"></i>Approve</button><button class="btn bo bsm" onclick="A.adminRejectVendor('${v.id}')"><i data-lucide="x" style="width:11px;height:11px"></i>Reject</button>`:''}
         </div>
       </div>
@@ -3161,6 +3167,7 @@ const P = {
     if(!post) return`<div style="padding:80px 24px;text-align:center;color:var(--t3)" class="page"><div class="spin"></div></div>`;
     const isLocked=!S.subscribed&&S.subStatus!=='trial';
     const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
+    // Body is now stored as rich HTML directly from the Quill editor — no conversion needed
     const looksLikeHtml=/<[a-z][\s\S]*>/i.test(post.body||'');
     const bodyHtml=looksLikeHtml?post.body:(post.body||'')
       .replace(/^## (.+)$/gm,'<h2>$1</h2>')
@@ -4292,6 +4299,7 @@ const A = {
     inp.value='';
     const now=new Date().toISOString();
 
+    // Resolve @mentions against the full platform user list
     const knownUsers=await A._loadAllUsersForMention();
     const mentionRegex=/@([A-Za-z0-9_]+(?:\s[A-Za-z0-9_]+)?)/g;
     const taggedIds=new Set();
@@ -4412,6 +4420,7 @@ const A = {
     }
 
     const allUsers=await A._loadAllUsersForMention();
+    // Guard against the input changing while the fetch was in flight
     if(document.activeElement!==inp) return;
     const reCheck=inp.value.slice(0,inp.selectionStart).match(/@([A-Za-z0-9_]*)$/);
     if(!reCheck){A.hideMentionDropdown();return;}
@@ -5191,6 +5200,7 @@ const A = {
             ${S.user?`<button class="btn ${userVoted?'bg':'bpur'} bsm" ${userVoted?'disabled':''} onclick="A.voteVendor('${v.id}');M.close()">
               <i data-lucide="thumbs-up" style="width:12px;height:12px"></i>${userVoted?'You voted':'Vote for this business'} (${v.votes||0})
             </button>`:`<button class="btn bo bsm" onclick="M.auth()"><i data-lucide="lock" style="width:12px;height:12px"></i>Sign in to vote</button>`}
+            <button class="btn bg bsm" onclick="A.shareVendorProfile('${v.id}','${v.bizName.replace(/'/g,"\\'")}','${v.category}','${v.city}')"><i data-lucide="share-2" style="width:12px;height:12px"></i>Share</button>
             ${isAdmin&&v.status==='pending'?`<button class="btn bc bsm" onclick="A.adminApproveVendor('${v.id}');M.close()"><i data-lucide="check" style="width:12px;height:12px"></i>Approve</button>`:''}
           </div>
 
@@ -5853,12 +5863,22 @@ const A = {
     const slug=city.toLowerCase().replace(/\s+/g,'-');
     const url=window.location.origin+window.location.pathname+'?vendors='+catId+'&city='+slug;
     const text=bizName
-      ?'Check out '+bizName+' — fan favourite for '+label+' in '+city+' on Toomuchcoin'
+      ?'Check out '+bizName+' — '+label+' in '+city+' on Toomuchcoin'
       :'Find the best '+label+' in '+city+' on Toomuchcoin';
     if(navigator.share){
       try{await navigator.share({title:'Toomuchcoin Vendors',text,url});return;}catch(e){if(e.name==='AbortError')return;}
     }
     try{await navigator.clipboard.writeText(url);toast('Vendor link copied!','ok');}
+    catch(e){prompt('Copy this link to share:',url);}
+  },
+
+  async shareVendorProfile(vendorId,bizName,catId,city){
+    const url=window.location.origin+window.location.pathname+'?vendor='+vendorId;
+    const text='Check out '+bizName+' on Toomuchcoin';
+    if(navigator.share){
+      try{await navigator.share({title:bizName,text,url});return;}catch(e){if(e.name==='AbortError')return;}
+    }
+    try{await navigator.clipboard.writeText(url);toast('Link copied!','ok');}
     catch(e){prompt('Copy this link to share:',url);}
   },
 
@@ -6127,6 +6147,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
     S.page='market';S.mTab='vendors';
     render();
   }
+  // Resolve ?listing= deep links (supports both slug and raw id)
   if(_qs.get('reset')==='1'){
     const _rUserId=_qs.get('userId');
     const _rSecret=_qs.get('secret');
@@ -6135,6 +6156,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
       M.resetPassword(_rUserId,_rSecret);
     }
   }
+  // Resolve ?blog= deep links
   const _blogParam=_qs.get('blog');
   if(_blogParam){
     history.replaceState({},'',window.location.pathname);
@@ -6142,6 +6164,13 @@ document.addEventListener('DOMContentLoaded', async()=>{
     const post=(S._blogPosts||[]).find(p=>p.slug===_blogParam||p.id===_blogParam);
     if(post){S._currentPost=post;S.page='blogpost';render();}
     else R.go('blog');
+  }
+  const _vendorParam=_qs.get('vendor');
+  if(_vendorParam){
+    history.replaceState({},'',window.location.pathname);
+    S.page='market';S.mTab='vendors';
+    render();
+    setTimeout(()=>A.openVendorProfile(_vendorParam),300);
   }
 
   const _listingParam=_qs.get('listing');
