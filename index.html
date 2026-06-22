@@ -1312,6 +1312,14 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft') lbPrev();
   if(e.key==='ArrowRight') lbNext();
 });
+function userAvatar(userId,initials,size=34,style=''){
+  // If this is the current user and they have a profile photo, show it
+  if(S.user&&userId===S.user.id&&S.user.avatarId){
+    return`<img src="${fileUrl(S.user.avatarId)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;${style}" onerror="this.outerHTML='<div style=width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0>${initials}</div>'">`;
+  }
+  // Otherwise show initials circle
+  return`<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0;${style}">${initials}</div>`;
+}
 function vendorWaLink(whatsapp,bizName,category){
   if(!whatsapp) return null;
   const cleanNum=whatsapp.replace(/[^0-9]/g,'');
@@ -2170,7 +2178,7 @@ const P = {
             :cons.map(c=>`
             <div class="cxcard">
               <div class="cxhead">
-                <div class="cxavat">${c.fromInitials}</div>
+                ${userAvatar(c.fromUserId,c.fromInitials,34)}
                 <div style="flex:1;min-width:0">
                   <div class="cxname">${c.fromName}</div>
                   <div class="cxorder">Re: <em>${c.orderTitle||'your listing'}</em> &nbsp;•&nbsp; ${ago(c.createdAt)}</div>
@@ -2525,7 +2533,7 @@ const P = {
         <div class="ogrid">
           ${list.map(o=>`
           <div class="ocard ${(o.status==='filled'||o.status==='closed')?'oresolved':''}">
-            <div class="oavat">${o.userInitials}</div>
+            ${userAvatar(o.userId,o.userInitials,40)}
             ${(()=>{const fid=(o.imageId||'').split(',').filter(Boolean)[0];return fid?`<div style="width:64px;height:64px;border-radius:var(--rsm);overflow:hidden;flex-shrink:0;background:var(--surf);border:1px solid var(--bdr)"><img src="${fileUrl(fid)}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.parentNode.style.display='none'"></div>`:'';})()}
             <div class="obody">
               <div class="otop">
@@ -6180,7 +6188,24 @@ document.addEventListener('DOMContentLoaded', async()=>{
   if(u){
     const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
     const p=res.documents[0];
-    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null};
+    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null,profileDocId:p?.$id||null};
+    // Load baselines from Appwrite profile so they're consistent across all devices
+    if(p?.joinBaselines){
+      try{
+        const cloudBaselines=JSON.parse(p.joinBaselines);
+        // Merge: cloud takes priority, fill in any missing keys from localStorage as fallback
+        let localBaselines={};
+        try{localBaselines=JSON.parse(localStorage.getItem('datum_user_baselines'))||{};}catch(e){}
+        const merged={...localBaselines,...cloudBaselines};
+        localStorage.setItem('datum_user_baselines',JSON.stringify(merged));
+        // Save merged back to cloud if local had keys cloud didn't
+        const cloudKeys=Object.keys(cloudBaselines);
+        const mergedKeys=Object.keys(merged);
+        if(mergedKeys.length>cloudKeys.length&&p.$id){
+          DB.update('profiles',p.$id,{joinBaselines:JSON.stringify(merged)}).catch(()=>{});
+        }
+      }catch(e){console.warn('baseline merge:',e.message);}
+    }
     await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
     initOneSignal(S.user.id);
     startNotifPoll();
@@ -6188,12 +6213,11 @@ document.addEventListener('DOMContentLoaded', async()=>{
   // Load manual stock prices from prices.json (cache-busted each page load)
   fetch('prices.json?v='+Date.now())
     .then(r=>r.json())
-    .then(data=>{
+    .then(async data=>{
       S._manualPrices=data;
-      // Set baselines for stock assets on first visit so Since Joined % works
       const STOCK_IDS=['gold','nvda','spx','dxy','tsla','mstr','nasdaq','lvmh','tsmc'];
       let baselines={};
-      try{ baselines=JSON.parse(localStorage.getItem('datum_user_baselines'))||{}; }catch(e){}
+      try{baselines=JSON.parse(localStorage.getItem('datum_user_baselines'))||{};}catch(e){}
       let changed=false;
       STOCK_IDS.forEach(id=>{
         if(!baselines[id]&&data[id]!=null){
@@ -6201,7 +6225,22 @@ document.addEventListener('DOMContentLoaded', async()=>{
           changed=true;
         }
       });
-      if(changed) localStorage.setItem('datum_user_baselines',JSON.stringify(baselines));
+      // Also set crypto baselines from live CoinGecko data if not already set
+      const cgMap={btc:'bitcoin',eth:'ethereum'};
+      Object.entries(cgMap).forEach(([id,cgId])=>{
+        const c=S.coins.find(x=>x.id===cgId);
+        if(c?.price!=null&&!baselines[id]){
+          baselines[id]=c.price;
+          changed=true;
+        }
+      });
+      if(changed){
+        localStorage.setItem('datum_user_baselines',JSON.stringify(baselines));
+        // Save to Appwrite so all devices get the same baseline
+        if(S.user?.profileDocId){
+          DB.update('profiles',S.user.profileDocId,{joinBaselines:JSON.stringify(baselines)}).catch(()=>{});
+        }
+      }
       render();
     })
     .catch(()=>{}); 
