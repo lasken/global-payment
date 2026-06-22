@@ -5873,8 +5873,18 @@ const A = {
   },
 
   async shareVendorProfile(vendorId,bizName,catId,city){
-    const url=window.location.origin+window.location.pathname+'?vendor='+vendorId;
-    const text='Check out '+bizName+' on Toomuchcoin';
+    // Build a clean readable slug from the business name
+    const slug=bizName.toLowerCase().trim()
+      .replace(/[^a-z0-9\s-]/g,'')
+      .replace(/\s+/g,'-')
+      .replace(/-+/g,'-')
+      .slice(0,48)
+      .replace(/-$/,'');
+    // Store slug→id map so deep link resolution works
+    S._vendorSlugMap=S._vendorSlugMap||{};
+    S._vendorSlugMap[slug]=vendorId;
+    const url=window.location.origin+window.location.pathname+'?vendor='+slug;
+    const text='Check out '+bizName+' on Toomuchcoin — '+catId+' in '+city;
     if(navigator.share){
       try{await navigator.share({title:bizName,text,url});return;}catch(e){if(e.name==='AbortError')return;}
     }
@@ -6170,7 +6180,29 @@ document.addEventListener('DOMContentLoaded', async()=>{
     history.replaceState({},'',window.location.pathname);
     S.page='market';S.mTab='vendors';
     render();
-    setTimeout(()=>A.openVendorProfile(_vendorParam),300);
+    setTimeout(async()=>{
+      // Try slug map first, then fall back to treating it as a raw ID
+      const resolvedId=(S._vendorSlugMap||{})[_vendorParam]||_vendorParam;
+      // If it looks like a slug (not an Appwrite ID), search by bizName
+      const looksLikeSlug=!/^[a-f0-9]{20,}$/i.test(_vendorParam);
+      if(looksLikeSlug&&!resolvedId.match(/^[a-f0-9]{20,}$/i)){
+        try{
+          const r=await DB.list('vendors',[Query.limit(100)]);
+          const match=r.documents.find(d=>{
+            const s=d.bizName.toLowerCase().trim()
+              .replace(/[^a-z0-9\s-]/g,'')
+              .replace(/\s+/g,'-')
+              .replace(/-+/g,'-')
+              .slice(0,48)
+              .replace(/-$/,'');
+            return s===_vendorParam;
+          });
+          if(match) A.openVendorProfile(match.$id);
+        }catch(e){console.warn('vendor deep link resolve:',e.message);}
+      } else {
+        A.openVendorProfile(resolvedId);
+      }
+    },300);
   }
 
   const _listingParam=_qs.get('listing');
