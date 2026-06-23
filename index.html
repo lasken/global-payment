@@ -1312,13 +1312,47 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft') lbPrev();
   if(e.key==='ArrowRight') lbNext();
 });
+// Cache of userId -> avatarId for users we've looked up
+// null = confirmed no avatar, undefined = not yet checked
+S._avatarCache = S._avatarCache || {};
+
 function userAvatar(userId,initials,size=34,style=''){
-  // If this is the current user and they have a profile photo, show it
-  if(S.user&&userId===S.user.id&&S.user.avatarId){
-    return`<img src="${fileUrl(S.user.avatarId)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;${style}" onerror="this.outerHTML='<div style=width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0>${initials}</div>'">`;
+  const cached = S._avatarCache[userId];
+  // Current user — always accurate from S.user directly
+  if(S.user && userId === S.user.id){
+    const aid = S.user.avatarId;
+    if(aid){
+      return`<img src="${fileUrl(aid)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;${style}" onerror="this.outerHTML='<div style=width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0>${initials}</div>'">`;
+    }
+    return`<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0;${style}">${initials}</div>`;
   }
-  // Otherwise show initials circle
-  return`<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0;${style}">${initials}</div>`;
+  // Other users — check cache
+  if(cached){
+    // We have their avatarId cached
+    return`<img src="${fileUrl(cached)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;${style}" onerror="this.outerHTML='<div style=width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0>${initials}</div>'">`;
+  }
+  if(cached===null){
+    // Confirmed no avatar
+    return`<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0;${style}">${initials}</div>`;
+  }
+  // Not yet looked up — fetch lazily, then patch the DOM without a full re-render
+  if(userId && !(userId in S._avatarCache)){
+    S._avatarCache[userId] = undefined; // mark as in-flight so we don't fire twice
+    DB.list('profiles',[Query.equal('userId',[userId]),Query.limit(1)])
+      .then(r=>{
+        const doc = r.documents[0];
+        const aid = doc?.avatarId || null;
+        S._avatarCache[userId] = aid;
+        if(aid){
+          // Patch all DOM elements showing this user's initials avatar
+          document.querySelectorAll(`[data-uid="${userId}"]`).forEach(el=>{
+            el.outerHTML=`<img src="${fileUrl(aid)}" data-uid="${userId}" style="width:${el.dataset.size||size}px;height:${el.dataset.size||size}px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0" onerror="this.remove()">`;
+          });
+        }
+      }).catch(()=>{ S._avatarCache[userId]=null; });
+  }
+  // Return initials for now, will be patched if avatar is found
+  return`<div data-uid="${userId}" data-size="${size}" style="width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0;${style}">${initials}</div>`;
 }
 function vendorWaLink(whatsapp,bizName,category){
   if(!whatsapp) return null;
@@ -2575,7 +2609,7 @@ const P = {
       <div class="chat-feed" id="cfeed">
         ${msgs.length===0?'<div class="chat-empty">No messages yet. Be the first to say something!</div>'
           :msgs.map(m=>`<div class="cmsg ${m.own?'own':''}">
-            <div class="cavat">${m.inits}</div>
+            ${userAvatar(m.userId,m.inits,30)}
             <div class="cbwrap">
               ${!m.own?`<div class="csender">${m.userName}</div>`:''}
               <div class="cbub">${(m.text||'').replace(/@([A-Za-z0-9_]+)/g,'<span class="mention-tag">@$1</span>')}</div>
@@ -3086,6 +3120,7 @@ const P = {
           ${waLink?`<a href="${waLink}" target="_blank" rel="noopener" class="btn bc bsm"><i data-lucide="message-circle" style="width:12px;height:12px"></i>WhatsApp</a>`:''}
           <button class="btn bo bsm" onclick="A.openVendorProfile('${v.id}')"><i data-lucide="eye" style="width:12px;height:12px"></i>View Profile</button>
           <button class="btn bg bsm" onclick="A.shareVendorProfile('${v.id}','${v.bizName.replace(/'/g,"\\'")}','${v.category}','${v.city}')"><i data-lucide="share-2" style="width:12px;height:12px"></i></button>
+          ${S.user?.id===ADMIN_ID?`<button class="btn bg bsm" onclick="M.editVendor('${v.id}')"><i data-lucide="pencil" style="width:12px;height:12px"></i>Edit</button>`:''}
         </div>
       </div>
     </div>`;
@@ -3113,6 +3148,7 @@ const P = {
             <i data-lucide="thumbs-up" style="width:11px;height:11px"></i>${userVoted?'Voted':'Vote'} (${v.votes||0})
           </button>`:''}
           <button class="btn bg bsm" onclick="A.shareVendorProfile('${v.id}','${v.bizName.replace(/'/g,"\\'")}','${v.category}','${v.city}')"><i data-lucide="share-2" style="width:11px;height:11px"></i></button>
+          ${isAdmin?`<button class="btn bg bsm" onclick="M.editVendor('${v.id}')"><i data-lucide="pencil" style="width:11px;height:11px"></i>Edit</button>`:''}
           ${isAdmin&&v.status==='pending'?`<button class="btn bc bsm" onclick="A.adminApproveVendor('${v.id}')"><i data-lucide="check" style="width:11px;height:11px"></i>Approve</button><button class="btn bo bsm" onclick="A.adminRejectVendor('${v.id}')"><i data-lucide="x" style="width:11px;height:11px"></i>Reject</button>`:''}
         </div>
       </div>
@@ -3857,6 +3893,58 @@ const M = {
       </div>
     </div>`);
     S._vendorPosterFiles=[];
+  },
+
+  editVendor(vendorId){
+    if(S.user?.id!==ADMIN_ID) return;
+    const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+    if(!v) return;
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal modal-lg" style="max-width:580px">
+        <div class="mhdr">
+          <div><div class="mey">Admin</div><h2 class="mtitle">Edit Vendor</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+        <div class="fg"><label>Business Name</label><input type="text" id="ve-name" value="${v.bizName?.replace(/"/g,'&quot;')||''}"/></div>
+        <div class="fg"><label>Tagline</label><input type="text" id="ve-tagline" value="${v.tagline?.replace(/"/g,'&quot;')||''}"/></div>
+        <div class="fg"><label>About</label><textarea id="ve-about" rows="4">${v.about||''}</textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>WhatsApp</label><input type="text" id="ve-whatsapp" value="${v.whatsapp||''}"/></div>
+          <div class="fg"><label>Phone</label><input type="text" id="ve-phone" value="${v.phone||''}"/></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>Website</label><input type="text" id="ve-website" value="${v.website||''}"/></div>
+          <div class="fg"><label>Instagram</label><input type="text" id="ve-instagram" value="${v.instagram||''}"/></div>
+        </div>
+        <div class="fg"><label>Email</label><input type="email" id="ve-email" value="${v.email||''}"/></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>Hours</label><input type="text" id="ve-hours" value="${v.hours||''}"/></div>
+          <div class="fg"><label>Years Active</label><input type="text" id="ve-years" value="${v.yearsActive||''}"/></div>
+        </div>
+        <div class="fg"><label>Status</label>
+          <select id="ve-status">
+            <option value="pending" ${v.status==='pending'?'selected':''}>Pending</option>
+            <option value="approved" ${v.status==='approved'?'selected':''}>Approved</option>
+            <option value="rejected" ${v.status==='rejected'?'selected':''}>Rejected</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="ve-pick" ${v.isCommunityPick?'checked':''} style="width:15px;height:15px"/>
+            Set as Community Pick for ${v.city}
+          </label>
+        </div>
+        <div class="ferr" id="ve-err"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn bp" id="ve-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.saveVendorEdit('${vendorId}')">
+            <i data-lucide="save" style="width:14px;height:14px"></i>Save Changes
+          </button>
+          <button class="btn bo" style="padding:12px 16px;color:var(--red);border-color:var(--red)" onclick="A.deleteVendor('${vendorId}')">
+            <i data-lucide="trash-2" style="width:14px;height:14px"></i>
+          </button>
+        </div>
+      </div>
+    </div>`);
   },
 
   contactSupport(){
@@ -5529,6 +5617,58 @@ const A = {
       }));
     }catch(e){console.warn('recalcCommunityPick:',e.message);}
   },
+  async saveVendorEdit(vendorId){
+    if(S.user?.id!==ADMIN_ID) return;
+    const bizName=document.getElementById('ve-name')?.value?.trim();
+    const err=document.getElementById('ve-err');
+    const btn=document.getElementById('ve-btn');
+    if(!bizName){err.textContent='Business name is required.';return;}
+    btn.disabled=true;btn.textContent='Saving…';
+    const isPick=document.getElementById('ve-pick')?.checked||false;
+    const newStatus=document.getElementById('ve-status')?.value||'pending';
+    try{
+      await DB.update('vendors',vendorId,{
+        bizName,
+        tagline:document.getElementById('ve-tagline')?.value?.trim()||'',
+        about:document.getElementById('ve-about')?.value?.trim()||'',
+        whatsapp:document.getElementById('ve-whatsapp')?.value?.trim()||'',
+        phone:document.getElementById('ve-phone')?.value?.trim()||'',
+        website:document.getElementById('ve-website')?.value?.trim()||'',
+        instagram:document.getElementById('ve-instagram')?.value?.trim()||'',
+        email:document.getElementById('ve-email')?.value?.trim()||'',
+        hours:document.getElementById('ve-hours')?.value?.trim()||'',
+        yearsActive:document.getElementById('ve-years')?.value?.trim()||'',
+        status:newStatus,
+        isCommunityPick:isPick,
+      });
+      // If setting as community pick, unset all others in same category+city
+      if(isPick){
+        const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+        if(v) await A.recalcCommunityPick(v.category,v.city);
+        await DB.update('vendors',vendorId,{isCommunityPick:true});
+      }
+      M.close();
+      toast('Vendor updated!','ok');
+      if(S._vCat&&S._vCity) await A.loadVendorDirectory(S._vCat,S._vCity);
+      render();
+    }catch(e){
+      err.textContent='Save failed: '+e.message;
+      btn.disabled=false;btn.textContent='Save Changes';
+    }
+  },
+
+  async deleteVendor(vendorId){
+    if(S.user?.id!==ADMIN_ID) return;
+    if(!confirm('Permanently delete this vendor listing? This cannot be undone.')) return;
+    try{
+      await _db.deleteDocument(AW_DB_ID,AW_COL.vendors,vendorId);
+      S._vendorDirectory=(S._vendorDirectory||[]).filter(v=>v.id!==vendorId);
+      M.close();
+      toast('Vendor deleted.','ok');
+      render();
+    }catch(e){toast('Delete failed: '+e.message,'err');}
+  },
+
   async adminApproveVendor(vendorId){
     if(S.user?.id!==ADMIN_ID) return;
     try{
@@ -5723,34 +5863,6 @@ const A = {
     }catch(e){console.warn('recalcCommunityPick:',e.message);}
   },
 
-  async adminApproveVendor(vendorId){
-    if(S.user?.id!==ADMIN_ID) return;
-    try{
-      await DB.update('vendors',vendorId,{status:'approved'});
-      const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
-      if(v){
-        v.status='approved';
-        await createNotif(v.userId,'connection','Your business listing is approved!',v.bizName+' is now fully live in the Toomuchcoin vendor directory.','market');
-        await pushNotif(v.userId,'Listing approved!',v.bizName+' is now live in the directory.');
-      }
-      toast('Vendor approved.','ok');
-      render();
-    }catch(e){toast('Failed: '+e.message,'err');}
-  },
-
-  async adminRejectVendor(vendorId){
-    if(S.user?.id!==ADMIN_ID) return;
-    try{
-      await DB.update('vendors',vendorId,{status:'rejected'});
-      const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
-      if(v){
-        await createNotif(v.userId,'connection','Listing update',v.bizName+' was not approved for the directory. You\'re welcome to edit and resubmit.','market');
-      }
-      toast('Vendor listing rejected.','ok');
-      if(S._vCat&&S._vCity) await A.loadVendorDirectory(S._vCat,S._vCity);
-      render();
-    }catch(e){toast('Failed: '+e.message,'err');}
-  },
   toggleSignupNotifCat(cat){
     S._signupNotifCats=S._signupNotifCats||[];
     const idx=S._signupNotifCats.indexOf(cat);
@@ -6236,9 +6348,20 @@ document.addEventListener('DOMContentLoaded', async()=>{
       });
       if(changed){
         localStorage.setItem('datum_user_baselines',JSON.stringify(baselines));
-        // Save to Appwrite so all devices get the same baseline
+        // Only save to Appwrite if the profile doesn't already have baselines set
+        // This ensures the baseline is always from the first device/session (signup moment)
+        // and never overwritten by a later login on a different device
         if(S.user?.profileDocId){
-          DB.update('profiles',S.user.profileDocId,{joinBaselines:JSON.stringify(baselines)}).catch(()=>{});
+          DB.list('profiles',[Query.equal('userId',[S.user.id]),Query.limit(1)])
+            .then(r=>{
+              const doc=r.documents[0];
+              if(doc&&!doc.joinBaselines){
+                // No baseline stored yet — this is effectively the first device
+                // to complete a full session, treat it as the authoritative signup baseline
+                DB.update('profiles',doc.$id,{joinBaselines:JSON.stringify(baselines)}).catch(()=>{});
+              }
+              // If joinBaselines already exists, don't overwrite — the first-device baseline wins
+            }).catch(()=>{});
         }
       }
       render();
