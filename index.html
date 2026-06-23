@@ -1357,7 +1357,7 @@ function userAvatar(userId,initials,size=34,style=''){
 function vendorWaLink(whatsapp,bizName,category){
   if(!whatsapp) return null;
   const cleanNum=whatsapp.replace(/[^0-9]/g,'');
-  const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music:'Music Services',entertainment:'Entertainment'}[category]||category||'your business';
+  const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music_entertainment:'Music & Entertainment',events:'Event Planner',electronics:'Electronics & Gadgets',catering:'Food Catering',music:'Music & Entertainment',entertainment:'Music & Entertainment'}[category]||category||'your business';
   const msg=`Hi ${bizName}, I found you on Toomuchcoin and I'm interested in ${catLabel}. Can you tell me more?`;
   return `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
 }
@@ -2977,8 +2977,10 @@ const P = {
       {id:'plumbing',svg:VSVG.plumbing,label:'Plumbing & HVAC',color:'#0369a1'},
       {id:'convenience',svg:VSVG.convenience,label:'Convenience Store',color:'var(--grn)'},
       {id:'spotlight',svg:VSVG.spotlight,label:'Secret Insider Spotlight',color:'var(--red)'},
-      {id:'music',svg:VSVG.music,label:'Music Services',color:'#7c3aed'},
-      {id:'entertainment',svg:VSVG.entertainment,label:'Entertainment',color:'#b45309'},
+      {id:'music_entertainment',svg:VSVG.music,label:'Music & Entertainment',color:'#7c3aed'},
+      {id:'events',svg:VSVG.entertainment,label:'Event Planner',color:'#b45309'},
+      {id:'electronics',svg:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,label:'Electronics & Gadgets',color:'#0284c7'},
+      {id:'catering',svg:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>`,label:'Food Catering',color:'#16a34a'},
     ];
     const NIGERIA=[
       'Abuja','Lagos','Ibadan','Kano','Port Harcourt','Benin City','Kaduna','Enugu',
@@ -3714,7 +3716,10 @@ const M = {
           <div class="odmi"><div class="odml">Status</div><div class="odmv" style="text-transform:capitalize">${order.status}</div></div>
           <div class="odmi"><div class="odml">Posted</div><div class="odmv">${ago(order.createdAt)}</div></div>
         </div>
-        <div class="selcard"><div class="selavat">${order.userInitials}</div><div><div class="selname">${order.userName}</div><div class="selstat">Datum member</div></div></div>
+        <div class="selcard">
+          ${userAvatar(order.userId,order.userInitials,42)}
+          <div><div class="selname">${order.userName}</div><div class="selstat">Datum member</div></div>
+        </div>
         ${!done&&!mine?`
         <div class="comm-box">
           <i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--gld);flex-shrink:0;margin-top:1px"></i>
@@ -3826,8 +3831,10 @@ const M = {
               <option value="plumbing" ${catId==='plumbing'?'selected':''}>Plumbing & HVAC</option>
               <option value="convenience" ${catId==='convenience'?'selected':''}>Convenience Store</option>
               <option value="spotlight" ${catId==='spotlight'?'selected':''}>Secret Insider Spotlight</option>
-              <option value="music" ${catId==='music'?'selected':''}>Music Services</option>
-              <option value="entertainment" ${catId==='entertainment'?'selected':''}>Entertainment</option>
+              <option value="music_entertainment" ${catId==='music_entertainment'?'selected':''}>Music & Entertainment</option>
+              <option value="events" ${catId==='events'?'selected':''}>Event Planner</option>
+              <option value="electronics" ${catId==='electronics'?'selected':''}>Electronics & Gadgets</option>
+              <option value="catering" ${catId==='catering'?'selected':''}>Food Catering</option>
             </select>
           </div>
           <div class="fg"><label>Price Range <span style="font-weight:400;color:var(--t3)">(optional)</span></label>
@@ -3920,6 +3927,25 @@ const M = {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="fg"><label>Hours</label><input type="text" id="ve-hours" value="${v.hours||''}"/></div>
           <div class="fg"><label>Years Active</label><input type="text" id="ve-years" value="${v.yearsActive||''}"/></div>
+        </div>
+        
+        <div class="fg"><label>Category</label>
+          <select id="ve-cat">
+            <option value="logistics" ${v.category==='logistics'?'selected':''}>Logistics</option>
+            <option value="restaurant" ${v.category==='restaurant'?'selected':''}>Restaurant</option>
+            <option value="airline" ${v.category==='airline'?'selected':''}>Airline</option>
+            <option value="cafe" ${v.category==='cafe'?'selected':''}>Café</option>
+            <option value="spa" ${v.category==='spa'?'selected':''}>Spa & Wellness</option>
+            <option value="hotel" ${v.category==='hotel'?'selected':''}>Hotel</option>
+            <option value="mechanic" ${v.category==='mechanic'?'selected':''}>Auto Mechanic</option>
+            <option value="plumbing" ${v.category==='plumbing'?'selected':''}>Plumbing & HVAC</option>
+            <option value="convenience" ${v.category==='convenience'?'selected':''}>Convenience Store</option>
+            <option value="spotlight" ${v.category==='spotlight'?'selected':''}>Secret Insider Spotlight</option>
+            <option value="music_entertainment" ${v.category==='music_entertainment'?'selected':''}>Music & Entertainment</option>
+            <option value="events" ${v.category==='events'?'selected':''}>Event Planner</option>
+            <option value="electronics" ${v.category==='electronics'?'selected':''}>Electronics & Gadgets</option>
+            <option value="catering" ${v.category==='catering'?'selected':''}>Food Catering</option>
+          </select>
         </div>
         <div class="fg"><label>Status</label>
           <select id="ve-status">
@@ -5629,6 +5655,7 @@ const A = {
     try{
       await DB.update('vendors',vendorId,{
         bizName,
+        category:document.getElementById('ve-cat')?.value||v.category,
         tagline:document.getElementById('ve-tagline')?.value?.trim()||'',
         about:document.getElementById('ve-about')?.value?.trim()||'',
         whatsapp:document.getElementById('ve-whatsapp')?.value?.trim()||'',
