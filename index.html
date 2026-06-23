@@ -2271,7 +2271,7 @@ const P = {
                   </div>
                   <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px;margin-bottom:6px">
                     <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">Bank Transfer</strong>
-                    <span style="font-size:.8rem">Datum Logistics &nbsp;·&nbsp; Acct: <strong>5076070889</strong> &nbsp;·&nbsp; Swift Code: 122106507</span>
+                    <span style="font-size:.8rem">Datum Logistics &nbsp;·&nbsp; <strong>Zenith Bank</strong> &nbsp;·&nbsp; Acct: <strong>5076070889</strong> &nbsp;·&nbsp; Swift Code: 122106507</span>
                   </div>
                   <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px">
                     <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">USDT TRC-20</strong>
@@ -3150,7 +3150,7 @@ const P = {
             <i data-lucide="thumbs-up" style="width:11px;height:11px"></i>${userVoted?'Voted':'Vote'} (${v.votes||0})
           </button>`:''}
           <button class="btn bg bsm" onclick="A.shareVendorProfile('${v.id}','${v.bizName.replace(/'/g,"\\'")}','${v.category}','${v.city}')"><i data-lucide="share-2" style="width:11px;height:11px"></i></button>
-          ${isAdmin?`<button class="btn bg bsm" onclick="M.editVendor('${v.id}')"><i data-lucide="pencil" style="width:11px;height:11px"></i>Edit</button>`:''}
+          ${isAdmin?`<button class="btn bg bsm" onclick="event.stopPropagation();M.editVendor('${v.id}')"><i data-lucide="pencil" style="width:11px;height:11px"></i>Edit</button>`:''}
           ${isAdmin&&v.status==='pending'?`<button class="btn bc bsm" onclick="A.adminApproveVendor('${v.id}')"><i data-lucide="check" style="width:11px;height:11px"></i>Approve</button><button class="btn bo bsm" onclick="A.adminRejectVendor('${v.id}')"><i data-lucide="x" style="width:11px;height:11px"></i>Reject</button>`:''}
         </div>
       </div>
