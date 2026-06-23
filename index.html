@@ -2271,7 +2271,7 @@ const P = {
                   </div>
                   <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px;margin-bottom:6px">
                     <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">Bank Transfer</strong>
-                    <span style="font-size:.8rem">Datum Logistics &nbsp;·&nbsp; Acct: <strong>1312154595</strong> &nbsp;·&nbsp; Routing: 021000021</span>
+                    <span style="font-size:.8rem">Datum Logistics &nbsp;·&nbsp; Acct: <strong>5076070889</strong> &nbsp;·&nbsp; Swift Code: 122106507</span>
                   </div>
                   <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px">
                     <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">USDT TRC-20</strong>
@@ -3108,7 +3108,7 @@ const P = {
         <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gld)">Community Pick</div>
         <span class="tag tgd" style="font-size:.65rem;margin-left:auto">${v.votes||0} votes</span>
       </div>
-      ${posterUrl?`<img src="${posterUrl}" style="width:100%;height:180px;object-fit:cover;display:block">`:''}
+      ${posterUrl?`<img src="${posterUrl}" style="width:100%;height:${window.innerWidth>768?'260px':'180px'};object-fit:cover;display:block;object-position:${v.coverFocus||'center center'}" onclick="event.stopPropagation();openLightbox([{url:'${posterUrl}',caption:''}],0)" style="cursor:zoom-in">`:''}
       <div style="padding:18px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
           ${logoUrl?`<img src="${logoUrl}" style="width:48px;height:48px;border-radius:var(--rsm);object-fit:cover;border:1px solid var(--bdr);flex-shrink:0">`:`<div style="width:48px;height:48px;border-radius:var(--rsm);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t3)"><i data-lucide="store" style="width:18px;height:18px"></i></div>`}
@@ -3902,19 +3902,29 @@ const M = {
     S._vendorPosterFiles=[];
   },
 
-  editVendor(vendorId){
+  eeditVendor(vendorId){
     if(S.user?.id!==ADMIN_ID) return;
     const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
     if(!v) return;
+    S._editVendorId=vendorId;
+    S._editVendorRemovedPosters=[];
+    S._editVendorNewPosters=[];
+    const logoUrl=v.logoId?fileUrl(v.logoId):null;
+    const posters=(v.posterIds||[]).map((id,i)=>({id,url:fileUrl(id),caption:v.posterCaptions?.[i]||''}));
+    const heroPosterUrl=posters[0]?.url||null;
+    const currentFocus=v.coverFocus||'center center';
+
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
-      <div class="modal modal-lg" style="max-width:580px">
+      <div class="modal modal-lg" style="max-width:620px">
         <div class="mhdr">
           <div><div class="mey">Admin</div><h2 class="mtitle">Edit Vendor</h2></div>
           <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
         </div>
+
+        <!-- Text fields -->
         <div class="fg"><label>Business Name</label><input type="text" id="ve-name" value="${v.bizName?.replace(/"/g,'&quot;')||''}"/></div>
         <div class="fg"><label>Tagline</label><input type="text" id="ve-tagline" value="${v.tagline?.replace(/"/g,'&quot;')||''}"/></div>
-        <div class="fg"><label>About</label><textarea id="ve-about" rows="4">${v.about||''}</textarea></div>
+        <div class="fg"><label>About</label><textarea id="ve-about" rows="3">${v.about||''}</textarea></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="fg"><label>WhatsApp</label><input type="text" id="ve-whatsapp" value="${v.whatsapp||''}"/></div>
           <div class="fg"><label>Phone</label><input type="text" id="ve-phone" value="${v.phone||''}"/></div>
@@ -3928,7 +3938,6 @@ const M = {
           <div class="fg"><label>Hours</label><input type="text" id="ve-hours" value="${v.hours||''}"/></div>
           <div class="fg"><label>Years Active</label><input type="text" id="ve-years" value="${v.yearsActive||''}"/></div>
         </div>
-        
         <div class="fg"><label>Category</label>
           <select id="ve-cat">
             <option value="logistics" ${v.category==='logistics'?'selected':''}>Logistics</option>
@@ -3960,8 +3969,70 @@ const M = {
             Set as Community Pick for ${v.city}
           </label>
         </div>
+
+        <!-- Logo section -->
+        <div style="border-top:1px solid var(--bdr);padding-top:16px;margin-top:4px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Logo</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            ${logoUrl
+              ?`<img id="ve-logo-preview-img" src="${logoUrl}" style="width:64px;height:64px;border-radius:var(--rmd);object-fit:cover;border:1px solid var(--bdr);flex-shrink:0">`
+              :`<div id="ve-logo-preview-img" style="width:64px;height:64px;border-radius:var(--rmd);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t3)"><i data-lucide="image" style="width:20px;height:20px"></i></div>`}
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button class="btn bo bsm" onclick="document.getElementById('ve-logo-input').click()">
+                <i data-lucide="upload" style="width:12px;height:12px"></i>Change Logo
+              </button>
+              ${logoUrl?`<button class="btn bg bsm" style="color:var(--red)" onclick="A.veRemoveLogo('${vendorId}')">
+                <i data-lucide="trash-2" style="width:12px;height:12px"></i>Remove Logo
+              </button>`:''}
+            </div>
+          </div>
+          <input type="file" id="ve-logo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="A.vePreviewLogo(this)"/>
+        </div>
+
+        <!-- Cover image focal point -->
+        ${heroPosterUrl?`
+        <div style="border-top:1px solid var(--bdr);padding-top:16px;margin-top:16px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Cover Image Focus Point</div>
+          <div style="font-size:.78rem;color:var(--t2);margin-bottom:10px;line-height:1.5">Click anywhere on the image to set the focal point — this controls what shows in the cover crop on desktop.</div>
+          <div style="position:relative;display:inline-block;width:100%;cursor:crosshair" id="ve-focus-wrap">
+            <img src="${heroPosterUrl}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--rsm);display:block;border:1px solid var(--bdr);object-position:${currentFocus}" id="ve-focus-img">
+            <div id="ve-focus-dot" style="position:absolute;width:20px;height:20px;border-radius:50%;border:3px solid #fff;background:var(--pur);box-shadow:0 2px 8px rgba(0,0,0,.4);transform:translate(-50%,-50%);pointer-events:none;display:${currentFocus==='center center'?'none':'block'}"></div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <div style="background:rgba(0,0,0,.4);color:#fff;font-size:.72rem;padding:4px 10px;border-radius:100px" id="ve-focus-hint">Click to set focus</div>
+            </div>
+          </div>
+          <input type="hidden" id="ve-focus-val" value="${currentFocus}"/>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn bg bsm" onclick="A.veSetFocus('center center')">Reset to Center</button>
+            <span style="font-size:.75rem;color:var(--t3);align-self:center" id="ve-focus-label">Current: ${currentFocus}</span>
+          </div>
+        </div>`:''}
+
+        <!-- Gallery management -->
+        <div style="border-top:1px solid var(--bdr);padding-top:16px;margin-top:16px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Gallery (${posters.length}/6 photos)</div>
+          <div id="ve-gallery-list" style="display:flex;flex-direction:column;gap:8px">
+            ${posters.map((p,i)=>`
+            <div id="ve-poster-${i}" style="display:flex;gap:10px;align-items:flex-start;background:var(--off);border:1px solid var(--bdr);border-radius:var(--rsm);padding:8px">
+              <img src="${p.url}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--bdr)">
+              <div style="flex:1;min-width:0">
+                <input type="text" placeholder="Caption (optional)" value="${p.caption.replace(/"/g,'&quot;')}" id="ve-cap-${i}" style="font-size:.78rem;padding:7px 10px;margin-bottom:4px">
+                <div style="font-size:.7rem;color:var(--t3)">${i===0?'★ Cover image (first photo)':''}</div>
+              </div>
+              <button onclick="A.veRemovePoster('${p.id}',${i})" style="width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0;margin-top:2px">×</button>
+            </div>`).join('')}
+          </div>
+          ${posters.length<6?`
+          <div style="margin-top:10px">
+            <button class="btn bo bsm" onclick="document.getElementById('ve-poster-input').click()">
+              <i data-lucide="plus" style="width:12px;height:12px"></i>Add Photos (${6-posters.length} remaining)
+            </button>
+            <input type="file" id="ve-poster-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="A.veAddPosters(this)"/>
+          </div>`:''}
+        </div>
+
         <div class="ferr" id="ve-err"></div>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:10px;margin-top:16px">
           <button class="btn bp" id="ve-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.saveVendorEdit('${vendorId}')">
             <i data-lucide="save" style="width:14px;height:14px"></i>Save Changes
           </button>
@@ -3971,6 +4042,26 @@ const M = {
         </div>
       </div>
     </div>`);
+
+    // Wire up focus point click handler after modal renders
+    setTimeout(()=>{
+      const wrap=document.getElementById('ve-focus-wrap');
+      if(!wrap) return;
+      wrap.addEventListener('click',e=>{
+        const rect=wrap.getBoundingClientRect();
+        const xPct=Math.round(((e.clientX-rect.left)/rect.width)*100);
+        const yPct=Math.round(((e.clientY-rect.top)/rect.height)*100);
+        const focusVal=xPct+'% '+yPct+'%';
+        document.getElementById('ve-focus-val').value=focusVal;
+        document.getElementById('ve-focus-img').style.objectPosition=focusVal;
+        document.getElementById('ve-focus-label').textContent='Current: '+focusVal;
+        document.getElementById('ve-focus-hint').style.display='none';
+        const dot=document.getElementById('ve-focus-dot');
+        dot.style.display='block';
+        dot.style.left=xPct+'%';
+        dot.style.top=yPct+'%';
+      });
+    },100);
   },
 
   contactSupport(){
@@ -5362,7 +5453,7 @@ const A = {
 
         ${heroPoster?`
         <div style="position:relative">
-          <img src="${heroPoster.url}" style="width:100%;height:240px;object-fit:cover;display:block;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(S._lbVendorPosters,0)">
+          <img src="${heroPoster.url}" style="width:100%;height:${window.innerWidth>768?'300px':'220px'};object-fit:cover;display:block;cursor:zoom-in;object-position:${v.coverFocus||'center center'}" onclick="event.stopPropagation();openLightbox(S._lbVendorPosters,0)">
           <button class="mclose" onclick="M.close()" style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,.5);color:#fff">
             <i data-lucide="x" style="width:15px;height:15px"></i>
           </button>
@@ -5643,6 +5734,71 @@ const A = {
       }));
     }catch(e){console.warn('recalcCommunityPick:',e.message);}
   },
+  vePreviewLogo(input){
+    if(!input.files[0]) return;
+    const url=URL.createObjectURL(input.files[0]);
+    const img=document.getElementById('ve-logo-preview-img');
+    if(img){
+      img.outerHTML=`<img id="ve-logo-preview-img" src="${url}" style="width:64px;height:64px;border-radius:var(--rmd);object-fit:cover;border:1px solid var(--bdr);flex-shrink:0">`;
+    }
+    S._editVendorNewLogo=input.files[0];
+  },
+
+  veRemoveLogo(vendorId){
+    S._editVendorRemoveLogo=true;
+    const img=document.getElementById('ve-logo-preview-img');
+    if(img) img.outerHTML=`<div id="ve-logo-preview-img" style="width:64px;height:64px;border-radius:var(--rmd);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t3)"><i data-lucide="image" style="width:20px;height:20px"></i></div>`;
+    toast('Logo will be removed on save.','notif');
+    lucide.createIcons();
+  },
+
+  veSetFocus(val){
+    document.getElementById('ve-focus-val').value=val;
+    const img=document.getElementById('ve-focus-img');
+    if(img) img.style.objectPosition=val;
+    const label=document.getElementById('ve-focus-label');
+    if(label) label.textContent='Current: '+val;
+    const dot=document.getElementById('ve-focus-dot');
+    if(dot) dot.style.display='none';
+    const hint=document.getElementById('ve-focus-hint');
+    if(hint) hint.style.display='flex';
+  },
+
+  veRemovePoster(posterId,index){
+    // Mark for removal (not deleted from storage, just removed from vendor doc)
+    S._editVendorRemovedPosters=S._editVendorRemovedPosters||[];
+    S._editVendorRemovedPosters.push(posterId);
+    const el=document.getElementById('ve-poster-'+index);
+    if(el) el.remove();
+    toast('Photo will be removed on save.','notif');
+  },
+
+  async veAddPosters(input){
+    const newFiles=Array.from(input.files||[]);
+    if(!newFiles.length) return;
+    S._editVendorNewPosters=S._editVendorNewPosters||[];
+    const list=document.getElementById('ve-gallery-list');
+    const currentCount=(list?.children?.length||0)+S._editVendorNewPosters.length;
+    const room=6-currentCount;
+    if(room<=0){toast('Maximum 6 photos.','err');return;}
+    const toAdd=newFiles.slice(0,room);
+    toAdd.forEach(file=>{
+      const url=URL.createObjectURL(file);
+      S._editVendorNewPosters.push({file,caption:''});
+      const idx=(list?.children?.length||0)+S._editVendorNewPosters.length-1;
+      const div=document.createElement('div');
+      div.id='ve-new-poster-'+(S._editVendorNewPosters.length-1);
+      div.style.cssText='display:flex;gap:10px;align-items:flex-start;background:#f0fff4;border:1px solid #B3DFCA;border-radius:var(--rsm);padding:8px';
+      div.innerHTML=`<img src="${url}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--bdr)"><div style="flex:1;min-width:0"><input type="text" placeholder="Caption (optional)" oninput="A.veUpdateNewCaption(${S._editVendorNewPosters.length-1},this.value)" style="font-size:.78rem;padding:7px 10px"><div style="font-size:.7rem;color:var(--grn);margin-top:4px">New photo — will upload on save</div></div>`;
+      list?.appendChild(div);
+    });
+    input.value='';
+  },
+
+  veUpdateNewCaption(idx,val){
+    if(S._editVendorNewPosters?.[idx]) S._editVendorNewPosters[idx].caption=val;
+  },
+
   async saveVendorEdit(vendorId){
     if(S.user?.id!==ADMIN_ID) return;
     const bizName=document.getElementById('ve-name')?.value?.trim();
@@ -5650,12 +5806,61 @@ const A = {
     const btn=document.getElementById('ve-btn');
     if(!bizName){err.textContent='Business name is required.';return;}
     btn.disabled=true;btn.textContent='Saving…';
+
+    const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
     const isPick=document.getElementById('ve-pick')?.checked||false;
     const newStatus=document.getElementById('ve-status')?.value||'pending';
+    const focusVal=document.getElementById('ve-focus-val')?.value||'center center';
+
+    // Handle logo
+    let logoId=v?.logoId||'';
+    if(S._editVendorRemoveLogo){
+      logoId='';
+      S._editVendorRemoveLogo=false;
+    } else if(S._editVendorNewLogo){
+      btn.textContent='Uploading logo…';
+      try{
+        const up=await _storage.createFile(BUCKET_ID,ID.unique(),S._editVendorNewLogo);
+        logoId=up.$id;
+      }catch(e){console.warn('logo upload:',e.message);}
+      S._editVendorNewLogo=null;
+    }
+
+    // Handle poster removals — filter out removed IDs from current lists
+    const removed=new Set(S._editVendorRemovedPosters||[]);
+    let posterIds=(v?.posterIds||[]).filter(id=>!removed.has(id));
+    let posterCaptions=(v?.posterIds||[]).map((id,i)=>removed.has(id)?null:(v?.posterCaptions?.[i]||'')).filter((_,i)=>!removed.has((v?.posterIds||[])[i]));
+
+    // Update captions for remaining existing posters
+    const galleryList=document.getElementById('ve-gallery-list');
+    if(galleryList){
+      const rows=galleryList.querySelectorAll('[id^="ve-poster-"]');
+      rows.forEach((row,ri)=>{
+        const capInput=row.querySelector('[id^="ve-cap-"]');
+        if(capInput&&posterCaptions[ri]!==undefined) posterCaptions[ri]=capInput.value||'';
+      });
+    }
+
+    // Upload new posters
+    if((S._editVendorNewPosters||[]).length){
+      btn.textContent='Uploading photos…';
+      for(const item of S._editVendorNewPosters){
+        if(posterIds.length>=6) break;
+        try{
+          const up=await _storage.createFile(BUCKET_ID,ID.unique(),item.file);
+          posterIds.push(up.$id);
+          posterCaptions.push(item.caption||'');
+        }catch(e){console.warn('poster upload:',e.message);}
+      }
+      S._editVendorNewPosters=[];
+    }
+    S._editVendorRemovedPosters=[];
+
+    btn.textContent='Saving…';
     try{
       await DB.update('vendors',vendorId,{
         bizName,
-        category:document.getElementById('ve-cat')?.value||v.category,
+        category:document.getElementById('ve-cat')?.value||v?.category,
         tagline:document.getElementById('ve-tagline')?.value?.trim()||'',
         about:document.getElementById('ve-about')?.value?.trim()||'',
         whatsapp:document.getElementById('ve-whatsapp')?.value?.trim()||'',
@@ -5667,10 +5872,12 @@ const A = {
         yearsActive:document.getElementById('ve-years')?.value?.trim()||'',
         status:newStatus,
         isCommunityPick:isPick,
+        logoId,
+        posterIds,
+        posterCaptions,
+        coverFocus:focusVal,
       });
-      // If setting as community pick, unset all others in same category+city
       if(isPick){
-        const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
         if(v) await A.recalcCommunityPick(v.category,v.city);
         await DB.update('vendors',vendorId,{isCommunityPick:true});
       }
@@ -5775,6 +5982,7 @@ const A = {
         priceRange:d.priceRange, yearsActive:d.yearsActive,
         status:d.status, votes:d.votes||0, voterIds:d.voterIds||[],
         isCommunityPick:d.isCommunityPick||false,
+        coverFocus:d.coverFocus||'center center',
         createdAt:d.$createdAt,
       }));
       // Show approved vendors to everyone; show pending vendors too (with "Under Review" badge) per the open-directory model,
@@ -5806,43 +6014,6 @@ const A = {
       storefrontId:d.storefrontId,createdAt:d.$createdAt,
     }));
     render();
-  },
-
-  async loadVendorDirectory(catId,city){
-    S._vendorDirLoading=true;
-    const root=document.getElementById('vendor-directory-root');
-    if(root) root.innerHTML=`<div style="text-align:center;padding:48px;color:var(--t3)"><div class="spin"></div><br>Loading vendors…</div>`;
-    try{
-      const r=await DB.list('vendors',[
-        Query.equal('category',[catId]),
-        Query.equal('city',[city]),
-        Query.orderDesc('votes'),
-        Query.limit(100),
-      ]);
-      const all=r.documents.map(d=>({
-        id:d.$id, userId:d.userId, submittedByAdmin:d.submittedByAdmin,
-        bizName:d.bizName, about:d.about, tagline:d.tagline,
-        category:d.category, city:d.city, country:d.country,
-        logoId:d.logoId, posterIds:d.posterIds||[], posterCaptions:d.posterCaptions||[],
-        whatsapp:d.whatsapp, website:d.website, instagram:d.instagram,
-        phone:d.phone, email:d.email, hours:d.hours,
-        priceRange:d.priceRange, yearsActive:d.yearsActive,
-        status:d.status, votes:d.votes||0, voterIds:d.voterIds||[],
-        isCommunityPick:d.isCommunityPick||false,
-        createdAt:d.$createdAt,
-      }));
-      S._vendorDirectory=all.filter(v=>v.status!=='rejected');
-    }catch(e){
-      console.warn('loadVendorDirectory:',e.message);
-      S._vendorDirectory=[];
-    }
-    S._vendorDirLoading=false;
-    const root2=document.getElementById('vendor-directory-root');
-    if(root2){
-      const isAdmin=S.user?.id===ADMIN_ID;
-      root2.innerHTML=P._vendorDirectoryBody(catId,city,isAdmin);
-      lucide.createIcons();
-    }
   },
 
   async voteVendor(vendorId){
