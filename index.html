@@ -4064,6 +4064,165 @@ const M = {
     },100);
   },
 
+  editVendor(vendorId){
+    if(S.user?.id!==ADMIN_ID) return;
+    const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+    if(!v){toast('Vendor not found in current directory. Make sure you have loaded the directory first.','err');return;}
+    S._editVendorId=vendorId;
+    S._editVendorRemovedPosters=[];
+    S._editVendorNewPosters=[];
+    S._editVendorNewLogo=null;
+    S._editVendorRemoveLogo=false;
+    const logoUrl=v.logoId?fileUrl(v.logoId):null;
+    const posters=(v.posterIds||[]).map((id,i)=>({id,url:fileUrl(id),caption:v.posterCaptions?.[i]||''}));
+    const heroPosterUrl=posters[0]?.url||null;
+    const currentFocus=v.coverFocus||'center center';
+
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal modal-lg" style="max-width:620px">
+        <div class="mhdr">
+          <div><div class="mey">Admin</div><h2 class="mtitle">Edit Vendor</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+
+        <div class="fg"><label>Business Name</label><input type="text" id="ve-name" value="${v.bizName?.replace(/"/g,'&quot;')||''}"/></div>
+        <div class="fg"><label>Tagline</label><input type="text" id="ve-tagline" value="${v.tagline?.replace(/"/g,'&quot;')||''}"/></div>
+        <div class="fg"><label>About</label><textarea id="ve-about" rows="3">${v.about||''}</textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>WhatsApp</label><input type="text" id="ve-whatsapp" value="${v.whatsapp||''}"/></div>
+          <div class="fg"><label>Phone</label><input type="text" id="ve-phone" value="${v.phone||''}"/></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>Website</label><input type="text" id="ve-website" value="${v.website||''}"/></div>
+          <div class="fg"><label>Instagram</label><input type="text" id="ve-instagram" value="${v.instagram||''}"/></div>
+        </div>
+        <div class="fg"><label>Email</label><input type="email" id="ve-email" value="${v.email||''}"/></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg"><label>Hours</label><input type="text" id="ve-hours" value="${v.hours||''}"/></div>
+          <div class="fg"><label>Years Active</label><input type="text" id="ve-years" value="${v.yearsActive||''}"/></div>
+        </div>
+        <div class="fg"><label>Category</label>
+          <select id="ve-cat">
+            <option value="logistics" ${v.category==='logistics'?'selected':''}>Logistics</option>
+            <option value="restaurant" ${v.category==='restaurant'?'selected':''}>Restaurant</option>
+            <option value="airline" ${v.category==='airline'?'selected':''}>Airline</option>
+            <option value="cafe" ${v.category==='cafe'?'selected':''}>Café</option>
+            <option value="spa" ${v.category==='spa'?'selected':''}>Spa & Wellness</option>
+            <option value="hotel" ${v.category==='hotel'?'selected':''}>Hotel</option>
+            <option value="mechanic" ${v.category==='mechanic'?'selected':''}>Auto Mechanic</option>
+            <option value="plumbing" ${v.category==='plumbing'?'selected':''}>Plumbing & HVAC</option>
+            <option value="convenience" ${v.category==='convenience'?'selected':''}>Convenience Store</option>
+            <option value="spotlight" ${v.category==='spotlight'?'selected':''}>Secret Insider Spotlight</option>
+            <option value="music_entertainment" ${v.category==='music_entertainment'?'selected':''}>Music & Entertainment</option>
+            <option value="events" ${v.category==='events'?'selected':''}>Event Planner</option>
+            <option value="electronics" ${v.category==='electronics'?'selected':''}>Electronics & Gadgets</option>
+            <option value="catering" ${v.category==='catering'?'selected':''}>Food Catering</option>
+          </select>
+        </div>
+        <div class="fg"><label>Status</label>
+          <select id="ve-status">
+            <option value="pending" ${v.status==='pending'?'selected':''}>Pending</option>
+            <option value="approved" ${v.status==='approved'?'selected':''}>Approved</option>
+            <option value="rejected" ${v.status==='rejected'?'selected':''}>Rejected</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="ve-pick" ${v.isCommunityPick?'checked':''} style="width:15px;height:15px"/>
+            Set as Community Pick for ${v.city}
+          </label>
+        </div>
+
+        <div style="border-top:1px solid var(--bdr);padding-top:16px;margin-top:4px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Logo</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            ${logoUrl
+              ?`<img id="ve-logo-preview-img" src="${logoUrl}" style="width:64px;height:64px;border-radius:var(--rmd);object-fit:cover;border:1px solid var(--bdr);flex-shrink:0">`
+              :`<div id="ve-logo-preview-img" style="width:64px;height:64px;border-radius:var(--rmd);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t3)"><i data-lucide="image" style="width:20px;height:20px"></i></div>`}
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button class="btn bo bsm" onclick="document.getElementById('ve-logo-input').click()">
+                <i data-lucide="upload" style="width:12px;height:12px"></i>Change Logo
+              </button>
+              ${logoUrl?`<button class="btn bg bsm" style="color:var(--red)" onclick="A.veRemoveLogo()">
+                <i data-lucide="trash-2" style="width:12px;height:12px"></i>Remove Logo
+              </button>`:''}
+            </div>
+          </div>
+          <input type="file" id="ve-logo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="A.vePreviewLogo(this)"/>
+        </div>
+
+        ${heroPosterUrl?`
+        <div style="border-top:1px solid var(--bdr);padding-top:16px;margin-top:16px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Cover Image Focus Point</div>
+          <div style="font-size:.78rem;color:var(--t2);margin-bottom:10px;line-height:1.5">Click anywhere on the image to set the focal point — this controls what shows in the cover crop on desktop.</div>
+          <div style="position:relative;display:inline-block;width:100%;cursor:crosshair" id="ve-focus-wrap">
+            <img src="${heroPosterUrl}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--rsm);display:block;border:1px solid var(--bdr);object-position:${currentFocus}" id="ve-focus-img">
+            <div id="ve-focus-dot" style="position:absolute;width:20px;height:20px;border-radius:50%;border:3px solid #fff;background:var(--pur);box-shadow:0 2px 8px rgba(0,0,0,.4);transform:translate(-50%,-50%);pointer-events:none;display:${currentFocus==='center center'?'none':'block'}"></div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <div style="background:rgba(0,0,0,.4);color:#fff;font-size:.72rem;padding:4px 10px;border-radius:100px" id="ve-focus-hint">Click to set focus</div>
+            </div>
+          </div>
+          <input type="hidden" id="ve-focus-val" value="${currentFocus}"/>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn bg bsm" onclick="A.veSetFocus('center center')">Reset to Center</button>
+            <span style="font-size:.75rem;color:var(--t3);align-self:center" id="ve-focus-label">Current: ${currentFocus}</span>
+          </div>
+        </div>`:''}
+
+        <div style="border-top:1px solid var(--bdr);padding-top:16px;margin-top:16px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Gallery (${posters.length}/6 photos)</div>
+          <div id="ve-gallery-list" style="display:flex;flex-direction:column;gap:8px">
+            ${posters.map((p,i)=>`
+            <div id="ve-poster-${i}" style="display:flex;gap:10px;align-items:flex-start;background:var(--off);border:1px solid var(--bdr);border-radius:var(--rsm);padding:8px">
+              <img src="${p.url}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--bdr)">
+              <div style="flex:1;min-width:0">
+                <input type="text" placeholder="Caption (optional)" value="${p.caption.replace(/"/g,'&quot;')}" id="ve-cap-${i}" style="font-size:.78rem;padding:7px 10px;margin-bottom:4px">
+                <div style="font-size:.7rem;color:var(--t3)">${i===0?'★ Cover image (first photo)':''}</div>
+              </div>
+              <button onclick="A.veRemovePoster('${p.id}',${i})" style="width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0;margin-top:2px">×</button>
+            </div>`).join('')}
+          </div>
+          ${posters.length<6?`
+          <div style="margin-top:10px">
+            <button class="btn bo bsm" onclick="document.getElementById('ve-poster-input').click()">
+              <i data-lucide="plus" style="width:12px;height:12px"></i>Add Photos (${6-posters.length} remaining)
+            </button>
+            <input type="file" id="ve-poster-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="A.veAddPosters(this)"/>
+          </div>`:''}
+        </div>
+
+        <div class="ferr" id="ve-err"></div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn bp" id="ve-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.saveVendorEdit('${vendorId}')">
+            <i data-lucide="save" style="width:14px;height:14px"></i>Save Changes
+          </button>
+          <button class="btn bo" style="padding:12px 16px;color:var(--red);border-color:var(--red)" onclick="A.deleteVendor('${vendorId}')">
+            <i data-lucide="trash-2" style="width:14px;height:14px"></i>
+          </button>
+        </div>
+      </div>
+    </div>`);
+
+    setTimeout(()=>{
+      const wrap=document.getElementById('ve-focus-wrap');
+      if(!wrap) return;
+      wrap.addEventListener('click',e=>{
+        const rect=wrap.getBoundingClientRect();
+        const xPct=Math.round(((e.clientX-rect.left)/rect.width)*100);
+        const yPct=Math.round(((e.clientY-rect.top)/rect.height)*100);
+        const focusVal=xPct+'% '+yPct+'%';
+        document.getElementById('ve-focus-val').value=focusVal;
+        document.getElementById('ve-focus-img').style.objectPosition=focusVal;
+        document.getElementById('ve-focus-label').textContent='Current: '+focusVal;
+        document.getElementById('ve-focus-hint').style.display='none';
+        const dot=document.getElementById('ve-focus-dot');
+        dot.style.display='block';
+        dot.style.left=xPct+'%';
+        dot.style.top=yPct+'%';
+      });
+    },100);
+  },
+
   contactSupport(){
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal" style="max-width:480px">
