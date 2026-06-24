@@ -615,6 +615,7 @@ const AW_COL = {
   kaykay_prefs   : 'kaykay_prefs',
   blog           : 'blog',
   vendors        : 'vendors',
+  price_alerts   : 'price_alerts',
 };
 
 const { Client, Account, Databases, Storage, Functions, Query, ID } = Appwrite;
@@ -1550,6 +1551,8 @@ async function loadCoins(){
       rank:c.market_cap_rank||999,mcap:c.market_cap||0,vol:c.total_volume||0,
     }));
     S.coinsState='ok';
+    // Check price alerts against fresh prices
+    A.checkPriceAlerts().catch(()=>{});
   }catch(e){S.coinsState='err';console.warn('CoinGecko:',e.message);}
   render();
 }
@@ -2679,7 +2682,12 @@ const P = {
         <td><div class="acell">${coinIcon(c,i,34)}<div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div></div></td>
         <td class="r price-c">${fmtp(c.price)}</td>
         <td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td>
-        <td class="r" onclick="event.stopPropagation()"><button class="wbtn ${st?'on':''}" onclick="A.toggleWatch('${c.id}')"><i data-lucide="star" style="width:15px;height:15px;${st?'fill:currentColor':''}"></i></button></td>
+        <td class="r" onclick="event.stopPropagation()">
+          <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
+            <button class="wbtn" title="Set price alert" onclick="A.setAlert('${c.id}','${c.name}',${c.price})"><i data-lucide="bell" style="width:13px;height:13px"></i></button>
+            <button class="wbtn ${st?'on':''}" onclick="A.toggleWatch('${c.id}')"><i data-lucide="star" style="width:15px;height:15px;${st?'fill:currentColor':''}"></i></button>
+          </div>
+        </td>
       </tr>`;};
 
     const thead=`<thead><tr><th style="width:38px">#</th><th>Asset</th><th class="r">Price</th><th class="r">24h</th><th class="r" style="width:48px">★</th></tr></thead>`;
@@ -2729,7 +2737,11 @@ const P = {
         <div style="text-align:right">
           <div class="aheroprice">${fmtp(coin.price)}</div>
           <div class="${pos?'cp':'cn'}" style="font-size:.95rem;font-weight:500;margin-top:4px">${fmtpct(coin.chg)} (24h)</div>
-          <div style="margin-top:12px"><button class="btn bo bsm" onclick="A.toggleWatch('${coin.id}');render()"><i data-lucide="star" style="width:13px;height:13px;${st?'fill:var(--gld);color:var(--gld)':''}"></i>${st?'Watchlisted':'Add to Watchlist'}</button></div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn bo bsm" onclick="A.toggleWatch('${coin.id}');render()"><i data-lucide="star" style="width:13px;height:13px;${st?'fill:var(--gld);color:var(--gld)':''}"></i>${st?'Watchlisted':'Add to Watchlist'}</button>
+        <button class="btn bc bsm" onclick="A.tradeAsset('${coin.name}','${coin.sym}')"><i data-lucide="arrow-left-right" style="width:13px;height:13px"></i>Trade P2P</button>
+        <button class="btn bg bsm" onclick="A.setAlert('${coin.id}','${coin.name}',${coin.price})"><i data-lucide="bell" style="width:13px;height:13px"></i>Set Alert</button>
+      </div>
         </div>
       </div>
       <div class="itabs">${['ytd','5y','10y'].map(iv2=>`<button class="ibtn ${iv===iv2?'on':''}" onclick="A.setIv('${iv2}')">${iv2.toUpperCase()}</button>`).join('')}</div>
@@ -2746,8 +2758,28 @@ const P = {
   _watchlist(){
     const starred=S.coins.filter(c=>S.watchlist.has(c.id));
     if(starred.length===0)return`<div class="wempty"><div class="wemi"><i data-lucide="star" style="width:26px;height:26px"></i></div><div class="wemt">Your watchlist is empty</div><p style="font-size:.875rem">Star assets from the market table to track them here.</p><button class="btn bp" style="margin-top:18px" onclick="A.setCryptoSub('market')">Browse Market</button></div>`;
-    return`<div class="mtwrap"><table><thead><tr><th>Asset</th><th class="r">Price</th><th class="r">24h</th><th class="r" style="width:48px">★</th></tr></thead><tbody>
-      ${starred.map(c=>{const i=S.coins.indexOf(c);const pos=c.chg>=0;return`<tr onclick="A.openCoin('${c.id}')"><td><div class="acell">${coinIcon(c,i,34)}<div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div></div></td><td class="r price-c">${fmtp(c.price)}</td><td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td><td class="r" onclick="event.stopPropagation()"><button class="wbtn on" onclick="A.toggleWatch('${c.id}')"><i data-lucide="star" style="width:15px;height:15px;fill:currentColor"></i></button></td></tr>`;}).join('')}
+    const alerts=S._priceAlerts||[];
+    return`<div class="mtwrap"><table><thead><tr><th>Asset</th><th class="r">Price</th><th class="r">24h</th><th class="r">Alert</th><th class="r" style="width:40px">★</th></tr></thead><tbody>
+      ${starred.map(c=>{
+        const i=S.coins.indexOf(c);
+        const pos=c.chg>=0;
+        const coinAlerts=alerts.filter(a=>a.coinId===c.id&&!a.triggered);
+        const alertBadge=coinAlerts.length
+          ?`<span style="font-size:.68rem;background:#FBF4E6;color:var(--gld);border:1px solid #E8D9B0;border-radius:100px;padding:2px 7px;white-space:nowrap">${coinAlerts.length} active</span>`
+          :`<span style="font-size:.68rem;color:var(--t3)">None</span>`;
+        return`<tr onclick="A.openCoin('${c.id}')">
+          <td><div class="acell">${coinIcon(c,i,34)}<div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div></div></td>
+          <td class="r price-c">${fmtp(c.price)}</td>
+          <td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td>
+          <td class="r" onclick="event.stopPropagation()">
+            <button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;margin-left:auto" onclick="A.setAlert('${c.id}','${c.name}',${c.price})">
+              ${alertBadge}
+              <i data-lucide="bell" style="width:13px;height:13px;color:${coinAlerts.length?'var(--gld)':'var(--t3)'}"></i>
+            </button>
+          </td>
+          <td class="r" onclick="event.stopPropagation()"><button class="wbtn on" onclick="A.toggleWatch('${c.id}')"><i data-lucide="star" style="width:15px;height:15px;fill:currentColor"></i></button></td>
+        </tr>`;
+      }).join('')}
     </tbody></table></div>`;
   },
 
@@ -3603,6 +3635,8 @@ const M = {
       const myListings=(S.orders||[]).filter(o=>o.userId===S.user.id).length;
       if(myListings>=3){toast('You\'ve posted your 3 free listings. Upgrade to Pro to continue.');R.go('sub');return;}
     }
+    const pf=S._preFillOrder||{};
+    S._preFillOrder=null;
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
         <div class="mhdr"><div><div class="mey">New Listing</div><h2 class="mtitle">Post an Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
@@ -4574,6 +4608,152 @@ const A = {
     toast('You have been signed out.');
   },
 
+  setAlert(coinId,coinName,currentPrice){
+    if(!S.user){M.auth();return;}
+    if(!S.subscribed){M.subscribe();return;}
+    // Load existing alerts for this coin
+    const existing=(S._priceAlerts||[]).filter(a=>a.coinId===coinId&&!a.triggered);
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal" style="max-width:440px">
+        <div class="mhdr">
+          <div><div class="mey">Price Alert</div><h2 class="mtitle">${coinName}</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+        <div style="background:var(--surf);border-radius:var(--rsm);padding:11px 14px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.8rem;color:var(--t2)">Current price</span>
+          <span style="font-weight:700;font-size:1rem">${fmtp(currentPrice)}</span>
+        </div>
+        <div class="fg">
+          <label>Alert me when price is</label>
+          <select id="alert-dir" style="margin-bottom:10px">
+            <option value="above">Above</option>
+            <option value="below">Below</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Target Price (USD)</label>
+          <div class="pfx"><span class="pfx-sym">$</span><input type="number" id="alert-price" placeholder="${currentPrice.toFixed(2)}" min="0" step="any"/></div>
+        </div>
+        ${existing.length>0?`
+        <div style="margin-bottom:16px">
+          <div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:8px">Active Alerts</div>
+          ${existing.map(a=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--off);border-radius:var(--rsm);margin-bottom:6px;font-size:.8rem">
+            <span>${a.direction==='above'?'↑ Above':'↓ Below'} <strong>${fmtp(a.targetPrice)}</strong></span>
+            <button onclick="A.deleteAlert('${a.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:.8rem;padding:2px 6px">Remove</button>
+          </div>`).join('')}
+        </div>`:''}
+        <div class="ferr" id="alert-err"></div>
+        <button class="btn bp" id="alert-btn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitAlert('${coinId}','${coinName}',${currentPrice})">
+          <i data-lucide="bell" style="width:14px;height:14px"></i>Set Alert
+        </button>
+      </div>
+    </div>`);
+  },
+
+  async submitAlert(coinId,coinName,currentPrice){
+    if(!S.user) return;
+    const dir=document.getElementById('alert-dir')?.value;
+    const rawPrice=parseFloat(document.getElementById('alert-price')?.value);
+    const err=document.getElementById('alert-err');
+    const btn=document.getElementById('alert-btn');
+    if(!rawPrice||isNaN(rawPrice)||rawPrice<=0){err.textContent='Please enter a valid target price.';return;}
+    if(dir==='above'&&rawPrice<=currentPrice){err.textContent='Target must be above current price of '+fmtp(currentPrice)+'.';return;}
+    if(dir==='below'&&rawPrice>=currentPrice){err.textContent='Target must be below current price of '+fmtp(currentPrice)+'.';return;}
+    btn.disabled=true;btn.textContent='Setting alert…';
+    try{
+      const coin=S.coins.find(c=>c.id===coinId);
+      const doc=await DB.create('price_alerts',{
+        userId:S.user.id,
+        coinId, coinName,
+        coinSym:coin?.sym||coinId.toUpperCase(),
+        targetPrice:rawPrice,
+        direction:dir,
+        triggered:false,
+        createdAt:new Date().toISOString(),
+      });
+      if(!S._priceAlerts) S._priceAlerts=[];
+      S._priceAlerts.push({
+        id:doc.$id, coinId, coinName,
+        coinSym:coin?.sym||coinId.toUpperCase(),
+        targetPrice:rawPrice, direction:dir,
+        triggered:false,
+      });
+      M.close();
+      toast('Alert set! We\'ll notify you when '+coinName+' '+dir+' '+fmtp(rawPrice),'ok');
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Set Alert';
+    }
+  },
+
+  async deleteAlert(alertId){
+    try{
+      await _db.deleteDocument(AW_DB_ID,AW_COL.price_alerts,alertId);
+      S._priceAlerts=(S._priceAlerts||[]).filter(a=>a.id!==alertId);
+      M.close();
+      toast('Alert removed.');
+    }catch(e){toast('Could not remove alert.','err');}
+  },
+
+  async loadPriceAlerts(){
+    if(!S.user) return;
+    try{
+      const r=await DB.list('price_alerts',[
+        Query.equal('userId',[S.user.id]),
+        Query.equal('triggered',[false]),
+        Query.limit(50),
+      ]);
+      S._priceAlerts=r.documents.map(d=>({
+        id:d.$id, coinId:d.coinId, coinName:d.coinName,
+        coinSym:d.coinSym, targetPrice:d.targetPrice,
+        direction:d.direction, triggered:d.triggered,
+      }));
+    }catch(e){console.warn('loadPriceAlerts:',e.message);}
+  },
+
+  async checkPriceAlerts(){
+    if(!S.user||!S._priceAlerts?.length||!S.coins.length) return;
+    const untriggered=S._priceAlerts.filter(a=>!a.triggered);
+    for(const alert of untriggered){
+      const coin=S.coins.find(c=>c.id===alert.coinId);
+      if(!coin) continue;
+      const triggered=(alert.direction==='above'&&coin.price>=alert.targetPrice)
+        ||(alert.direction==='below'&&coin.price<=alert.targetPrice);
+      if(!triggered) continue;
+      // Mark as triggered
+      alert.triggered=true;
+      DB.update('price_alerts',alert.id,{triggered:true}).catch(()=>{});
+      // Notify in-app
+      const msg=alert.coinName+' hit your target of '+fmtp(alert.targetPrice)+'! Current price: '+fmtp(coin.price);
+      await createNotif(S.user.id,'connection',
+        alert.coinSym+' price alert triggered 🔔',
+        msg,'crypto'
+      );
+      // Notify via push
+      await pushNotif(S.user.id,
+        alert.coinSym+' price alert triggered 🔔',
+        msg,
+        'https://toomuchcoin.com?page=crypto'
+      );
+      toast(alert.coinSym+' hit '+fmtp(alert.targetPrice)+'!','ok');
+    }
+  },
+
+  tradeAsset(assetName,sym){
+    if(!S.user){M.auth();toast('Sign in to post a trade listing.');return;}
+    if(!S.subscribed){M.subscribe();return;}
+    S.page='market';S.mTab='board';S.mFilter='finance';
+    S._preFillOrder={
+      title:'Sell '+sym+' — '+assetName,
+      category:'finance',
+      type:'sell',
+    };
+    loadOrders();
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+    setTimeout(()=>M.createOrder(),400);
+  },
   setMTab(t){
     if(t==='forum'&&!S.subscribed){M.subscribe();return;}
     S.mTab=t;
@@ -6686,6 +6866,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
       }catch(e){console.warn('baseline merge:',e.message);}
     }
     await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
+    await A.loadPriceAlerts();
     initOneSignal(S.user.id);
     startNotifPoll();
   }
