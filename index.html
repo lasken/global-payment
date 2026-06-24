@@ -3719,19 +3719,18 @@ const M = {
       if(myListings>=3){toast('You\'ve posted your 3 free listings. Upgrade to Pro to continue.');R.go('sub');return;}
     }
     const pf=S._preFillOrder||{};
-    S._preFillOrder=null;
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
         <div class="mhdr"><div><div class="mey">New Listing</div><h2 class="mtitle">Post an Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
-        <div class="fg"><label>Title</label><input type="text" id="otitle" placeholder="e.g. Sell 0.1 ETH at spot rate"/></div>
-        <div class="fg"><label>Category</label><select id="ocat"><option value="">Select…</option><option value="unique">Unique Requests</option><option value="logistics">Logistics</option><option value="goods">Goods</option><option value="services">Services</option><option value="b2b">B2B</option><option value="finance">Finance & Trading</option><option value="knowledge">Knowledge-based</option><option value="music">Music Services</option><option value="entertainment">Entertainment</option></select></div>
-        <div class="fg"><label>Order Type</label><select id="otype"><option value="sell">Sell</option><option value="buy">Buy</option><option value="request">Service Request</option></select></div>
+        <div class="fg"><label>Title</label><input type="text" id="otitle" placeholder="e.g. Sell 0.1 ETH at spot rate" value="${(pf.title||'').replace(/"/g,'&quot;')}"/></div>
+        <div class="fg"><label>Category</label><select id="ocat"><option value="">Select…</option><option value="unique">Unique Requests</option><option value="logistics">Logistics</option><option value="goods">Goods</option><option value="services">Services</option><option value="b2b">B2B</option><option value="finance" ${pf.category==='finance'?'selected':''}>Finance & Trading</option><option value="knowledge">Knowledge-based</option><option value="music">Music Services</option><option value="entertainment">Entertainment</option></select></div>
+        <div class="fg"><label>Order Type</label><select id="otype"><option value="sell" ${pf.type==='sell'?'selected':''}>Sell</option><option value="buy" ${pf.type==='buy'?'selected':''}>Buy</option><option value="request" ${pf.type==='request'?'selected':''}>Service Request</option></select></div>
         <div class="fg">
           <label>Price / Budget</label>
-          <div class="pfx"><span class="pfx-sym">$</span><input type="text" id="oprice" placeholder="0.00 or Negotiable"/></div>
+          <div class="pfx"><span class="pfx-sym">$</span><input type="text" id="oprice" placeholder="0.00 or Negotiable" value="${(pf.price||'').replace(/"/g,'&quot;')}"/></div>
           <div style="font-size:.72rem;color:var(--t3);margin-top:5px"><i data-lucide="info" style="width:10px;height:10px;display:inline;vertical-align:-1px"></i> Price in USD. A 1% platform commission applies on completed deals.</div>
         </div>
-        <div class="fg"><label>Description</label><textarea id="odesc" rows="3" placeholder="Full details of your listing…"></textarea></div>
+        <div class="fg"><label>Description</label><textarea id="odesc" rows="3" placeholder="Full details of your listing…">${pf.desc||''}</textarea></div>
         <div class="fg">
           <label>Photos <span style="font-weight:400;color:var(--t3)">(optional · up to 3 · max 3MB each)</span></label>
           <div class="img-drop" id="img-drop-zone" onclick="document.getElementById('oimgs').click()">
@@ -5110,16 +5109,37 @@ const A = {
   tradeAsset(assetName,sym){
     if(!S.user){M.auth();toast('Sign in to post a trade listing.');return;}
     if(!S.subscribed){M.subscribe();return;}
+    const coin=S.coins.find(c=>c.sym===sym);
+    const price=coin?fmtp(coin.price):'';
     S.page='market';S.mTab='board';S.mFilter='finance';
     S._preFillOrder={
       title:'Sell '+sym+' — '+assetName,
       category:'finance',
       type:'sell',
+      price:price.replace('$',''),
+      desc:'I am looking to sell x units of '+assetName+' ('+sym+') at '+price+' per unit. '+
+           'Payment via bank transfer or USDT. Serious buyers only. ',
     };
     loadOrders();
     render();
     window.scrollTo({top:0,behavior:'smooth'});
-    setTimeout(()=>M.createOrder(),400);
+    setTimeout(()=>{
+      M.createOrder();
+      // Pre-fill the form fields after modal renders
+      setTimeout(()=>{
+        const t=document.getElementById('otitle');
+        const c=document.getElementById('ocat');
+        const ty=document.getElementById('otype');
+        const p=document.getElementById('oprice');
+        const d=document.getElementById('odesc');
+        if(t) t.value=S._preFillOrder.title;
+        if(c) c.value=S._preFillOrder.category;
+        if(ty) ty.value=S._preFillOrder.type;
+        if(p) p.value=S._preFillOrder.price;
+        if(d) d.value=S._preFillOrder.desc;
+        S._preFillOrder=null;
+      },100);
+    },400);
   },
   setMTab(t){
     if(t==='forum'&&!S.subscribed){M.subscribe();return;}
