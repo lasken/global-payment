@@ -10,6 +10,14 @@
   <link rel="shortcut icon" href="toomuchcoin.png">
   
   <meta property="og:title" content="Toomuchcoin x Datum"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Toomuchcoin"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#1A1916"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="toomuchcoin.png"/>
+  <link rel="apple-touch-startup-image" href="toomuchcoin.png"/>
+  <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta property="og:description" content="Agentic Commerce: Your passport to trade and access the globe 🌎"/>
   <meta property="og:image" content="https://toomuchcoin.com/toomuchcoin.png"/>
   <meta property="og:image:width" content="1200"/>
@@ -3337,7 +3345,7 @@ const P = {
 
       <!-- Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;position:relative">
-        <button onclick="history.length>1?history.back():R.go('land')" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:7px 14px;color:rgba(255,255,255,.7);font-size:.8rem;font-family:var(--fb);cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
+        <button onclick="R.go(S._kkPrevPage||'land')" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:7px 14px;color:rgba(255,255,255,.7);font-size:.8rem;font-family:var(--fb);cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           Back
         </button>
@@ -4430,6 +4438,8 @@ const M = {
 const R = {
   go(page){
     stopAR();
+    // Remember where we came from before entering KayKay
+    if(page==='kaykay'&&S.page!=='kaykay') S._kkPrevPage=S.page||'land';
     S.page=page;
     if(page==='market'){S.mTab='board';S.mFilter='all';loadOrders();startAR();}
     if(page==='crypto'&&S.coinsState==='idle') loadCoins();
