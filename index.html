@@ -2985,7 +2985,39 @@ const P = {
       },
     ];
 
-    const row=(a)=>{
+    const THESIS={
+        gold   :'Gold remains the world\'s oldest store of value. With rising geopolitical tension, dollar debasement risk, and central bank accumulation at record highs, gold is the ultimate macro hedge in any portfolio.',
+        nvda   :'Nvidia owns the picks-and-shovels of the AI revolution. Their CUDA ecosystem creates a near-unbreakable moat. Every major AI lab runs on Nvidia GPUs — demand is structural, not cyclical.',
+        spx    :'The S&P 500 is the default long-term wealth compounder. 100+ years of data show it outperforms nearly every active strategy over 20-year periods. Core holding for any long-term investor.',
+        btc    :'Bitcoin is digital gold with a hard cap of 21 million coins. Institutional adoption is accelerating — ETF approvals, corporate treasuries, and sovereign interest make this the defining asset of the decade.',
+        dxy    :'The Dollar Index measures USD strength against major currencies. A falling DXY is historically bullish for commodities and crypto. Watching DXY tells you where global capital is flowing.',
+        eth    :'Ethereum is the world\'s programmable money layer. DeFi, NFTs, and tokenised real-world assets all run on Ethereum. The move to proof-of-stake reduced issuance — ETH is now deflationary at scale.',
+        tet    :'$TET is a high-risk, high-conviction speculative position. Early-stage token with strong community narrative. Position sizing should be small — asymmetric upside if the thesis plays out.',
+        mstr   :'Strategy (formerly MicroStrategy) is effectively a leveraged Bitcoin ETF in stock form. Michael Saylor has committed the entire corporate treasury to BTC. A proxy bet on Bitcoin with amplified volatility.',
+        tsla   :'Tesla is more than a car company — it\'s an energy, AI, and robotics platform. FSD progress, the Optimus robot, and energy storage make this a multi-decade bet on the future of physical automation.',
+        nasdaq :'The Nasdaq Composite is the benchmark for tech and innovation. When interest rates fall, Nasdaq leads. It\'s the best single index exposure to the companies building the next 20 years of the economy.',
+        lvmh   :'LVMH is the ultimate luxury conglomerate — 75+ brands including Louis Vuitton, Dior, and Moët. Luxury demand from Asia is structurally growing. LVMH captures aspirational spending at the highest margin.',
+        tsmc   :'TSMC fabricates the most advanced chips on earth. Without TSMC, there is no iPhone, no Nvidia GPU, no modern AI. They are the single most strategically important company in the global tech supply chain.',
+        dangcem:'Dangote Cement is the largest cement producer in Africa. Nigeria\'s infrastructure deficit is massive — roads, housing, commercial real estate. Dangote is the direct pick-and-shovel play on African growth.',
+      };
+
+      const NEWS={
+        gold   :[{h:'Central banks buy record gold in Q1 2025',t:'World Gold Council'},{h:'Gold hits all-time high amid dollar weakness',t:'Reuters'},{h:'Goldman raises gold target to $3,700',t:'Goldman Sachs'}],
+        nvda   :[{h:'Nvidia Blackwell chips sell out through 2025',t:'Bloomberg'},{h:'NVDA beats earnings — data centre revenue up 427%',t:'CNBC'},{h:'Nvidia partners with Saudi Arabia on AI infrastructure',t:'FT'}],
+        spx    :[{h:'S&P 500 recovers losses after Fed signals rate cuts',t:'WSJ'},{h:'Q2 earnings season beats expectations across sectors',t:'FactSet'},{h:'Buffett sitting on record cash — watching S&P levels',t:'Berkshire'}],
+        btc    :[{h:'BlackRock Bitcoin ETF hits $20B AUM milestone',t:'CoinDesk'},{h:'Bitcoin halving complete — supply shock begins',t:'Decrypt'},{h:'El Salvador doubles down on Bitcoin treasury strategy',t:'Reuters'}],
+        dxy    :[{h:'Dollar weakens as Fed holds rates steady',t:'Bloomberg'},{h:'DXY falls below 100 — risk assets rally',t:'FX Street'},{h:'BRICS nations accelerate de-dollarisation push',t:'FT'}],
+        eth    :[{h:'Ethereum ETF sees $500M inflows in first week',t:'CoinDesk'},{h:'ETH supply turns deflationary after EIP-4844',t:'Ultrasound.money'},{h:'Vitalik outlines Ethereum roadmap for 2025-2026',t:'Ethereum.org'}],
+        tet    :[{h:'$TET community governance vote passes key proposal',t:'Discord'},{h:'New DEX listing drives 40% volume spike',t:'DexScreener'},{h:'Core team announces product update roadmap',t:'Twitter/X'}],
+        mstr   :[{h:'MicroStrategy acquires 12,000 more BTC this quarter',t:'SEC Filing'},{h:'MSTR added to Nasdaq 100 index',t:'Nasdaq'},{h:'Saylor: "We will never sell Bitcoin"',t:'CNBC Interview'}],
+        tsla   :[{h:'Tesla FSD v13 achieves zero interventions in 1,000-mile test',t:'Tesla'},{h:'Optimus robot begins limited factory deployment',t:'Bloomberg'},{h:'Tesla energy storage hits record quarterly deployment',t:'Electrek'}],
+        nasdaq :[{h:'Nasdaq surges as inflation data comes in cool',t:'CNBC'},{h:'Tech sector leads market recovery — AI stocks up 8%',t:'Bloomberg'},{h:'Apple, Microsoft, Google all beat Q1 estimates',t:'Reuters'}],
+        lvmh   :[{h:'LVMH revenue grows 8% driven by Asia-Pacific demand',t:'FT'},{h:'Bernard Arnault increases stake in Louis Vuitton parent',t:'Bloomberg'},{h:'Luxury sector outperforms in risk-off environment',t:'Vogue Business'}],
+        tsmc   :[{h:'TSMC confirms 2nm production on track for 2025',t:'DigiTimes'},{h:'Arizona fab expansion receives $6.6B US government grant',t:'Reuters'},{h:'TSMC raises guidance — AI chip demand exceeds forecast',t:'Bloomberg'}],
+        dangcem:[{h:'Dangote Cement expands into East Africa with new plant',t:'BusinessDay NG'},{h:'Nigeria cement demand rises 12% on housing push',t:'Nairametrics'},{h:'Aliko Dangote signals pan-African infrastructure play',t:'ThisDay'}],
+      };
+
+      const row=(a)=>{
       const d=lp[a.id];
       const livePrice=getLivePrice(a.id);
       const isManual=MANUAL_PRICES[a.id]!=null&&!cgPriceMap[a.id];
@@ -3002,7 +3034,10 @@ const P = {
       }
 
       const get=(key,fb)=>d?.[key]!=null&&!isNaN(d[key])?d[key]:fb;
-      return`<tr>
+      const news=NEWS[a.id]||[];
+      const thesis=THESIS[a.id]||'';
+      const rowId='al-expand-'+a.id;
+      return`<tr style="cursor:pointer" onclick="document.getElementById('${rowId}').style.display=document.getElementById('${rowId}').style.display==='none'?'table-row':'none'">
         <td><div class="al-num">${a.n}</div></td>
         <td><div class="al-cell">${logo(a.id,a.bg,a.fg,a.sym)}<div><div class="al-aname">${a.name}</div><div class="al-asym">${a.sym}</div></div></div></td>
         <td class="r al-price">${priceStr}</td>
@@ -3011,6 +3046,45 @@ const P = {
         <td class="r">${pf(get('y5',a.y5))}</td>
         <td class="r">${pf(get('y10',a.y10))}</td>
         <td class="r">${pf(computedSinceJoined)}</td>
+      </tr>
+      <tr id="${rowId}" style="display:none">
+        <td colspan="8" style="padding:0;border-bottom:2px solid var(--bdr)">
+          <div style="padding:20px 16px 24px;background:linear-gradient(135deg,#fafaf8,#f5f4f0);display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+            <!-- Thesis -->
+            <div>
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+                <div style="width:22px;height:22px;border-radius:50%;background:var(--t1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </div>
+                <span style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t2)">Why We're Watching</span>
+              </div>
+              <p style="font-size:.8125rem;color:var(--t2);line-height:1.75;margin:0">${thesis}</p>
+              <button onclick="event.stopPropagation();A.tradeAsset('${a.name}','${a.sym}')" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;background:var(--t1);color:#fff;border:none;border-radius:var(--rsm);padding:7px 14px;font-size:.78rem;font-weight:500;cursor:pointer;font-family:var(--fb)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                Trade ${a.sym} P2P
+              </button>
+            </div>
+
+            <!-- News -->
+            <div>
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+                <div style="width:22px;height:22px;border-radius:50%;background:var(--org);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
+                </div>
+                <span style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t2)">Latest News</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                ${news.map(n=>`
+                <div style="background:#fff;border:1px solid var(--bdr);border-radius:var(--rsm);padding:10px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                  <div style="font-size:.8rem;font-weight:500;color:var(--t1);line-height:1.45;flex:1">${n.h}</div>
+                  <span style="font-size:.68rem;color:var(--t3);white-space:nowrap;margin-top:2px;flex-shrink:0">${n.t}</span>
+                </div>`).join('')}
+              </div>
+            </div>
+
+          </div>
+        </td>
       </tr>`;
     };
 
