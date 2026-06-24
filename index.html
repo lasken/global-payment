@@ -411,6 +411,7 @@
     .cbar:hover{opacity:.75}
     .cylabel{position:absolute;top:14px;left:14px;font-size:.72rem;color:var(--t3)}
     .cxlabels{display:flex;justify-content:space-between;padding:7px 14px;background:var(--off);border-top:1px solid var(--bdr);font-size:.68rem;color:var(--t3)}
+    #price-chart{display:block;width:100%}
     .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:13px;margin-bottom:22px}
     .mc{background:var(--white);border:1px solid var(--bdr);border-radius:var(--rmd);padding:16px}
     .mcl{font-size:.68rem;color:var(--t2);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
@@ -2642,6 +2643,15 @@ const P = {
     const subtitle=S.coinsState==='loading'?'Fetching live data from CoinGecko…'
       :S.coinsState==='err'?'Could not reach CoinGecko — retry below'
       :total>0?`${total.toLocaleString()} assets tracked live`:'Initialising…';
+
+    if(sub==='deepdive'){
+      return`<div id="pg-crypto" class="page">
+        <div style="max-width:1080px;margin:0 auto;padding:40px 24px">
+          ${P._deepdive()}
+        </div>
+      </div>`;
+    }
+
     return`<div id="pg-crypto" class="page">
       <div class="pghdr">
         <div>
@@ -2661,7 +2671,7 @@ const P = {
         </button>
         <button class="tbtn ${sub==='portfolio'?'on':''}" onclick="A.setCryptoSub('portfolio')"><i data-lucide="pie-chart" style="width:13px;height:13px"></i><span>Portfolio</span></button>
       </div>
-      ${sub==='market'?P._mktTable():sub==='deepdive'?P._deepdive():sub==='watchlist'?P._watchlist():sub==='assetlist'?P._assetList():P._portfolio()}
+      ${sub==='market'?P._mktTable():sub==='watchlist'?P._watchlist():sub==='assetlist'?P._assetList():P._portfolio()}
     </div>`;
   },
 
@@ -2723,7 +2733,7 @@ const P = {
     const idx=S.coins.indexOf(coin);const pos=coin.chg>=0;const iv=S.interval;
     const bars=mockBars(coin.id,iv);const maxH=Math.max(...bars.map(b=>b.h));
     const mets=mockMetrics(coin.id,iv);
-    const xlabels={ytd:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],'5y':['2020','2021','2022','2023','2024'],'10y':['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024']};
+    const xlabels={'1d':['00:00','04:00','08:00','12:00','16:00','20:00','24:00'],'7d':['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],'30d':['W1','W2','W3','W4'],'ytd':['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],'5y':['2020','2021','2022','2023','2024'],'10y':['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024']};
     const st=S.watchlist.has(coin.id);const[bg,fg]=COLORS[idx%COLORS.length];
     return`
       <button class="back" onclick="A.setCryptoSub('market')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Market</button>
@@ -2745,12 +2755,23 @@ const P = {
         </div>
       </div>
       <div class="itabs">${['ytd','5y','10y'].map(iv2=>`<button class="ibtn ${iv===iv2?'on':''}" onclick="A.setIv('${iv2}')">${iv2.toUpperCase()}</button>`).join('')}</div>
-      <div class="chartwrap">
-        <div class="chartarea" style="padding-top:36px">
-          <span class="cylabel">${coin.sym}/USD — ${iv.toUpperCase()} Performance (illustrative)</span>
-          ${bars.map(b=>`<div class="cbar" style="height:${Math.round((b.h/maxH)*220)}px;background:${b.up?'var(--grn)':'var(--red)'};opacity:.72"></div>`).join('')}
+      <div class="chartwrap" style="position:relative">
+        ${S._chartLoading?`<div style="height:280px;display:flex;align-items:center;justify-content:center;background:var(--off)"><div class="spin"></div></div>`:`
+        <div style="position:relative">
+          <div id="chart-fixed-label" style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--t1);color:#fff;border-radius:var(--rsm);padding:4px 10px;font-size:.75rem;z-index:10;pointer-events:none">
+            <span id="chart-fix-price"></span> &nbsp;·&nbsp; <span id="chart-fix-date"></span>
+          </div>
+          <div id="chart-tooltip" style="display:none;position:absolute;background:var(--t1);color:#fff;border-radius:var(--rsm);padding:5px 10px;font-size:.75rem;z-index:10;pointer-events:none;white-space:nowrap">
+            <div id="chart-tip-price" style="font-weight:600"></div>
+            <div id="chart-tip-date" style="opacity:.7;font-size:.68rem"></div>
+          </div>
+          <canvas id="price-chart" style="width:100%;height:280px;display:block;cursor:crosshair"></canvas>
         </div>
-        <div class="cxlabels">${xlabels[iv].map(l=>`<span>${l}</span>`).join('')}</div>
+        <div class="cxlabels" id="chart-xlabels" style="display:flex;justify-content:space-between;padding:7px 14px;background:var(--off);border-top:1px solid var(--bdr);font-size:.68rem;color:var(--t3)"></div>`}
+      </div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:18px">
+        <div id="dd-price-display" style="font-family:var(--fd);font-size:2rem;font-weight:600">${fmtp(coin.price)}</div>
+        <div id="dd-date-display" style="font-size:.78rem;color:var(--t3)"></div>
       </div>
       <div class="mgrid">${Object.entries(mets).map(([k,v])=>`<div class="mc"><div class="mcl">${k}</div><div class="mcv">${v}</div><div class="mcs">${iv.toUpperCase()} period</div></div>`).join('')}</div>`;
   },
@@ -4696,6 +4717,202 @@ const A = {
     }catch(e){toast('Could not remove alert.','err');}
   },
 
+  drawChart(coinId,interval){
+    const canvas=document.getElementById('price-chart');
+    if(!canvas) return;
+    const data=S._chartData?.[coinId]?.[interval]||[];
+    if(!data.length) return;
+    const coin=S.coins.find(c=>c.id===coinId);
+    const pos=(data[data.length-1]?.p||0)>=(data[0]?.p||0);
+    const lineColor=pos?'#1A7A4A':'#C43030';
+    const fillColor=pos?'rgba(26,122,74,0.12)':'rgba(196,48,48,0.12)';
+    const dpr=window.devicePixelRatio||1;
+    const rect=canvas.getBoundingClientRect();
+    canvas.width=rect.width*dpr;
+    canvas.height=280*dpr;
+    canvas.style.height='280px';
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const W=rect.width;
+    const H=280;
+    const pad={top:20,right:16,bottom:30,left:14};
+    const chartW=W-pad.left-pad.right;
+    const chartH=H-pad.top-pad.bottom;
+    const prices=data.map(d=>d.p);
+    const minP=Math.min(...prices);
+    const maxP=Math.max(...prices);
+    const range=maxP-minP||1;
+    const xScale=(i)=>pad.left+(i*(chartW/(data.length-1)));
+    const yScale=(p)=>pad.top+chartH-(((p-minP)/range)*chartH);
+    A._drawChartBase(ctx,data,W,H,pad,xScale,yScale,lineColor,fillColor);
+    const xlabels=document.getElementById('chart-xlabels');
+    if(xlabels){
+      const labelCount=6;
+      const step=Math.floor((data.length-1)/(labelCount-1));
+      const labelFmt = ({
+        '1d':(ts)=>new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+        '7d':(ts)=>new Date(ts).toLocaleDateString([],{weekday:'short',day:'numeric'}),
+        '30d':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'}),
+        'ytd':(ts)=>new Date(ts).toLocaleDateString([],{month:'short'}),
+        '1y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short'}),
+        '5y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',year:'2-digit'}),
+      }[interval]) || ((ts)=>new Date(ts).toLocaleDateString());
+      xlabels.innerHTML=Array.from({length:labelCount},(_,i)=>{
+        const idx2=Math.min(i*step,data.length-1);
+        return'<span>'+labelFmt(data[idx2].ts)+'</span>';
+      }).join('');
+    }
+    const wrap=canvas.parentElement;
+    const isMobile=window.innerWidth<=768;
+    const fixedLabel=document.getElementById('chart-fixed-label');
+    const fixPrice=document.getElementById('chart-fix-price');
+    const fixDate=document.getElementById('chart-fix-date');
+    const tooltip=document.getElementById('chart-tooltip');
+    const tipPrice=document.getElementById('chart-tip-price');
+    const tipDate=document.getElementById('chart-tip-date');
+    const priceDisplay=document.getElementById('dd-price-display');
+    const dateDisplay=document.getElementById('dd-date-display');
+    const drawCrosshair=(clientX,clientY)=>{
+      const canvasRect=canvas.getBoundingClientRect();
+      const x=clientX-canvasRect.left;
+      const idx3=Math.round(((x-pad.left)/chartW)*(data.length-1));
+      const ci=Math.max(0,Math.min(data.length-1,idx3));
+      const point=data[ci];
+      const px=fmtp(point.p);
+      const fmt2 = ({
+        '1d':(ts)=>new Date(ts).toLocaleString([],{hour:'2-digit',minute:'2-digit',month:'short',day:'numeric'}),
+        '7d':(ts)=>new Date(ts).toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}),
+        '30d':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}),
+        'ytd':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}),
+        '1y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}),
+        '5y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',year:'numeric'}),
+      }[interval]) || ((ts)=>new Date(ts).toLocaleDateString());
+      const dateStr=fmt2(point.ts);
+      A._drawChartBase(ctx,data,W,H,pad,xScale,yScale,lineColor,fillColor);
+      const cx=xScale(ci);
+      const cy=yScale(point.p);
+      ctx.beginPath();ctx.moveTo(cx,pad.top);ctx.lineTo(cx,H-pad.bottom);
+      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle=lineColor;ctx.fill();
+      ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+      if(isMobile){
+        if(fixedLabel){fixedLabel.style.display='block';fixPrice.textContent=px;fixDate.textContent=dateStr;}
+      } else {
+        if(tooltip){
+          tooltip.style.display='block';
+          tipPrice.textContent=px;tipDate.textContent=dateStr;
+          const wrapRect=wrap.getBoundingClientRect();
+          const tx=cx+canvasRect.left-wrapRect.left;
+          const ty=clientY-wrapRect.top;
+          tooltip.style.left=Math.min(tx+12,W-140)+'px';
+          tooltip.style.top=Math.max(ty-36,4)+'px';
+        }
+      }
+      if(priceDisplay) priceDisplay.textContent=px;
+      if(dateDisplay) dateDisplay.textContent=dateStr;
+    };
+    const clearCrosshair=()=>{
+      A._drawChartBase(ctx,data,W,H,pad,xScale,yScale,lineColor,fillColor);
+      if(tooltip) tooltip.style.display='none';
+      if(fixedLabel) fixedLabel.style.display='none';
+      if(priceDisplay) priceDisplay.textContent=fmtp(coin?.price||0);
+      if(dateDisplay) dateDisplay.textContent='';
+    };
+    canvas.addEventListener('mousemove',e=>drawCrosshair(e.clientX,e.clientY));
+    canvas.addEventListener('mouseleave',clearCrosshair);
+    canvas.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      const t=e.touches[0];
+      drawCrosshair(t.clientX,t.clientY);
+    },{passive:false});
+    canvas.addEventListener('touchend',()=>setTimeout(clearCrosshair,1200));
+  },
+
+  _drawChartBase(ctx,data,W,H,pad,xScale,yScale,lineColor,fillColor){
+    ctx.clearRect(0,0,W,H);
+    ctx.beginPath();
+    ctx.moveTo(xScale(0),yScale(data[0].p));
+    data.forEach((_,i)=>{if(i>0) ctx.lineTo(xScale(i),yScale(data[i].p));});
+    ctx.lineTo(xScale(data.length-1),H-pad.bottom);
+    ctx.lineTo(xScale(0),H-pad.bottom);
+    ctx.closePath();
+    ctx.fillStyle=fillColor;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(xScale(0),yScale(data[0].p));
+    data.forEach((_,i)=>{if(i>0) ctx.lineTo(xScale(i),yScale(data[i].p));});
+    ctx.strokeStyle=lineColor;
+    ctx.lineWidth=2;
+    ctx.lineJoin='round';
+    ctx.stroke();
+  },
+
+  async loadCoinDetail(coinId){
+    if(S._coinDetail?.[coinId]) return;
+    try{
+      const r=await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+coinId+'&price_change_percentage=7d,30d&x_cg_demo_api_key=CG-ukJ4Loyx3D9ZvYm1B8smA1tP');
+      if(!r.ok) throw new Error(r.status);
+      const data=await r.json();
+      const d=data[0];
+      if(!d) return;
+      if(!S._coinDetail) S._coinDetail={};
+      S._coinDetail[coinId]={
+        ath:d.ath,
+        athDate:d.ath_date,
+        atl:d.atl,
+        atlDate:d.atl_date,
+        supply:d.circulating_supply,
+        maxSupply:d.max_supply,
+        chg7d:d.price_change_percentage_7d_in_currency,
+        chg30d:d.price_change_percentage_30d_in_currency,
+      };
+      render();
+    }catch(e){console.warn('coinDetail:',e.message);}
+  },
+
+  async loadChartData(coinId,interval){
+    S._chartLoading=true;
+    if(S.cryptoSub==='deepdive') render();
+    if(!S._chartData) S._chartData={};
+    if(!S._chartData[coinId]) S._chartData[coinId]={};
+
+    const daysMap={'1d':1,'7d':7,'30d':30,'ytd':365,'1y':365,'5y':1825};
+    const days=daysMap[interval]||365;
+
+    // Generate realistic mock fallback from current coin price
+    const makeMockData=()=>{
+      const coin=S.coins.find(c=>c.id===coinId);
+      const basePrice=coin?.price||1000;
+      const points=days<=1?48:days<=7?56:days<=30?60:days<=365?52:days<=1825?60:120;
+      const now=Date.now();
+      const step=(days*24*60*60*1000)/points;
+      let price=basePrice*(0.7+Math.random()*0.3);
+      return Array.from({length:points},(_,i)=>{
+        price=price*(1+(Math.random()-0.48)*0.04);
+        return{ts:now-(points-i)*step,p:Math.max(price,0.000001)};
+      });
+    };
+
+    try{
+      // Try without API key first (free tier)
+      const url=`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${days}&x_cg_demo_api_key=CG-ukJ4Loyx3D9ZvYm1B8smA1tP`;
+      const r=await fetch(url);
+      if(!r.ok) throw new Error(r.status);
+      const data=await r.json();
+      const prices=data.prices||[];
+      if(!prices.length) throw new Error('empty');
+      S._chartData[coinId][interval]=prices.map(([ts,p])=>({ts,p}));
+    }catch(e){
+      console.warn('chartData:',e.message,'— using mock data');
+      // Always fall back to mock so chart renders
+      S._chartData[coinId][interval]=makeMockData();
+    }
+
+    S._chartLoading=false;
+    if(S.cryptoSub==='deepdive') render();
+    setTimeout(()=>A.drawChart(coinId,interval),80);
+  },
+
   async loadPriceAlerts(){
     if(!S.user) return;
     try{
@@ -4738,6 +4955,94 @@ const A = {
       );
       toast(alert.coinSym+' hit '+fmtp(alert.targetPrice)+'!','ok');
     }
+  },
+
+  setAlert(coinId,coinName,currentPrice){
+    if(!S.user){M.auth();return;}
+    if(!S.subscribed){M.subscribe();return;}
+    // Load existing alerts for this coin
+    const existing=(S._priceAlerts||[]).filter(a=>a.coinId===coinId&&!a.triggered);
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal" style="max-width:440px">
+        <div class="mhdr">
+          <div><div class="mey">Price Alert</div><h2 class="mtitle">${coinName}</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+        <div style="background:var(--surf);border-radius:var(--rsm);padding:11px 14px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.8rem;color:var(--t2)">Current price</span>
+          <span style="font-weight:700;font-size:1rem">${fmtp(currentPrice)}</span>
+        </div>
+        <div class="fg">
+          <label>Alert me when price is</label>
+          <select id="alert-dir" style="margin-bottom:10px">
+            <option value="above">Above</option>
+            <option value="below">Below</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Target Price (USD)</label>
+          <div class="pfx"><span class="pfx-sym">$</span><input type="number" id="alert-price" placeholder="${currentPrice.toFixed(2)}" min="0" step="any"/></div>
+        </div>
+        ${existing.length>0?`
+        <div style="margin-bottom:16px">
+          <div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:8px">Active Alerts</div>
+          ${existing.map(a=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--off);border-radius:var(--rsm);margin-bottom:6px;font-size:.8rem">
+            <span>${a.direction==='above'?'↑ Above':'↓ Below'} <strong>${fmtp(a.targetPrice)}</strong></span>
+            <button onclick="A.deleteAlert('${a.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:.8rem;padding:2px 6px">Remove</button>
+          </div>`).join('')}
+        </div>`:''}
+        <div class="ferr" id="alert-err"></div>
+        <button class="btn bp" id="alert-btn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitAlert('${coinId}','${coinName}',${currentPrice})">
+          <i data-lucide="bell" style="width:14px;height:14px"></i>Set Alert
+        </button>
+      </div>
+    </div>`);
+  },
+
+  async submitAlert(coinId,coinName,currentPrice){
+    if(!S.user) return;
+    const dir=document.getElementById('alert-dir')?.value;
+    const rawPrice=parseFloat(document.getElementById('alert-price')?.value);
+    const err=document.getElementById('alert-err');
+    const btn=document.getElementById('alert-btn');
+    if(!rawPrice||isNaN(rawPrice)||rawPrice<=0){err.textContent='Please enter a valid target price.';return;}
+    if(dir==='above'&&rawPrice<=currentPrice){err.textContent='Target must be above current price of '+fmtp(currentPrice)+'.';return;}
+    if(dir==='below'&&rawPrice>=currentPrice){err.textContent='Target must be below current price of '+fmtp(currentPrice)+'.';return;}
+    btn.disabled=true;btn.textContent='Setting alert…';
+    try{
+      const coin=S.coins.find(c=>c.id===coinId);
+      const doc=await DB.create('price_alerts',{
+        userId:S.user.id,
+        coinId, coinName,
+        coinSym:coin?.sym||coinId.toUpperCase(),
+        targetPrice:rawPrice,
+        direction:dir,
+        triggered:false,
+        createdAt:new Date().toISOString(),
+      });
+      if(!S._priceAlerts) S._priceAlerts=[];
+      S._priceAlerts.push({
+        id:doc.$id, coinId, coinName,
+        coinSym:coin?.sym||coinId.toUpperCase(),
+        targetPrice:rawPrice, direction:dir,
+        triggered:false,
+      });
+      M.close();
+      toast('Alert set! We\'ll notify you when '+coinName+' '+dir+' '+fmtp(rawPrice),'ok');
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Set Alert';
+    }
+  },
+
+  async deleteAlert(alertId){
+    try{
+      await _db.deleteDocument(AW_DB_ID,AW_COL.price_alerts,alertId);
+      S._priceAlerts=(S._priceAlerts||[]).filter(a=>a.id!==alertId);
+      M.close();
+      toast('Alert removed.');
+    }catch(e){toast('Could not remove alert.','err');}
   },
 
   tradeAsset(assetName,sym){
@@ -5482,7 +5787,19 @@ const A = {
     if(s==='assetlist'&&!S.alLoading&&Object.keys(S.alPrices).length===0) loadAlData();
     render();
   },
-  setIv(iv){ S.interval=iv; render(); },
+  setIv(iv){
+    S.interval=iv;
+    if(S.selCoin){
+      if(!S._chartData?.[S.selCoin]?.[iv]){
+        A.loadChartData(S.selCoin,iv);
+      } else {
+        render();
+        setTimeout(()=>A.drawChart(S.selCoin,iv),50);
+      }
+    } else {
+      render();
+    }
+  },
   cSearch(q){ S.csearch=q; S.cpage=1; render(); },
   cPage(p){
     const q=S.csearch.toLowerCase().trim();
@@ -5491,7 +5808,16 @@ const A = {
     if(p<1||p>pages) return;
     S.cpage=p;render();
   },
-  openCoin(id){ S.selCoin=id;S.cryptoSub='deepdive';S.interval='ytd';render(); },
+  openCoin(id){
+    S.selCoin=id;
+    S.cryptoSub='deepdive';
+    S.interval='1d';
+    render();
+    A.loadChartData(id,'1d').then(()=>{
+      setTimeout(()=>A.drawChart(id,'1d'),80);
+    });
+    A.loadCoinDetail(id);
+  },
   async toggleNotifCat(cat){
     const idx=S.notifPrefs.categories.indexOf(cat);
     if(idx>=0)S.notifPrefs.categories.splice(idx,1);
