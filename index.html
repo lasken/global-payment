@@ -48,24 +48,39 @@
           const ctx=c.getContext('2d');
           ctx.fillStyle='#1A1916';
           ctx.fillRect(0,0,w,h);
-          // Logo circle
           const cx=w/2,cy=h/2;
-          ctx.beginPath();
-          ctx.arc(cx,cy-40,Math.min(w,h)*0.12,0,Math.PI*2);
-          ctx.fillStyle='#C4622D';
-          ctx.fill();
-          // Text
-          ctx.fillStyle='#F8F7F4';
-          ctx.font=`bold ${Math.round(w*0.055)}px Georgia,serif`;
-          ctx.textAlign='center';
-          ctx.textBaseline='middle';
-          ctx.fillText('Toomuchcoin',cx,cy+Math.min(w,h)*0.1);
-          ctx.fillStyle='#C4622D';
-          ctx.fillText('.',cx+ctx.measureText('Toomuchcoin').width/2+Math.round(w*0.015),cy+Math.min(w,h)*0.1);
-          // Tagline
-          ctx.fillStyle='#6B6860';
-          ctx.font=`${Math.round(w*0.028)}px system-ui,sans-serif`;
-          ctx.fillText('Agentic Commerce',cx,cy+Math.min(w,h)*0.16);
+          const logoSize=Math.min(w,h)*0.22;
+          // Draw actual logo image
+          const img=new Image();
+          img.src='toomuchcoin.png';
+          const drawSplash=()=>{
+            ctx.fillStyle='#1A1916';
+            ctx.fillRect(0,0,w,h);
+            // Logo image centered slightly above middle
+            ctx.drawImage(img,cx-logoSize/2,cy-logoSize/2-Math.min(w,h)*0.06,logoSize,logoSize);
+            // App name
+            ctx.fillStyle='#F8F7F4';
+            ctx.font=`600 ${Math.round(w*0.052)}px "DM Serif Display",Georgia,serif`;
+            ctx.textAlign='center';
+            ctx.textBaseline='middle';
+            const nameY=cy+Math.min(w,h)*0.1;
+            ctx.fillText('Toomuchcoin',cx-Math.round(w*0.012),nameY);
+            // Orange dot
+            ctx.fillStyle='#C4622D';
+            ctx.font=`600 ${Math.round(w*0.06)}px Georgia,serif`;
+            const nameW=ctx.measureText('Toomuchcoin').width;
+            ctx.fillText('.',cx-Math.round(w*0.012)+nameW/2+Math.round(w*0.01),nameY-Math.round(w*0.005));
+            // Tagline
+            ctx.fillStyle='#6B6860';
+            ctx.font=`${Math.round(w*0.026)}px "DM Sans",system-ui,sans-serif`;
+            ctx.fillText('Agentic Commerce',cx,nameY+Math.min(w,h)*0.065);
+            const dataUrl=c.toDataURL('image/png');
+            document.querySelectorAll('link[rel="apple-touch-startup-image"]').forEach(l=>{
+              if(l.href.includes('splash-'+w+'x'+h)) l.href=dataUrl;
+            });
+          };
+          img.onload=drawSplash;
+          img.onerror=drawSplash; // draw without logo if fails
           const dataUrl=c.toDataURL('image/png');
           // Store in sessionStorage so service worker can serve it
           try{sessionStorage.setItem('splash-'+w+'x'+h,dataUrl);}catch(e){}
@@ -152,7 +167,7 @@
     .pfx-sym{position:absolute;left:12px;color:var(--t1);font-weight:600;font-size:.95rem;pointer-events:none;z-index:1}
     .pfx input{padding-left:26px}
 
-    #gnav{position:fixed;top:0;left:0;right:0;z-index:900;background:rgba(255,255,255,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px;position:fixed}
+    #gnav{position:fixed;top:0;left:0;right:0;z-index:900;background:rgba(255,255,255,.93);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform;}
     .nbrand{font-family:var(--fd);font-size:1.375rem;color:var(--t1);cursor:pointer;user-select:none}
     .nbrand span{color:var(--org)}
     .nact{display:flex;align-items:center;gap:8px}
@@ -160,7 +175,7 @@
     .nubadge:hover{background:var(--bdr)}
     .navat{width:28px;height:28px;border-radius:50%;background:var(--t1);display:flex;align-items:center;justify-content:center;color:var(--white);font-size:.75rem;font-weight:600}
 
-    .page{min-height:100vh;padding-top:60px;animation:pup .28s ease}
+    .page{min-height:100vh;padding-top:60px;padding-top:calc(60px + env(safe-area-inset-top));animation:pup .28s ease}
     @keyframes pup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 
@@ -392,7 +407,7 @@
     .review-text{font-size:.8125rem;color:var(--t2);line-height:1.5;margin-bottom:5px}
     .review-by{font-size:.72rem;color:var(--t3)}
 
-    .fab{position:fixed;bottom:32px;right:32px;background:var(--t1);color:var(--white);border:none;border-radius:100px;padding:13px 22px;font-family:var(--fb);font-size:.875rem;font-weight:500;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--s3);transition:var(--ease);z-index:100}
+    .fab{position:fixed;bottom:calc(32px + env(safe-area-inset-bottom));right:32px;background:var(--t1);color:var(--white);border:none;border-radius:100px;padding:13px 22px;font-family:var(--fb);font-size:.875rem;font-weight:500;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--s3);transition:var(--ease);z-index:100}
     .fab:hover{transform:translateY(-2px);box-shadow:0 20px 60px rgba(26,25,22,.22)}
 
     .chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 290px);min-height:460px;border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden}
