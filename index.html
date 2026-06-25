@@ -599,7 +599,7 @@ const _hasFwKey  = !!(TMC.FW_PUBLIC_KEY  && !TMC.FW_PUBLIC_KEY.includes('YOUR_')
 const AW_ENDPOINT   = 'https://cloud.appwrite.io/v1';
 const AW_PROJECT_ID = '6a163159003bd203c63f';
 const AW_DB_ID      = '6a1631ee00269fc986b8';
-const ADMIN_ID = '6a18343c00284eaee0af';
+const ADMIN_ID = '6a182772002a6de2d95e';
 
 const AW_COL = {
   profiles       : 'profiles',
@@ -7354,10 +7354,11 @@ const A = {
     const title=document.getElementById('bp-title')?.value?.trim();
     const excerpt=document.getElementById('bp-excerpt')?.value?.trim();
     const tagsRaw=document.getElementById('bp-tags')?.value||'';
-    const body=document.getElementById('bp-body')?.value?.trim();
+    const body=window._bpQuill?window._bpQuill.root.innerHTML.trim():'';
     const err=document.getElementById('bp-err');
     const btn=document.getElementById('bp-btn');
-    if(!title||!body){err.textContent='Title and body are required.';return;}
+    if(!title){err.textContent='Title is required.';return;}
+    if(!body||body==='<p><br></p>'||body==='<p></p>'){err.textContent='Body is required.';return;}
     btn.disabled=true;btn.textContent='Saving…';
     const tags=tagsRaw.split(',').map(t=>t.trim()).filter(Boolean);
     try{
@@ -7408,11 +7409,21 @@ const A = {
   },
 
   async shareBlogPost(id,title,slug){
-    const url=window.location.origin+window.location.pathname+'?blog='+(slug||id);
-    const text='Read "'+title+'" on Toomuchcoin — Deji\'s Blog';
-    if(navigator.share){try{await navigator.share({title,text,url});return;}catch(e){if(e.name==='AbortError')return;}}
-    try{await navigator.clipboard.writeText(url);toast('Link copied!','ok');}
-    catch(e){prompt('Copy this link:',url);}
+    // Find the post to get its cover image and excerpt
+    const post=(S._blogPosts||[]).find(p=>p.id===id)||S._currentPost;
+    const imgUrl=post?.coverImageId?fileUrl(post.coverImageId):'https://toomuchcoin.com/toomuchcoin.png';
+    const excerpt=post?.excerpt||'Thoughts on commerce, crypto, culture, and everything in between.';
+    const postSlug=slug||id;
+    // Use edge function URL so bots get og:image, real users get redirected to SPA
+    const shareUrl='https://toomuchcoin.com/api/blog-preview'
+      +'?slug='+encodeURIComponent(postSlug)
+      +'&title='+encodeURIComponent(title)
+      +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
+      +'&image='+encodeURIComponent(imgUrl);
+    const text='Read "'+title+'" on Toomuchcoin';
+    if(navigator.share){try{await navigator.share({title,text,url:shareUrl});return;}catch(e){if(e.name==='AbortError')return;}}
+    try{await navigator.clipboard.writeText(shareUrl);toast('Link copied!','ok');}
+    catch(e){prompt('Copy this link:',shareUrl);}
   },
 
   toggleKayKayVisibility(){
