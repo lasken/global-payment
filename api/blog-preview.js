@@ -5,13 +5,17 @@ export default async function handler(req) {
   const slug = url.searchParams.get('slug') || '';
   const title = url.searchParams.get('title') || 'Toomuchcoin Blog';
   const excerpt = url.searchParams.get('excerpt') || 'Thoughts on commerce, crypto, culture, and everything in between.';
-  const image = url.searchParams.get('image') || 'https://toomuchcoin.com/toomuchcoin.png';
+  const image = url.searchParams.get('image') || 'https://www.toomuchcoin.com/toomuchcoin.png';
   const type = url.searchParams.get('type') || 'blog';
+  const customCanonical = url.searchParams.get('canonical') || '';
 
-  let canonical = 'https://www.toomuchcoin.com/';
-  if(type === 'blog') canonical += '?blog=' + encodeURIComponent(slug);
-  else if(type === 'vendor') canonical += '?vendor=' + encodeURIComponent(slug);
-  else if(type === 'listing') canonical += '?listing=' + encodeURIComponent(slug);
+  let canonical = customCanonical;
+  if(!canonical){
+    if(type==='blog') canonical='https://www.toomuchcoin.com/blog/'+encodeURIComponent(slug);
+    else if(type==='vendor') canonical='https://www.toomuchcoin.com/?vendor='+encodeURIComponent(slug);
+    else if(type==='listing') canonical='https://www.toomuchcoin.com/?listing='+encodeURIComponent(slug);
+    else canonical='https://www.toomuchcoin.com/';
+  }
 
   const ua = req.headers.get('user-agent') || '';
   const isBot = /facebookexternalhit|twitterbot|whatsapp|linkedinbot|telegrambot|slackbot|discordbot|googlebot|bingbot|applebot/i.test(ua);
@@ -54,9 +58,5 @@ export default async function handler(req) {
 }
 
 function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
