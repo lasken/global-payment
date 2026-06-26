@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/marketplace/orderboard", "destination": "/" },
+    { "source": "/marketplace/vendorlist", "destination": "/" },
+    { "source": "/marketplace/openforum", "destination": "/" },
+    { "source": "/financial/coinmarkets", "destination": "/" },
+    { "source": "/financial/datumlist", "destination": "/" },
+    { "source": "/financial/watchlist", "destination": "/" },
+    { "source": "/blog/:slug", "destination": "/" },
+    { "source": "/api/blog-preview", "destination": "/api/blog-preview" }
+  ]
+}
