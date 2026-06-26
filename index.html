@@ -737,7 +737,7 @@ const KK_PROMPTS=[
 const KK_LOCAL={
   nav:{
     market    :{kw:['marketplace','market','listing','order','board'],fn:()=>{R.go('market');return'Opening the marketplace for you now.';}},
-    crypto    :{kw:['crypto','bitcoin','price','financial','coin','datum list','watchlist','markets'],fn:()=>{R.go('crypto');return'Here are the financial markets.';}},
+    crypto    :{kw:['crypto','bitcoin','price','financial','coin','datum list','watchlist','markets'],fn:()=>{R.go('crypto');return'Here are the Coin Markets.';}},
     profile   :{kw:['profile','account','my page','settings'],fn:()=>{R.go('profile');return'Opening your profile.';}},
     sub       :{kw:['subscription','upgrade','pro','plan','trial','pay'],fn:()=>{R.go('sub');return'Here is the subscription page.';}},
     vendors   :{kw:['vendor','restaurant','logistics','hotel','cafe','spa','find a'],fn:()=>{S.page='market';S.mTab='vendors';render();return'Opening the vendor directory.';}},
@@ -774,7 +774,7 @@ function kkParseAndNavigate(reply){
   setTimeout(()=>{
     if(r.includes('marketplace')||r.includes('order board')||r.includes('taking you to the market')||r.includes('opening the marketplace')){
       if(S.page!=='market'){R.go('market');}
-    } else if(r.includes('financial market')||r.includes('crypto page')||r.includes('market page')||r.includes('taking you to the crypto')||(r.includes('bitcoin')&&r.includes('taking'))){
+    } else if(r.includes('Coin Market')||r.includes('crypto page')||r.includes('market page')||r.includes('taking you to the crypto')||(r.includes('bitcoin')&&r.includes('taking'))){
       if(S.page!=='crypto'){R.go('crypto');}
     } else if(r.includes('opening your profile')||r.includes('taking you to your profile')||r.includes('opening the profile')){
       if(S.page!=='profile'){R.go('profile');}
@@ -935,7 +935,7 @@ Stock prices from prices.json: Gold ~$${S._manualPrices?.gold||'—'}, NVDA ~$${
 Active listings on marketplace: ${listings}
 
 PLATFORM KNOWLEDGE (answer these accurately):
-- Toomuchcoin is a P2P marketplace + financial markets tracker + vendor directory
+- Toomuchcoin is a P2P marketplace + Coin Markets tracker + vendor directory
 - Pro membership: $20/month. Unlocks marketplace, forum, 500+ crypto, Datum List, Vendor directory, KayKay
 - Free trial: 7 days via exclusive coupon code (max 8 users per code)
 - Platform commission: 1% of final deal value. 10% of that goes to 3 charities: Feed the Future Africa, Code for Kids Foundation, Clean Water Initiative NG
@@ -2184,7 +2184,7 @@ const P = {
     return `<div id="pg-land" class="page">
       <p class="l-ey">The unified commerce layer</p>
       <h1 class="l-h">Your passport to <em>trade & access</em> the globe. 🌎</h1>
-      <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time financial markets — all in one place.</p>
+      <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time Coin Markets — all in one place.</p>
       <!-- Blog link where whitepaper was -->
       <div style="margin-top:-40px;margin-bottom:48px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
         <button onclick="R.go('blog')" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:7px 18px;font-family:var(--fb);font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;transition:var(--ease)" onmouseover="this.style.borderColor='var(--t1)';this.style.color='var(--t1)'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)'">
@@ -2211,7 +2211,7 @@ const P = {
           <div class="gci ib" style="background:#E8EEFB"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blu)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg></div>
           <span class="gcl">Markets</span>
           <h2 class="gct">Financial Rates</h2>
-          <p class="gcd">Live prices for 500+ assets, deep-dive analytics, interval charts, and your personal watchlist.</p>
+          <p class="gcd">Live prices for 500+ coins, deep-dive analytics, interval charts, and your personal financial watchlist.</p>
           <div class="gca"><span>View Markets</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
       </div>
@@ -2776,7 +2776,7 @@ const P = {
       <div class="pghdr">
         <div>
           <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
-          <h1 class="pgttl">Financial Markets</h1>
+          <h1 class="pgttl">Coin Markets</h1>
           <p class="pgsub">${subtitle}</p>
         </div>
         ${S.coinsState==='err'?`<button class="btn bo bsm" onclick="loadCoins()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i>Retry</button>`:''}
@@ -3029,7 +3029,7 @@ const P = {
         emoji:'🌏', name:'Asia',
         desc:'Top picks from Asian markets',
         assets:[
-          {id:'tet',  n:'#', name:'$TET',  sym:'TET',  bg:'#26A17B',fg:'#fff',    fp:'$0.43',    ytd:-92.59, y1:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
+          {id:'tet',  n:'#', name:'$TET',  sym:'TET',  bg:'#26A17B',fg:'#fff',    fp:'$0.9986',    ytd:-92.59, y1:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
           {id:'tsmc', n:'#', name:'TSMC',  sym:'TSM',  bg:'#E31837',fg:'#fff',    fp:'$446.81',  ytd:35.29,  y1:131.58,   y5:273.43,   y10:2095,  sj:0},
         ],
       },
@@ -3462,7 +3462,7 @@ const P = {
         <div>
           <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
           <h1 style="font-family:var(--fd);font-size:clamp(2rem,4vw,3rem);line-height:1.1;margin-bottom:6px">Blog <em style="color:var(--org);font-style:italic">✦</em></h1>
-          <p style="font-size:.9375rem;color:var(--t2);max-width:480px;line-height:1.6">Thoughts on commerce, crypto, culture, and everything in between.</p>
+          <p style="font-size:.9375rem;color:var(--t2);max-width:480px;line-height:1.6">Thoughts on commerce, culture, and everything in between.</p>
         </div>
         ${isAdmin?`<button class="btn bp" style="margin-top:22px" onclick="M.newBlogPost()"><i data-lucide="plus" style="width:14px;height:14px"></i>Write New Post</button>`:''}
       </div>
@@ -3471,7 +3471,7 @@ const P = {
       <div style="background:linear-gradient(135deg,#F3EEFF,#ede8fb);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:18px 22px;margin:20px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <div style="flex:1;min-width:200px">
           <div style="font-weight:700;font-size:.9375rem;color:var(--pur);margin-bottom:4px;display:flex;align-items:center;gap:6px"><i data-lucide="lock" style="width:14px;height:14px"></i>Premium Reading</div>
-          <div style="font-size:.8rem;color:var(--t2);line-height:1.5">Full posts are available to Pro members. Upgrade to read everything and support independent writing.</div>
+          <div style="font-size:.8rem;color:var(--t2);line-height:1.5">Full posts are available to Pro members. Upgrade to read everything and gain timeless financial knowledge.</div>
         </div>
         <button class="btn bpur bsm" onclick="R.go('sub')" style="white-space:nowrap"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade to Pro</button>
       </div>`:''}
@@ -3553,7 +3553,7 @@ const P = {
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
           <div style="width:52px;height:52px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff"><i data-lucide="lock" style="width:22px;height:22px"></i></div>
           <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:8px">This is a Pro post</div>
-          <p style="font-size:.875rem;color:var(--t2);margin-bottom:18px;max-width:300px;line-height:1.6">Upgrade to Pro to read this and all future posts from Deji.</p>
+          <p style="font-size:.875rem;color:var(--t2);margin-bottom:18px;max-width:300px;line-height:1.6">Upgrade to Pro to read this and all future posts.</p>
           <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/mo</button>
         </div>
       </div>`
@@ -5985,7 +5985,7 @@ const A = {
           <select id="ann-link">
             <option value="">No link</option>
             <option value="market">Marketplace</option>
-            <option value="crypto">Financial Markets</option>
+            <option value="crypto">Coin Markets</option>
             <option value="sub">Subscription</option>
             <option value="profile">Profile</option>
           </select>
@@ -6223,7 +6223,7 @@ const A = {
       tsmc:       {2024:100,   2025:195,   2026:446.81},
       dangcem:    {2024:620,   2025:1180,  2026:1180.00},
       eth:        {2024:2300,  2025:3400,  2026:2013.93},
-      tet:        {2024:1,     2025:0.50,  2026:0.43},
+      tet:        {2024:1,     2025:0.50,  2026:0.9986},
     };
 
     if(hist.length<2&&joinDate){
