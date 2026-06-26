@@ -6229,23 +6229,28 @@ const A = {
     if(hist.length<2&&joinDate){
       const daysSinceJoin=Math.max(7,Math.round((Date.now()-joinDate.getTime())/(24*60*60*1000)));
       const points=Math.min(daysSinceJoin,180);
-      const entryMap=ENTRY_PRICES[id]||{};
-      const joinYear=joinDate.getFullYear();
-      const joinEntryPrice=entryMap[joinYear]||entryMap[2025]||livePrice||1000;
+      // Always start from the same baseline price used in the table
+      const joinEntryPrice=localBaselines[id]||livePrice||1000;
       let p=joinEntryPrice;
-      const vol=0.018;
+      const vol=0.015;
       hist=Array.from({length:points},(_,i)=>{
-        p=p*(1+(Math.random()-0.46)*vol);
-        if(i===points-1) p=livePrice||p;
+        const progress=i/(points-1);
+        // Interpolate smoothly from entry price to current price
+        const target=joinEntryPrice+(( livePrice||joinEntryPrice)-joinEntryPrice)*progress;
+        const noise=(Math.random()-0.5)*target*vol;
+        p=target+noise;
+        if(i===0) p=joinEntryPrice;
+        if(i===points-1) p=livePrice||joinEntryPrice;
         const d=new Date(joinDate.getTime()+i*(daysSinceJoin/points)*24*60*60*1000);
         return{d:d.toISOString().split('T')[0],p:Math.max(p,0.000001)};
       });
     }
 
     // Entry price = first historical data point or real join-date price
-    const ENTRY_PRICES_MAP=ENTRY_PRICES;
-    const joinYear2=joinDate?.getFullYear()||2025;
-    const realEntryPrice=(ENTRY_PRICES_MAP[id]||{})[joinYear2]||(ENTRY_PRICES_MAP[id]||{})[2025]||hist[0]?.p||livePrice||1;
+    // Read from same source as datum list table for consistency
+    let localBaselines={};
+    try{localBaselines=JSON.parse(localStorage.getItem('datum_user_baselines'))||{};}catch(e){}
+    const realEntryPrice=localBaselines[id]||hist[0]?.p||livePrice||1;
 
     const joinPrice=realEntryPrice;
     const currentP=livePrice||hist[hist.length-1]?.p||joinPrice;
