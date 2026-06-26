@@ -3527,7 +3527,7 @@ const P = {
     return`<div style="max-width:780px;margin:0 auto;padding:clamp(16px,4vw,80px) 16px 80px" class="page">
       <button class="back" style="margin-top:0" onclick="R.go('blog')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Blog</button>
 
-      ${imgUrl?`<div style="width:100%;max-height:420px;border-radius:var(--rlg);margin-bottom:28px;overflow:hidden"><img src="${imgUrl}" style="width:100%;height:420px;object-fit:cover;display:block" alt="${post.title}" onerror="this.parentNode.remove()"></div>`:''}
+      ${imgUrl?`<div style="width:100%;max-height:420px;border-radius:var(--rlg);margin-bottom:28px;overflow:hidden;background:var(--surf)"><img src="${imgUrl}" style="width:100%;height:auto;max-height:420px;object-fit:contain;display:block;margin:0 auto" alt="${post.title}" onerror="this.parentNode.remove()"></div>`:''}
 
       ${post.tags?.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${post.tags.map(t=>`<span class="tag tn" style="font-size:.72rem">${t}</span>`).join('')}</div>`:''}
 
