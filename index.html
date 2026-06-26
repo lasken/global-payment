@@ -1423,7 +1423,7 @@ function userAvatar(userId,initials,size=34,style=''){
   if(S.user && userId === S.user.id){
     const aid = S.user.avatarId;
     if(aid){
-      return`<img src="${fileUrl(aid)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;${style}" onerror="this.outerHTML='<div style=width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0>${initials}</div>'">`;
+      return`<img src="${fileUrl(aid)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;object-position:${S.user.avatarFocus||'center center'};display:block;flex-shrink:0;${style}" onerror="this.outerHTML='<div style=width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0>${initials}</div>'">`;
     }
     return`<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0;${style}">${initials}</div>`;
   }
@@ -2275,7 +2275,7 @@ const P = {
       <div class="phero">
         <div class="uavatar-wrap">
           ${u.avatarId
-            ?`<img src="${fileUrl(u.avatarId)}" class="uavatar" onerror="this.style.display='none';document.getElementById('pav-fb').style.display='flex'">`
+            ?`<img src="${fileUrl(u.avatarId)}" class="uavatar" style="object-position:${u.avatarFocus||'center center'}" onerror="this.style.display='none';document.getElementById('pav-fb').style.display='flex'">`
             :''}
           <div class="pavat" id="pav-fb" style="${u.avatarId?'display:none':'display:flex'}">${u.inits}</div>
           <button class="uavatar-edit" onclick="A.changeAvatar()" title="${u.avatarId?'Change photo':'Add photo'}">
@@ -3457,7 +3457,7 @@ const P = {
     const posts=S._blogPosts||[];
     const loading=S._blogLoading;
     const isAdmin=S.user?.id===ADMIN_ID;
-    return`<div style="max-width:1080px;margin:0 auto;padding:80px 24px 80px" class="page">
+    return`<div style="max-width:1080px;margin:0 auto;padding:clamp(16px,4vw,80px) 16px 80px" class="page">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:8px">
         <div>
           <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
@@ -3522,7 +3522,7 @@ const P = {
       .replace(/\n\n/g,'</p><p>')
       .replace(/^(?!<[h|b])/,'<p>')
       +'</p>';
-    return`<div style="max-width:780px;margin:0 auto;padding:80px 24px 80px" class="page">
+    return`<div style="max-width:780px;margin:0 auto;padding:clamp(16px,4vw,80px) 16px 80px" class="page">
       <button class="back" style="margin-top:0" onclick="R.go('blog')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Blog</button>
 
       ${imgUrl?`<div style="width:100%;max-height:420px;border-radius:var(--rlg);margin-bottom:28px;overflow:hidden"><img src="${imgUrl}" style="width:100%;height:420px;object-fit:cover;display:block" alt="${post.title}" onerror="this.parentNode.remove()"></div>`:''}
@@ -3548,13 +3548,17 @@ const P = {
       </div>
 
       ${isLocked?`
-      <div class="blog-post-body" style="position:relative">
-        <div style="filter:blur(3px);pointer-events:none;user-select:none;opacity:.5">${bodyHtml}</div>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
+      <div class="blog-post-body">
+        <div style="position:relative;overflow:hidden;max-height:180px;pointer-events:none;user-select:none">
+          <div style="opacity:.6">${bodyHtml}</div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:100px;background:linear-gradient(to bottom,transparent,var(--white))"></div>
+        </div>
+        <div style="border:1.5px solid #D4C8F0;border-radius:var(--rlg);padding:32px 24px;text-align:center;background:linear-gradient(135deg,#F3EEFF,#ede8fb);margin-top:0">
           <div style="width:52px;height:52px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff"><i data-lucide="lock" style="width:22px;height:22px"></i></div>
-          <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:8px">This is a Pro post</div>
-          <p style="font-size:.875rem;color:var(--t2);margin-bottom:18px;max-width:300px;line-height:1.6">Upgrade to Pro to read this and all future posts.</p>
-          <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/mo</button>
+          <div style="font-family:var(--fd);font-size:1.3rem;margin-bottom:8px">Continue reading</div>
+          <p style="font-size:.875rem;color:var(--t2);margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.6">This post is for Pro members. Upgrade to read the full article and all future posts from Deji.</p>
+          <button class="btn bpur" onclick="R.go('sub')" style="padding:12px 28px"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/mo</button>
+          <div style="font-size:.72rem;color:var(--t3);margin-top:12px">Have a coupon? <span onclick="R.go('sub')" style="color:var(--pur);cursor:pointer;text-decoration:underline">Redeem it here</span></div>
         </div>
       </div>`
       :`<div class="blog-post-body">${bodyHtml}</div>`}
@@ -4662,9 +4666,12 @@ const M = {
 const R = {
   go(page){
     stopAR();
-    // Remember where we came from before entering KayKay
     if(page==='kaykay'&&S.page!=='kaykay') S._kkPrevPage=S.page||'land';
     S.page=page;
+    // Push pretty URL to browser history
+    const _prettyMap={market:'/marketplace/orderboard',crypto:'/financial/coinmarkets',blog:'/blog',land:'/',profile:'/profile',sub:'/subscribe',kaykay:'/kaykay'};
+    const _prettyUrl=_prettyMap[page]||'/';
+    if(window.location.pathname!==_prettyUrl) history.pushState({},'',_prettyUrl);
     if(page==='market'){S.mTab='board';S.mFilter='all';loadOrders();startAR();}
     if(page==='crypto'&&S.coinsState==='idle') loadCoins();
     if(page==='kaykay'){kkLoadLocal();kkBuildPersona();}
@@ -4923,7 +4930,8 @@ const A = {
     const minP=Math.min(...prices);
     const maxP=Math.max(...prices);
     const range=maxP-minP||1;
-    const xScale=(i)=>pad.left+(i*(chartW/(data.length-1)));
+    // Add 0.5% right padding so the last point never sits flush against the edge
+    const xScale=(i)=>pad.left+(i*(chartW/Math.max(data.length-1,1))*(1-0.005));
     const yScale=(p)=>pad.top+chartH-(((p-minP)/range)*chartH);
 
     // Draw grid lines
@@ -5351,6 +5359,8 @@ const A = {
   setMTab(t){
     if(t==='forum'&&!S.subscribed){M.subscribe();return;}
     S.mTab=t;
+    const _tabUrl={board:'/marketplace/orderboard',vendors:'/marketplace/vendorlist',forum:'/marketplace/openforum'}[t]||'/marketplace/orderboard';
+    if(window.location.pathname!==_tabUrl) history.pushState({},'',_tabUrl);
     if(t==='board') loadOrders();
     if(t==='forum'){loadChat();A._loadAllUsersForMention();}
     render();
@@ -5778,22 +5788,98 @@ const A = {
       const file=e.target.files[0];
       if(!file) return;
       if(file.size>3*1024*1024){toast('Image must be under 3MB','err');return;}
-      toast('Uploading photo…');
-      try{
-        if(S.user.avatarId){
-          try{await _storage.deleteFile(BUCKET_ID,S.user.avatarId);}catch(e){}
-        }
-        const uploaded=await _storage.createFile(BUCKET_ID,ID.unique(),file);
-        const profRes=await DB.list('profiles',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
-        if(profRes.documents[0]){
-          await DB.update('profiles',profRes.documents[0].$id,{avatarId:uploaded.$id});
-        }
-        S.user.avatarId=uploaded.$id;
-        render();
-        toast('Profile photo updated!','ok');
-      }catch(e){toast('Upload failed: '+e.message,'err');}
+      // Show crop focus picker before uploading
+      const previewUrl=URL.createObjectURL(file);
+      A._pendingAvatarFile=file;
+      A._pendingAvatarUrl=previewUrl;
+      M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+        <div class="modal" style="max-width:420px">
+          <div class="mhdr">
+            <div><div class="mey">Profile Photo</div><h2 class="mtitle">Set Focus Point</h2></div>
+            <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+          </div>
+          <div style="font-size:.8rem;color:var(--t2);margin-bottom:12px;line-height:1.5">Click anywhere on the image to set where the circular crop focuses. This ensures your face shows correctly in the avatar.</div>
+          <!-- Preview of how it will look -->
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:12px;background:var(--surf);border-radius:var(--rsm)">
+            <div id="av-preview-circle" style="width:68px;height:68px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid var(--bdr)">
+              <img src="${previewUrl}" id="av-preview-img" style="width:100%;height:100%;object-fit:cover;object-position:center center;display:block">
+            </div>
+            <div>
+              <div style="font-weight:600;font-size:.875rem">${S.user.name}</div>
+              <div style="font-size:.75rem;color:var(--t3)">Preview of your avatar</div>
+            </div>
+          </div>
+          <!-- Full image with click-to-focus -->
+          <div style="position:relative;cursor:crosshair;border-radius:var(--rsm);overflow:hidden;border:1.5px solid var(--bdr)" id="av-focus-wrap">
+            <img src="${previewUrl}" id="av-focus-full" style="width:100%;max-height:320px;object-fit:contain;display:block;background:var(--off)">
+            <div id="av-focus-dot" style="display:none;position:absolute;width:22px;height:22px;border-radius:50%;border:3px solid #fff;background:var(--pur);box-shadow:0 2px 8px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none"></div>
+          </div>
+          <input type="hidden" id="av-focus-val" value="center center"/>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn bg bsm" onclick="document.getElementById('av-focus-val').value='center center';document.getElementById('av-focus-dot').style.display='none';document.getElementById('av-preview-img').style.objectPosition='center center'">Reset to Center</button>
+            <span style="font-size:.72rem;color:var(--t3)" id="av-focus-label">Click the image to set focus</span>
+          </div>
+          <div class="ferr" id="av-err"></div>
+          <button class="btn bp" id="av-btn" style="width:100%;justify-content:center;padding:12px;margin-top:16px" onclick="A.uploadAvatar()">
+            <i data-lucide="upload" style="width:14px;height:14px"></i>Save Photo
+          </button>
+        </div>
+      </div>`);
+      // Wire up click-to-focus on the full image
+      setTimeout(()=>{
+        const wrap=document.getElementById('av-focus-wrap');
+        const fullImg=document.getElementById('av-focus-full');
+        const previewImg=document.getElementById('av-preview-img');
+        const dot=document.getElementById('av-focus-dot');
+        const label=document.getElementById('av-focus-label');
+        const valInput=document.getElementById('av-focus-val');
+        if(!wrap) return;
+        wrap.addEventListener('click',ev=>{
+          const rect=fullImg.getBoundingClientRect();
+          const xPct=Math.round(((ev.clientX-rect.left)/rect.width)*100);
+          const yPct=Math.round(((ev.clientY-rect.top)/rect.height)*100);
+          const focusVal=xPct+'% '+yPct+'%';
+          valInput.value=focusVal;
+          // Move dot
+          dot.style.display='block';
+          dot.style.left=xPct+'%';
+          dot.style.top=yPct+'%';
+          // Update preview
+          previewImg.style.objectPosition=focusVal;
+          label.textContent='Focus: '+focusVal;
+        });
+      },100);
     };
     input.click();
+  },
+
+  async uploadAvatar(){
+    const file=A._pendingAvatarFile;
+    const focusVal=document.getElementById('av-focus-val')?.value||'center center';
+    const btn=document.getElementById('av-btn');
+    const err=document.getElementById('av-err');
+    if(!file){err.textContent='No file selected.';return;}
+    btn.disabled=true;btn.textContent='Uploading…';
+    try{
+      if(S.user.avatarId){
+        try{await _storage.deleteFile(BUCKET_ID,S.user.avatarId);}catch(e){}
+      }
+      const uploaded=await _storage.createFile(BUCKET_ID,ID.unique(),file);
+      const profRes=await DB.list('profiles',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
+      if(profRes.documents[0]){
+        await DB.update('profiles',profRes.documents[0].$id,{avatarId:uploaded.$id,avatarFocus:focusVal});
+      }
+      S.user.avatarId=uploaded.$id;
+      S.user.avatarFocus=focusVal;
+      A._pendingAvatarFile=null;
+      A._pendingAvatarUrl=null;
+      M.close();
+      render();
+      toast('Profile photo updated!','ok');
+    }catch(e){
+      err.textContent='Upload failed: '+e.message;
+      btn.disabled=false;btn.textContent='Save Photo';
+    }
   },
 
   previewOrderImgs(input){
@@ -6501,6 +6587,8 @@ Rules:
   },
   setCryptoSub(s){
     S.cryptoSub=s;
+    const _subUrl={market:'/financial/coinmarkets',watchlist:'/financial/watchlist',assetlist:'/financial/datumlist',portfolio:'/financial/portfolio'}[s]||'/financial/coinmarkets';
+    if(window.location.pathname!==_subUrl) history.pushState({},'',_subUrl);
     if(s==='assetlist'){
       S.selDatumAsset=null;
       if(!S.alLoading&&Object.keys(S.alPrices).length===0) loadAlData();
@@ -7927,7 +8015,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
   if(u){
     const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
     const p=res.documents[0];
-    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null,profileDocId:p?.$id||null};
+    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null,avatarFocus:p?.avatarFocus||'center center',profileDocId:p?.$id||null};
     // Load baselines from Appwrite profile so they're consistent across all devices
     if(p?.joinBaselines){
       try{
@@ -8030,6 +8118,37 @@ document.addEventListener('DOMContentLoaded', async()=>{
   // if(S.user&&KK.wakeWord){
   //   setTimeout(()=>kkStartWakeWord(),2000);
   // }
+  // Pretty URL routing — map clean paths to SPA state
+  const _path=window.location.pathname;
+  if(_path==='/marketplace/orderboard'){
+    history.replaceState({},'','/marketplace/orderboard');
+    S.page='market';S.mTab='board';loadOrders();startAR();render();
+  } else if(_path==='/marketplace/vendorlist'){
+    history.replaceState({},'','/marketplace/vendorlist');
+    S.page='market';S.mTab='vendors';render();
+  } else if(_path==='/marketplace/openforum'){
+    history.replaceState({},'','/marketplace/openforum');
+    S.page='market';S.mTab='forum';loadChat();render();
+  } else if(_path==='/financial/coinmarkets'){
+    history.replaceState({},'','/financial/coinmarkets');
+    S.page='crypto';S.cryptoSub='market';loadCoins();render();
+  } else if(_path==='/financial/datumlist'){
+    history.replaceState({},'','/financial/datumlist');
+    S.page='crypto';S.cryptoSub='assetlist';loadCoins();render();
+  } else if(_path==='/financial/watchlist'){
+    history.replaceState({},'','/financial/watchlist');
+    S.page='crypto';S.cryptoSub='watchlist';loadCoins();render();
+  } else if(_path.startsWith('/blog/')){
+    const _blogSlug=_path.replace('/blog/','');
+    history.replaceState({},'',_path);
+    (async()=>{
+      await A.loadBlogPosts();
+      const post=(S._blogPosts||[]).find(p=>p.slug===_blogSlug||p.id===_blogSlug);
+      if(post){S._currentPost=post;S.page='blogpost';render();}
+      else R.go('blog');
+    })();
+  }
+
   const _qs=new URLSearchParams(window.location.search);
   const _vCat=_qs.get('vendors');
   const _vCity=_qs.get('city');
