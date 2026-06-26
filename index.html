@@ -7628,20 +7628,21 @@ Rules:
   },
 
   async shareBlogPost(id,title,slug){
-    const post=(S._blogPosts||[]).find(p=>p.id===id)||S._currentPost;
-    const imgUrl=post?.coverImageId?fileUrl(post.coverImageId):'https://toomuchcoin.com/toomuchcoin.png';
-    const excerpt=post?.excerpt||'Thoughts on commerce, crypto, culture, and everything in between.';
-    const postSlug=slug||id;
-    const shareUrl='https://www.toomuchcoin.com/api/blog-preview'
-      +'?type=blog'
-      +'&slug='+encodeURIComponent(postSlug)
-      +'&title='+encodeURIComponent(title)
-      +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
-      +'&image='+encodeURIComponent(imgUrl);
-    const text='Read "'+title+'" on Toomuchcoin';
-    if(navigator.share){try{await navigator.share({title,text,url:shareUrl});return;}catch(e){if(e.name==='AbortError')return;}}
-    try{await navigator.clipboard.writeText(shareUrl);toast('Link copied!','ok');}
-    catch(e){prompt('Copy this link:',shareUrl);}
+    const cleanSlug=slug&&slug.length<60&&!slug.match(/^[a-f0-9]{20,}$/)
+      ?slug
+      :title.toLowerCase().trim()
+        .replace(/[^a-z0-9\s]/g,'')
+        .replace(/\s+/g,'-')
+        .replace(/-+/g,'-')
+        .slice(0,50)
+        .replace(/-$/,'');
+    const url='https://www.toomuchcoin.com/?blog='+cleanSlug;
+    const shareText=title+'\n'+url;
+    if(navigator.share){
+      try{await navigator.share({title,text:shareText,url});return;}catch(e){if(e.name==='AbortError')return;}
+    }
+    try{await navigator.clipboard.writeText(shareText);toast('Link copied!','ok');}
+    catch(e){prompt('Copy this link:',url);}
   },
 
   toggleKayKayVisibility(){
@@ -8053,7 +8054,16 @@ document.addEventListener('DOMContentLoaded', async()=>{
   if(_blogParam){
     history.replaceState({},'',window.location.pathname);
     await A.loadBlogPosts();
-    const post=(S._blogPosts||[]).find(p=>p.slug===_blogParam||p.id===_blogParam);
+    const post=(S._blogPosts||[]).find(p=>{
+      if(p.slug===_blogParam||p.id===_blogParam) return true;
+      const derived=p.title.toLowerCase().trim()
+        .replace(/[^a-z0-9\s]/g,'')
+        .replace(/\s+/g,'-')
+        .replace(/-+/g,'-')
+        .slice(0,50)
+        .replace(/-$/,'');
+      return derived===_blogParam;
+    });
     if(post){S._currentPost=post;S.page='blogpost';render();}
     else R.go('blog');
   }
