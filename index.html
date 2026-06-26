@@ -599,7 +599,7 @@ const _hasFwKey  = !!(TMC.FW_PUBLIC_KEY  && !TMC.FW_PUBLIC_KEY.includes('YOUR_')
 const AW_ENDPOINT   = 'https://cloud.appwrite.io/v1';
 const AW_PROJECT_ID = '6a163159003bd203c63f';
 const AW_DB_ID      = '6a1631ee00269fc986b8';
-const ADMIN_ID = '6a182772002a6de2d95e';
+const ADMIN_ID = '6a18343c00284eaee0af';
 
 const AW_COL = {
   profiles       : 'profiles',
@@ -767,6 +767,85 @@ function startAR(){
 function stopAR(){ if(_rt){clearInterval(_rt);_rt=null;} }
 // ── KayKay Core ──
 
+function kkParseAndNavigate(reply){
+  if(!reply) return;
+  const r=reply.toLowerCase();
+  // Wait a moment then navigate so user sees the message first
+  setTimeout(()=>{
+    if(r.includes('marketplace')||r.includes('order board')||r.includes('taking you to the market')||r.includes('opening the marketplace')){
+      if(S.page!=='market'){R.go('market');}
+    } else if(r.includes('financial market')||r.includes('crypto page')||r.includes('market page')||r.includes('taking you to the crypto')||(r.includes('bitcoin')&&r.includes('taking'))){
+      if(S.page!=='crypto'){R.go('crypto');}
+    } else if(r.includes('opening your profile')||r.includes('taking you to your profile')||r.includes('opening the profile')){
+      if(S.page!=='profile'){R.go('profile');}
+    } else if(r.includes('subscription page')||r.includes('upgrade page')||r.includes('taking you to the sub')){
+      if(S.page!=='sub'){R.go('sub');}
+    } else if(r.includes('vendor director')||r.includes('taking you to the vendor')){
+      S.page='market';S.mTab='vendors';render();
+    } else if(r.includes('blog')||r.includes('taking you to the blog')){
+      if(S.page!=='blog'){R.go('blog');}
+    } else if(r.includes('taking you home')||r.includes('going home')){
+      if(S.page!=='land'){R.go('land');}
+    } else if(r.includes('datum list')){
+      S.cryptoSub='assetlist';
+      if(S.page!=='crypto') R.go('crypto');
+      else render();
+    }
+    // Close KayKay panel after navigating
+    if(KK.open) setTimeout(()=>kkClose(),800);
+  },1200);
+}
+const KK_THINKING_PHRASES=[
+  'Thinking…',
+  'Give me a second…',
+  'On it…',
+  'Checking the latest…',
+  'Almost there…',
+  'Let me look that up…',
+  'Processing…',
+  'Connecting the dots…',
+  'Crunching the numbers…',
+  'One moment…',
+  'Reading the market…',
+  'Consulting the data…',
+  'Getting smarter by the second…',
+  'Worth the wait, I promise…',
+  'Still with you…',
+  'Pulling this together…',
+  'Just a heartbeat…',
+  'Making sure I get this right…',
+  'Your answer is loading…',
+  'Thinking cap on…',
+];
+
+let _kkThinkTimer=null;
+let _kkThinkIndex=0;
+
+function kkStartThinking(){
+  _kkThinkIndex=0;
+  clearInterval(_kkThinkTimer);
+  const update=()=>{
+    const el=document.getElementById('kk-thinking-text');
+    if(el){
+      el.style.opacity='0';
+      setTimeout(()=>{
+        if(el){
+          el.textContent=KK_THINKING_PHRASES[_kkThinkIndex%KK_THINKING_PHRASES.length];
+          el.style.opacity='1';
+          el.style.transition='opacity .4s ease';
+        }
+      },200);
+    }
+    _kkThinkIndex++;
+  };
+  update();
+  _kkThinkTimer=setInterval(update,2200);
+}
+
+function kkStopThinking(){
+  clearInterval(_kkThinkTimer);
+  _kkThinkTimer=null;
+}
 function kkLoadLocal(){
   try{
     const h=localStorage.getItem('kaykay_history');
@@ -892,12 +971,14 @@ async function kkAsk(userText){
   kkAddMsg('user',userText);
   KK.persona.totalConversations=(KK.persona.totalConversations||0)+1;
   if(S.page==='kaykay') kkUpdatePageInPlace();
+  kkStartThinking();
 
   // Check for local navigation command first (no Gemini needed)
   const lower=userText.toLowerCase();
   for(const[,nav] of Object.entries(KK_LOCAL.nav)){
     if(nav.kw.some(kw=>lower.includes(kw))){
       const reply=nav.fn();
+      kkStopThinking();
       KK.loading=false;
       kkAddMsg('kk',reply);
       kkSpeak(reply);
@@ -918,11 +999,12 @@ async function kkAsk(userText){
 
   if(!kkFnId){
     const fallback=kkLocalFallback(userText);
-    KK.loading=false;
-    kkAddMsg('kk',fallback);
-    kkSpeak(fallback);
-    if(S.page==='kaykay') kkUpdatePageInPlace();
-    return;
+      kkStopThinking();
+      KK.loading=false;
+      kkAddMsg('kk',fallback);
+      kkSpeak(fallback);
+      if(S.page==='kaykay') kkUpdatePageInPlace();
+      return;
   }
 
   const callAI=async()=>{
@@ -942,9 +1024,10 @@ async function kkAsk(userText){
   };
 
   try{
-    let reply=await callAI();
-    if(!reply) throw new Error('empty_response');
-    KK.loading=false;
+      let reply=await callAI();
+      if(!reply) throw new Error('empty_response');
+      kkStopThinking();
+      KK.loading=false;
     kkAddMsg('kk',reply);
     kkSpeak(reply);
     kkBuildPersona();
@@ -957,16 +1040,19 @@ async function kkAsk(userText){
       await new Promise(r=>setTimeout(r,3000));
       try{
         let reply=await callAI();
-        KK.history=KK.history.filter(m=>m.text!==retryMsg);
-        if(!reply) throw new Error('empty');
+        if(!reply) throw new Error('empty_response');
+        kkStopThinking();
         KK.loading=false;
         kkAddMsg('kk',reply);
         kkSpeak(reply);
         kkBuildPersona();
         if(S.page==='kaykay') kkUpdatePageInPlace();
-      }catch(e2){
+        // Parse reply for navigation intent and execute
+        kkParseAndNavigate(reply);
+      }catch(e){
         KK.history=KK.history.filter(m=>m.text!==retryMsg);
         const fb=kkLocalFallback(userText);
+        kkStopThinking();
         KK.loading=false;
         kkAddMsg('kk',fb);
         kkSpeak(fb);
@@ -975,6 +1061,7 @@ async function kkAsk(userText){
     } else {
       console.warn('KayKay AI error:',e.message);
       const fb=kkLocalFallback(userText);
+      kkStopThinking();
       KK.loading=false;
       kkAddMsg('kk',fb);
       kkSpeak(fb);
@@ -1195,7 +1282,7 @@ function kkUpdatePanel(){
       <div class="kk-msg ${m.role==='user'?'user':'kk'}">
         <div class="kk-bubble">${m.text}</div>
       </div>`).join('');
-    if(KK.loading) feed.innerHTML+=`<div class="kk-msg kk"><div class="kk-bubble" style="display:flex;gap:5px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);animation:kkDot .8s .4s infinite"></span></div></div>`;
+    if(KK.loading) feed.innerHTML+=`<div class="kk-msg kk"><div class="kk-bubble" style="display:flex;flex-direction:column;gap:7px;min-width:180px"><div style="display:flex;gap:5px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .4s infinite"></span></div><div id="kk-thinking-text" style="font-size:.72rem;color:rgba(255,255,255,.4);font-style:italic"></div></div></div>`;
     feed.scrollTop=feed.scrollHeight;
   }
   // Update mic button
@@ -1839,11 +1926,14 @@ function kkUpdatePageInPlace(){
     const loading=KK.loading?`
       <div style="display:flex;justify-content:flex-start">
         <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>
-        <div style="padding:12px 16px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);display:flex;gap:5px;align-items:center">
-          <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s infinite"></div>
-          <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .2s infinite"></div>
-          <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .4s infinite"></div>
-        </div>
+        <div style="padding:12px 16px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:8px;min-width:200px">
+            <div style="display:flex;gap:5px;align-items:center">
+              <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s infinite"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .2s infinite"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .4s infinite"></div>
+            </div>
+            <div id="kk-thinking-text" style="font-size:.72rem;color:rgba(255,255,255,.4);font-style:italic;animation:kkMsgIn .3s ease"></div>
+          </div>
       </div>`:'';
     feed.innerHTML=msgs+loading;
     feed.scrollTop=feed.scrollHeight;
@@ -2001,8 +2091,9 @@ function render(){
   const kkFab=document.getElementById('kk-fab');
   if(kkFab){
     const kkHidden=localStorage.getItem('kaykay_hidden')==='true';
-    const showOnlyOnLand=S.page==='land';
-    kkFab.style.display=(kkHidden||!showOnlyOnLand)?'none':'flex';
+    const isForumTab=S.page==='market'&&S.mTab==='forum';
+    const isKayKayPage=S.page==='kaykay';
+    kkFab.style.display=(kkHidden||isForumTab||isKayKayPage)?'none':'flex';
   }
 
   renderNav();lucide.createIcons();
@@ -2787,16 +2878,27 @@ const P = {
       <div class="chartwrap" style="position:relative">
         ${S._chartLoading?`<div style="height:280px;display:flex;align-items:center;justify-content:center;background:var(--off)"><div class="spin"></div></div>`:`
         <div style="position:relative">
-          <div id="chart-fixed-label" style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--t1);color:#fff;border-radius:var(--rsm);padding:4px 10px;font-size:.75rem;z-index:10;pointer-events:none">
+          <div id="chart-fixed-label" style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--t1);color:#fff;border-radius:var(--rsm);padding:4px 10px;font-size:.75rem;z-index:10;pointer-events:none;white-space:nowrap">
             <span id="chart-fix-price"></span> &nbsp;·&nbsp; <span id="chart-fix-date"></span>
           </div>
           <div id="chart-tooltip" style="display:none;position:absolute;background:var(--t1);color:#fff;border-radius:var(--rsm);padding:5px 10px;font-size:.75rem;z-index:10;pointer-events:none;white-space:nowrap">
             <div id="chart-tip-price" style="font-weight:600"></div>
             <div id="chart-tip-date" style="opacity:.7;font-size:.68rem"></div>
           </div>
-          <canvas id="price-chart" style="width:100%;height:280px;display:block;cursor:crosshair"></canvas>
+          <!-- Scroll hint badge -->
+          <div id="chart-scroll-hint" style="position:absolute;top:10px;right:10px;background:rgba(26,25,22,.55);color:#fff;font-size:.65rem;padding:3px 8px;border-radius:100px;display:flex;align-items:center;gap:4px;pointer-events:none;z-index:5;transition:opacity .4s">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            swipe
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <!-- Scrollable chart wrapper -->
+          <div id="chart-scroll-wrap" style="overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab;background:var(--off)" onscroll="document.getElementById('chart-scroll-hint').style.opacity='0'">
+            <div id="chart-scroll-inner" style="position:relative;display:inline-block">
+              <canvas id="price-chart" style="display:block;height:280px;cursor:crosshair"></canvas>
+            </div>
+          </div>
         </div>
-        <div class="cxlabels" id="chart-xlabels" style="display:flex;justify-content:space-between;padding:7px 14px;background:var(--off);border-top:1px solid var(--bdr);font-size:.68rem;color:var(--t3)"></div>`}
+        <div class="cxlabels" id="chart-xlabels" style="overflow-x:auto;scrollbar-width:none;display:flex;padding:7px 14px;background:var(--off);border-top:1px solid var(--bdr);font-size:.68rem;color:var(--t3);white-space:nowrap;gap:0"></div>`}
       </div>
       <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:18px">
         <div id="dd-price-display" style="font-family:var(--fd);font-size:2rem;font-weight:600">${fmtp(coin.price)}</div>
@@ -2895,14 +2997,17 @@ const P = {
       return`<span class="perf ${v>=0?'pp':'pn'}">${v>=0?'+':''}${Number(v).toFixed(2)}%</span>`;
     };
     const logo=(id,bg,fg,sym)=>{
-      if(id==='btc'){const c=S.coins.find(x=>x.id==='bitcoin');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
-      if(id==='eth'){const c=S.coins.find(x=>x.id==='ethereum');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
-      if(['nvda','tsla','mstr','dangcem',].includes(id)){
-        const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR',dangcem:'DANGCEM',}[id];
-        return`<div class="al-ico" style="background:#fff;overflow:hidden"><img src="https://financialmodelingprep.com/image-stock/${s}.png" width="36" height="36" style="object-fit:contain;display:block" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=font-size:.65rem;font-weight:700;color:${fg}>${s}</span>'"></div>`;
-      }
-      return`<div class="al-ico" style="background:${bg};color:${fg}">${sym}</div>`;
-    };
+        if(id==='btc'){const c=S.coins.find(x=>x.id==='bitcoin');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
+        if(id==='eth'){const c=S.coins.find(x=>x.id==='ethereum');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
+        if(['nvda','tsla','mstr'].includes(id)){
+          const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR'}[id];
+          return`<div class="al-ico" style="background:#fff;overflow:hidden"><img src="https://financialmodelingprep.com/image-stock/${s}.png" width="36" height="36" style="object-fit:contain;display:block" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=font-size:.65rem;font-weight:700;color:${fg}>${s}</span>'"></div>`;
+        }
+        if(id==='dangcem'){
+          return`<div class="al-ico" style="background:${bg};color:${fg};font-size:.6rem;font-weight:700;font-family:var(--fd)">DAN</div>`;
+        }
+        return`<div class="al-ico" style="background:${bg};color:${fg}">${sym}</div>`;
+      };
 
     const HOLD=[
       {id:'gold',  n:1, name:'Gold',          sym:'XAU',  bg:'#B8892A',fg:'#fff', fp:'$4,492.70',   ytd:4.73,   y1:35.61, y5:134.95,   y10:138.20,   sj:0},
@@ -3383,7 +3488,7 @@ const P = {
           const isLocked=!S.subscribed&&S.subStatus!=='trial';
           return`<div class="blog-card" onclick="A.openBlogPost('${post.id}')">
             ${imgUrl
-              ?`<div class="blog-card-img" style="display:flex;align-items:center;justify-content:center;background:var(--surf)"><img src="${imgUrl}" style="width:100%;height:100%;object-fit:contain" alt="${post.title}" onerror="this.parentNode.style.display='none'"></div>`
+              ?`<img src="${imgUrl}" class="blog-card-img" alt="${post.title}" style="width:100%;height:200px;object-fit:cover;display:block;background:transparent" onerror="this.outerHTML=''">`
               :`<div class="blog-card-img-placeholder"><i data-lucide="pen-line" style="width:32px;height:32px"></i></div>`}
             <div class="blog-card-body">
               ${post.tags?.length?`<div class="blog-card-tags">${post.tags.map(t=>`<span class="tag tn" style="font-size:.68rem">${t}</span>`).join('')}</div>`:''}
@@ -3420,14 +3525,16 @@ const P = {
     return`<div style="max-width:780px;margin:0 auto;padding:80px 24px 80px" class="page">
       <button class="back" style="margin-top:0" onclick="R.go('blog')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Blog</button>
 
-      ${imgUrl?`<div style="width:100%;max-height:380px;border-radius:var(--rlg);margin-bottom:28px;overflow:hidden;background:var(--surf);display:flex;align-items:center;justify-content:center"><img src="${imgUrl}" style="width:100%;height:auto;max-height:380px;object-fit:contain;display:block" alt="${post.title}"></div>`:''}
+      ${imgUrl?`<div style="width:100%;max-height:420px;border-radius:var(--rlg);margin-bottom:28px;overflow:hidden"><img src="${imgUrl}" style="width:100%;height:420px;object-fit:cover;display:block" alt="${post.title}" onerror="this.parentNode.remove()"></div>`:''}
 
       ${post.tags?.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${post.tags.map(t=>`<span class="tag tn" style="font-size:.72rem">${t}</span>`).join('')}</div>`:''}
 
       <h1 style="font-family:var(--fd);font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.15;margin-bottom:12px">${post.title}</h1>
 
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--bdr)">
-        <div style="width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0">DL</div>
+        ${S.user?.avatarId
+          ?`<img src="${fileUrl(S.user.avatarId)}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block" onerror="this.outerHTML='<div style=width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0>${S.user.inits}</div>'">`
+          :`<div style="width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0">${S.user?.inits||'DL'}</div>`}
         <div>
           <div style="font-weight:600;font-size:.875rem">${post.authorName||'Deji Lasisi'}</div>
           <div style="font-size:.75rem;color:var(--t3)">${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'Recently'}</div>
@@ -4789,14 +4896,26 @@ const A = {
     const lineColor=pos?'#1A7A4A':'#C43030';
     const fillColor=pos?'rgba(26,122,74,0.12)':'rgba(196,48,48,0.12)';
     const dpr=window.devicePixelRatio||1;
-    const rect=canvas.getBoundingClientRect();
-    canvas.width=rect.width*dpr;
-    canvas.height=280*dpr;
-    canvas.style.height='280px';
+
+    // Calculate canvas width based on data points and interval
+    const scrollWrap=document.getElementById('chart-scroll-wrap');
+    const visibleWidth=scrollWrap?scrollWrap.getBoundingClientRect().width:window.innerWidth-48;
+    const minPxPerPoint=interval==='10y'?12:interval==='5y'?8:interval==='ytd'?6:4;
+    const canvasWidth=Math.max(visibleWidth, data.length*minPxPerPoint);
+    const H=280;
+
+    canvas.width=canvasWidth*dpr;
+    canvas.height=H*dpr;
+    canvas.style.width=canvasWidth+'px';
+    canvas.style.height=H+'px';
+
+    // Sync inner wrapper width
+    const inner=document.getElementById('chart-scroll-inner');
+    if(inner) inner.style.width=canvasWidth+'px';
+
     const ctx=canvas.getContext('2d');
     ctx.scale(dpr,dpr);
-    const W=rect.width;
-    const H=280;
+    const W=canvasWidth;
     const pad={top:20,right:16,bottom:30,left:14};
     const chartW=W-pad.left-pad.right;
     const chartH=H-pad.top-pad.bottom;
@@ -4806,24 +4925,69 @@ const A = {
     const range=maxP-minP||1;
     const xScale=(i)=>pad.left+(i*(chartW/(data.length-1)));
     const yScale=(p)=>pad.top+chartH-(((p-minP)/range)*chartH);
+
+    // Draw grid lines
+    ctx.strokeStyle='rgba(26,25,22,0.05)';
+    ctx.lineWidth=1;
+    for(let g=0;g<=4;g++){
+      const y=pad.top+(g/4)*chartH;
+      ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();
+    }
+
+    // Draw chart
     A._drawChartBase(ctx,data,W,H,pad,xScale,yScale,lineColor,fillColor);
+
+    // Build x-axis labels spread across full canvas width
     const xlabels=document.getElementById('chart-xlabels');
     if(xlabels){
-      const labelCount=6;
+      xlabels.style.width=canvasWidth+'px';
+      xlabels.style.minWidth=canvasWidth+'px';
+      const labelCount=Math.max(6,Math.floor(canvasWidth/120));
       const step=Math.floor((data.length-1)/(labelCount-1));
-      const labelFmt = ({
+      const fmt=({
         '1d':(ts)=>new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
         '7d':(ts)=>new Date(ts).toLocaleDateString([],{weekday:'short',day:'numeric'}),
         '30d':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'}),
-        'ytd':(ts)=>new Date(ts).toLocaleDateString([],{month:'short'}),
-        '1y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short'}),
-        '5y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',year:'2-digit'}),
-      }[interval]) || ((ts)=>new Date(ts).toLocaleDateString());
+        'ytd':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',year:'2-digit'}),
+        '1y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',year:'2-digit'}),
+        '5y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',year:'numeric'}),
+        '10y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',year:'numeric'}),
+      }[interval])||((ts)=>new Date(ts).toLocaleDateString());
       xlabels.innerHTML=Array.from({length:labelCount},(_,i)=>{
-        const idx2=Math.min(i*step,data.length-1);
-        return'<span>'+labelFmt(data[idx2].ts)+'</span>';
+        const idx=Math.min(i*step,data.length-1);
+        const x=xScale(idx);
+        return`<span style="position:absolute;left:${x}px;transform:translateX(-50%);white-space:nowrap">${fmt(data[idx].ts)}</span>`;
       }).join('');
+      xlabels.style.position='relative';
+      xlabels.style.height='28px';
+      xlabels.style.display='block';
     }
+
+    // Sync label scroll with chart scroll
+    if(scrollWrap&&xlabels){
+      scrollWrap.onscroll=()=>{
+        xlabels.scrollLeft=scrollWrap.scrollLeft;
+        document.getElementById('chart-scroll-hint').style.opacity='0';
+      };
+      xlabels.onscroll=()=>{scrollWrap.scrollLeft=xlabels.scrollLeft;};
+    }
+
+    // Scroll to the right end by default (most recent data)
+    setTimeout(()=>{
+      if(scrollWrap) scrollWrap.scrollLeft=scrollWrap.scrollWidth;
+      if(xlabels) xlabels.scrollLeft=xlabels.scrollWidth;
+    },50);
+
+    // Mouse/touch drag to pan
+    let isDragging=false,dragStartX=0,dragScrollLeft=0;
+    const onDragStart=(x)=>{isDragging=true;dragStartX=x;dragScrollLeft=scrollWrap.scrollLeft;canvas.style.cursor='grabbing';};
+    const onDragMove=(x)=>{if(!isDragging)return;scrollWrap.scrollLeft=dragScrollLeft-(x-dragStartX);};
+    const onDragEnd=()=>{isDragging=false;canvas.style.cursor='crosshair';};
+    canvas.addEventListener('mousedown',e=>onDragStart(e.clientX));
+    window.addEventListener('mousemove',e=>onDragMove(e.clientX));
+    window.addEventListener('mouseup',onDragEnd);
+
+    // Crosshair hover/touch
     const wrap=canvas.parentElement;
     const isMobile=window.innerWidth<=768;
     const fixedLabel=document.getElementById('chart-fixed-label');
@@ -4834,24 +4998,25 @@ const A = {
     const tipDate=document.getElementById('chart-tip-date');
     const priceDisplay=document.getElementById('dd-price-display');
     const dateDisplay=document.getElementById('dd-date-display');
+
     const drawCrosshair=(clientX,clientY)=>{
       const canvasRect=canvas.getBoundingClientRect();
       const x=clientX-canvasRect.left;
-      const idx3=Math.round(((x-pad.left)/chartW)*(data.length-1));
-      const ci=Math.max(0,Math.min(data.length-1,idx3));
-      const point=data[ci];
+      const idx=Math.max(0,Math.min(data.length-1,Math.round((x-pad.left)/chartW*(data.length-1))));
+      const point=data[idx];
       const px=fmtp(point.p);
-      const fmt2 = ({
+      const fmt2=({
         '1d':(ts)=>new Date(ts).toLocaleString([],{hour:'2-digit',minute:'2-digit',month:'short',day:'numeric'}),
         '7d':(ts)=>new Date(ts).toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}),
         '30d':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}),
         'ytd':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}),
         '1y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}),
         '5y':(ts)=>new Date(ts).toLocaleDateString([],{month:'short',year:'numeric'}),
-      }[interval]) || ((ts)=>new Date(ts).toLocaleDateString());
+        '10y':(ts)=>new Date(ts).toLocaleDateString([],{month:'long',year:'numeric'}),
+      }[interval])||((ts)=>new Date(ts).toLocaleDateString());
       const dateStr=fmt2(point.ts);
       A._drawChartBase(ctx,data,W,H,pad,xScale,yScale,lineColor,fillColor);
-      const cx=xScale(ci);
+      const cx=xScale(idx);
       const cy=yScale(point.p);
       ctx.beginPath();ctx.moveTo(cx,pad.top);ctx.lineTo(cx,H-pad.bottom);
       ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
@@ -4863,16 +5028,15 @@ const A = {
         if(tooltip){
           tooltip.style.display='block';
           tipPrice.textContent=px;tipDate.textContent=dateStr;
-          const wrapRect=wrap.getBoundingClientRect();
-          const tx=cx+canvasRect.left-wrapRect.left;
-          const ty=clientY-wrapRect.top;
-          tooltip.style.left=Math.min(tx+12,W-140)+'px';
-          tooltip.style.top=Math.max(ty-36,4)+'px';
+          const wrapRect=scrollWrap?scrollWrap.getBoundingClientRect():wrap.getBoundingClientRect();
+          tooltip.style.left=Math.min(clientX-wrapRect.left+12,visibleWidth-150)+'px';
+          tooltip.style.top=Math.max(clientY-wrapRect.top-36,4)+'px';
         }
       }
       if(priceDisplay) priceDisplay.textContent=px;
       if(dateDisplay) dateDisplay.textContent=dateStr;
     };
+
     const clearCrosshair=()=>{
       A._drawChartBase(ctx,data,W,H,pad,xScale,yScale,lineColor,fillColor);
       if(tooltip) tooltip.style.display='none';
@@ -4880,14 +5044,15 @@ const A = {
       if(priceDisplay) priceDisplay.textContent=fmtp(coin?.price||0);
       if(dateDisplay) dateDisplay.textContent='';
     };
-    canvas.addEventListener('mousemove',e=>drawCrosshair(e.clientX,e.clientY));
+
+    canvas.addEventListener('mousemove',e=>{if(!isDragging) drawCrosshair(e.clientX,e.clientY);});
     canvas.addEventListener('mouseleave',clearCrosshair);
     canvas.addEventListener('touchmove',e=>{
       e.preventDefault();
       const t=e.touches[0];
       drawCrosshair(t.clientX,t.clientY);
     },{passive:false});
-    canvas.addEventListener('touchend',()=>setTimeout(clearCrosshair,1200));
+    canvas.addEventListener('touchend',()=>setTimeout(clearCrosshair,1400));
   },
 
   _drawChartBase(ctx,data,W,H,pad,xScale,yScale,lineColor,fillColor){
@@ -6255,9 +6420,10 @@ const A = {
       </div>
     </div>`;
   },
-  showNewsSummary(headline,source,date,summary){
+  async showNewsSummary(headline,source,date,summary){
     const h=headline.replace(/&quot;/g,'"').replace(/&#39;/g,"'");
     const s=summary.replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+    // Show modal with loading state first
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal" style="max-width:520px">
         <div class="mhdr">
@@ -6270,15 +6436,63 @@ const A = {
           </div>
           <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
         </div>
-        <div style="font-size:.9rem;color:var(--t2);line-height:1.8;padding:4px 0 8px">
-          ${s||'This story covers key developments in this asset. Stay informed by tracking price movements and market signals on your Datum List.'}
+        <div id="news-summary-body" style="font-size:.9rem;color:var(--t2);line-height:1.8;padding:4px 0 8px;min-height:80px;display:flex;align-items:center;gap:10px">
+          <div class="spin" style="width:18px;height:18px;border-width:2px;flex-shrink:0"></div>
+          <span style="color:var(--t3)">Generating summary…</span>
         </div>
         <div style="background:var(--off);border-radius:var(--rsm);padding:12px 14px;font-size:.78rem;color:var(--t3);line-height:1.6;margin-top:8px;display:flex;align-items:flex-start;gap:8px">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Summary generated from news feed. Always do your own research before making any investment decisions.
+          AI-generated briefing. Always do your own research before making investment decisions.
         </div>
       </div>
     </div>`);
+    lucide.createIcons();
+
+    // Generate real summary via KayKay AI function
+    try{
+      const kkFnId=(window.TMC_CONFIG||{}).KAYKAY_FN_ID;
+      let summaryText='';
+      if(kkFnId){
+        const prompt=`You are a financial journalist writing for a premium investment platform called Toomuchcoin. 
+
+Write a concise but detailed briefing (4-6 sentences, about 120-160 words) about this news story:
+
+HEADLINE: "${h}"
+SOURCE: ${source}
+DATE: ${date}
+CONTEXT: ${s}
+
+Rules:
+- Write in a confident, informed tone like a Bloomberg or FT journalist
+- Include what happened, why it matters to investors, and what to watch next
+- Be specific — mention asset classes, percentages, or companies where relevant
+- End with one forward-looking sentence about market implications
+- Do NOT say "In conclusion" or use bullet points
+- Do NOT mention you are an AI`;
+
+        const execution=await _fn.createExecution(
+          kkFnId,
+          JSON.stringify({
+            systemPrompt:'You are a concise financial news analyst. Write clear, professional market briefings.',
+            messages:[{role:'user',content:prompt}]
+          }),
+          false
+        );
+        const result=JSON.parse(execution.responseBody||'{}');
+        if(result.success&&result.reply) summaryText=result.reply;
+      }
+
+      if(!summaryText){
+        // Fallback — generate locally without API
+        summaryText=`${h}. This development comes as markets continue to closely monitor macroeconomic signals and sector-specific catalysts. ${s?s+' ':''}Analysts are watching this story for potential ripple effects across related assets and broader market sentiment. Investors should monitor price action and volume over the coming sessions for confirmation of any trend shifts. As always, position sizing and risk management remain critical in the current environment.`;
+      }
+
+      const el=document.getElementById('news-summary-body');
+      if(el) el.innerHTML=summaryText;
+    }catch(e){
+      const el=document.getElementById('news-summary-body');
+      if(el) el.innerHTML=`${h}. ${s||'This story highlights key developments that may impact market sentiment and asset pricing. Monitor related instruments for follow-through momentum over the next 24-48 hours.'}`;
+    }
   },
   setCryptoSub(s){
     S.cryptoSub=s;
@@ -7409,14 +7623,13 @@ const A = {
   },
 
   async shareBlogPost(id,title,slug){
-    // Find the post to get its cover image and excerpt
     const post=(S._blogPosts||[]).find(p=>p.id===id)||S._currentPost;
     const imgUrl=post?.coverImageId?fileUrl(post.coverImageId):'https://toomuchcoin.com/toomuchcoin.png';
     const excerpt=post?.excerpt||'Thoughts on commerce, crypto, culture, and everything in between.';
     const postSlug=slug||id;
-    // Use edge function URL so bots get og:image, real users get redirected to SPA
-    const shareUrl='https://toomuchcoin.com/api/blog-preview'
-      +'?slug='+encodeURIComponent(postSlug)
+    const shareUrl='https://www.toomuchcoin.com/api/blog-preview'
+      +'?type=blog'
+      +'&slug='+encodeURIComponent(postSlug)
       +'&title='+encodeURIComponent(title)
       +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
       +'&image='+encodeURIComponent(imgUrl);
@@ -7457,27 +7670,36 @@ const A = {
   },
 
   async shareVendorProfile(vendorId,bizName,catId,city){
-    // Build a clean readable slug from the business name
     const slug=bizName.toLowerCase().trim()
       .replace(/[^a-z0-9\s-]/g,'')
       .replace(/\s+/g,'-')
       .replace(/-+/g,'-')
       .slice(0,48)
       .replace(/-$/,'');
-    // Store slug→id map so deep link resolution works
     S._vendorSlugMap=S._vendorSlugMap||{};
     S._vendorSlugMap[slug]=vendorId;
-    const url=window.location.origin+window.location.pathname+'?vendor='+slug;
-    const text='Check out '+bizName+' on Toomuchcoin — '+catId+' in '+city;
+    // Get vendor's first poster or logo for thumbnail
+    const v=(S._vendorDirectory||[]).find(x=>x.id===vendorId);
+    const imgUrl=v?.posterIds?.[0]?fileUrl(v.posterIds[0])
+      :v?.logoId?fileUrl(v.logoId)
+      :'https://www.toomuchcoin.com/toomuchcoin.png';
+    const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music_entertainment:'Music & Entertainment',events:'Event Planner',electronics:'Electronics & Gadgets',catering:'Food Catering'}[catId]||catId;
+    const excerpt=v?.tagline||(catLabel+' in '+city+', found on Toomuchcoin');
+    const shareUrl='https://www.toomuchcoin.com/api/blog-preview'
+      +'?type=vendor'
+      +'&slug='+encodeURIComponent(slug)
+      +'&title='+encodeURIComponent(bizName)
+      +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
+      +'&image='+encodeURIComponent(imgUrl);
+    const text='Check out '+bizName+' on Toomuchcoin — '+catLabel+' in '+city;
     if(navigator.share){
-      try{await navigator.share({title:bizName,text,url});return;}catch(e){if(e.name==='AbortError')return;}
+      try{await navigator.share({title:bizName,text,url:shareUrl});return;}catch(e){if(e.name==='AbortError')return;}
     }
-    try{await navigator.clipboard.writeText(url);toast('Link copied!','ok');}
-    catch(e){prompt('Copy this link to share:',url);}
+    try{await navigator.clipboard.writeText(shareUrl);toast('Link copied!','ok');}
+    catch(e){prompt('Copy this link to share:',shareUrl);}
   },
 
   async shareOrder(id,title){
-    // Build a clean slug from the listing title
     const slug=(title||'listing')
       .toLowerCase()
       .trim()
@@ -7486,18 +7708,27 @@ const A = {
       .replace(/-+/g,'-')
       .slice(0,48)
       .replace(/-$/,'');
-    // Store slug↔id map so deep-link resolution works in the same session
     S._slugMap=S._slugMap||{};
     S._idToSlug=S._idToSlug||{};
     S._slugMap[slug]=id;
     S._idToSlug[id]=slug;
-    const url=window.location.origin+window.location.pathname+'?listing='+slug;
+    // Get first listing image for thumbnail
+    const order=(S.orders||[]).find(o=>o.id===id);
+    const firstImgId=(order?.imageId||'').split(',').filter(Boolean)[0];
+    const imgUrl=firstImgId?fileUrl(firstImgId):'https://www.toomuchcoin.com/toomuchcoin.png';
+    const excerpt=order?.desc?(order.desc.slice(0,160)):(order?.price?order.price+' — '+title:title);
+    const shareUrl='https://www.toomuchcoin.com/api/blog-preview'
+      +'?type=listing'
+      +'&slug='+encodeURIComponent(slug)
+      +'&title='+encodeURIComponent(title)
+      +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
+      +'&image='+encodeURIComponent(imgUrl);
     const text='Check out this listing on Toomuchcoin: '+title;
     if(navigator.share){
-      try{ await navigator.share({title:title,text,url}); return; }catch(e){ if(e.name==='AbortError') return; }
+      try{await navigator.share({title,text,url:shareUrl});return;}catch(e){if(e.name==='AbortError')return;}
     }
-    try{ await navigator.clipboard.writeText(url); toast('Link copied!','ok'); }
-    catch(e){ prompt('Copy this link to share:',url); }
+    try{await navigator.clipboard.writeText(shareUrl);toast('Link copied!','ok');}
+    catch(e){prompt('Copy this link to share:',shareUrl);}
   },
 
   toggleWatch(id){
