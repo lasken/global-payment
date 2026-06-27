@@ -2194,7 +2194,7 @@ const P = {
       <div style="margin-top:-40px;margin-bottom:48px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
         <button onclick="R.go('blog')" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:7px 18px;font-family:var(--fb);font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;transition:var(--ease)" onmouseover="this.style.borderColor='var(--t1)';this.style.color='var(--t1)'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          Read the Blog
+          Resources & Blog
         </button>
       </div>
       <div class="ggrid">
@@ -3460,63 +3460,127 @@ const P = {
   },
 
   blog(){
-    const posts=S._blogPosts||[];
+    const allPosts=S._blogPosts||[];
     const loading=S._blogLoading;
     const isAdmin=S.user?.id===ADMIN_ID;
-    return`<div style="max-width:1080px;margin:0 auto;padding:clamp(16px,4vw,80px) 16px 80px" class="page">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:8px">
+    const isLocked=!S.subscribed&&S.subStatus!=='trial';
+
+    // Split into blog posts and guides
+    const blogPosts=allPosts.filter(p=>!p.type||p.type==='blog');
+    const guidePosts=allPosts.filter(p=>p.type==='guide');
+
+    // Guide categories
+    const GUIDE_CATS=[
+      {id:'datum_basics',        label:'Datum Basics',               icon:'book-open'},
+      {id:'datum_marketplace',   label:'Datum Marketplace',          icon:'store'},
+      {id:'coin_markets',        label:'Coin Markets & Datum List',  icon:'bar-chart-2'},
+      {id:'kaykay_ai',           label:'KayKay AI',                  icon:'cpu'},
+      {id:'pro_billing',         label:'Pro & Billing',              icon:'zap'},
+    ];
+
+    const _adminAvatarUrl=S._adminProfile?.avatarId?fileUrl(S._adminProfile.avatarId):null;
+    const adminAvatar=_adminAvatarUrl
+      ?`<img src="${_adminAvatarUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block;object-position:${S._adminProfile?.avatarFocus||'center center'}">`
+      :`<div style="width:26px;height:26px;border-radius:50%;background:var(--t1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0">${S._adminProfile?.inits||'DL'}</div>`;
+
+    const blogCard=(post)=>{
+      const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
+      return`<div class="blog-card" onclick="A.openBlogPost('${post.id}')">
+        ${imgUrl
+          ?`<img src="${imgUrl}" class="blog-card-img" alt="${post.title}" style="width:100%;height:200px;object-fit:cover;display:block" onerror="this.outerHTML=''">`
+          :`<div class="blog-card-img-placeholder"><i data-lucide="pen-line" style="width:32px;height:32px"></i></div>`}
+        <div class="blog-card-body">
+          ${post.tags?.length?`<div class="blog-card-tags">${post.tags.map(t=>`<span class="tag tn" style="font-size:.68rem">${t}</span>`).join('')}</div>`:''}
+          <div class="blog-card-title">${post.title}</div>
+          <div class="blog-card-excerpt">${post.excerpt||post.body.replace(/<[^>]+>/g,'').slice(0,140)+'…'}</div>
+          <div class="blog-card-meta" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+            ${adminAvatar}
+            <span>Deji Lasisi</span>
+            <span style="color:var(--bdr2)">·</span>
+            <span>${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Recently'}</span>
+            ${post.type!=='guide'&&isLocked?`<span class="tag tpur" style="font-size:.65rem;margin-left:auto"><i data-lucide="lock" style="width:9px;height:9px"></i>Pro</span>`:''}
+            ${post.type==='guide'?`<span class="tag tg" style="font-size:.65rem;margin-left:auto">Free</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    };
+
+    return`<div style="max-width:1080px;margin:0 auto;padding:clamp(16px,4vw,60px) 16px 80px" class="page">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px">
         <div>
           <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
-          <h1 style="font-family:var(--fd);font-size:clamp(2rem,4vw,3rem);line-height:1.1;margin-bottom:6px">Blog <em style="color:var(--org);font-style:italic">✦</em></h1>
-          <p style="font-size:.9375rem;color:var(--t2);max-width:480px;line-height:1.6">Thoughts on commerce, culture, and everything in between.</p>
+          <h1 style="font-family:var(--fd);font-size:clamp(2rem,4vw,3rem);line-height:1.1;margin-bottom:6px">Resources <em style="color:var(--org);font-style:italic">&</em> Blog</h1>
+          <p style="font-size:.9375rem;color:var(--t2);max-width:520px;line-height:1.6">Thoughts on commerce, coin, culture, and everything in between.</p>
         </div>
         ${isAdmin?`<button class="btn bp" style="margin-top:22px" onclick="M.newBlogPost()"><i data-lucide="plus" style="width:14px;height:14px"></i>Write New Post</button>`:''}
       </div>
 
-      ${!S.subscribed&&S.subStatus!=='trial'?`
-      <div style="background:linear-gradient(135deg,#F3EEFF,#ede8fb);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:18px 22px;margin:20px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-        <div style="flex:1;min-width:200px">
-          <div style="font-weight:700;font-size:.9375rem;color:var(--pur);margin-bottom:4px;display:flex;align-items:center;gap:6px"><i data-lucide="lock" style="width:14px;height:14px"></i>Premium Reading</div>
-          <div style="font-size:.8rem;color:var(--t2);line-height:1.5">Full posts are available to Pro members. Upgrade to read everything and gain timeless financial knowledge.</div>
+      <!-- ── BLOG SECTION ── -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-family:var(--fd);font-size:1.35rem">Blog</span>
+          <span class="tag tpur" style="font-size:.68rem"><i data-lucide="lock" style="width:9px;height:9px"></i>Pro</span>
         </div>
-        <button class="btn bpur bsm" onclick="R.go('sub')" style="white-space:nowrap"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade to Pro</button>
+        <div style="flex:1;height:1px;background:var(--bdr)"></div>
+      </div>
+
+      ${isLocked?`
+      <div style="background:linear-gradient(135deg,#F3EEFF,#ede8fb);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:.875rem;color:var(--pur);margin-bottom:3px;display:flex;align-items:center;gap:6px"><i data-lucide="lock" style="width:13px;height:13px"></i>Pro members only</div>
+          <div style="font-size:.78rem;color:var(--t2);line-height:1.5">Top-tier market insight, culture, and opinion — content you won't find anywhere else. Upgrade to read in full.</div>
+        </div>
+        <button class="btn bpur bsm" onclick="R.go('sub')" style="white-space:nowrap"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — ₦10k/mo</button>
       </div>`:''}
 
-      ${loading?`<div style="text-align:center;padding:56px;color:var(--t3)"><div class="spin"></div><br>Loading posts…</div>`
-      :posts.length===0?`<div style="text-align:center;padding:72px 24px;color:var(--t3)">
-        <div style="width:60px;height:60px;background:var(--surf);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><i data-lucide="pen-line" style="width:24px;height:24px"></i></div>
-        <div style="font-family:var(--fd);font-size:1.2rem;color:var(--t2);margin-bottom:6px">No posts yet</div>
-        <div style="font-size:.875rem">Check back soon — something is brewing.</div>
+      ${loading?`<div style="text-align:center;padding:40px;color:var(--t3)"><div class="spin"></div><br>Loading…</div>`
+      :blogPosts.length===0?`<div style="text-align:center;padding:48px 24px;color:var(--t3);border:1.5px dashed var(--bdr);border-radius:var(--rlg)">
+        <i data-lucide="pen-line" style="width:28px;height:28px;display:block;margin:0 auto 12px"></i>
+        <div style="font-size:.875rem">No blog posts yet — check back soon.</div>
       </div>`
-      :`<div class="blog-grid">
-        ${posts.map(post=>{
-          const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
-          const isLocked=!S.subscribed&&S.subStatus!=='trial';
-          return`<div class="blog-card" onclick="A.openBlogPost('${post.id}')">
-            ${imgUrl
-              ?`<img src="${imgUrl}" class="blog-card-img" alt="${post.title}" style="width:100%;height:200px;object-fit:cover;display:block;background:transparent" onerror="this.outerHTML=''">`
-              :`<div class="blog-card-img-placeholder"><i data-lucide="pen-line" style="width:32px;height:32px"></i></div>`}
-            <div class="blog-card-body">
-              ${post.tags?.length?`<div class="blog-card-tags">${post.tags.map(t=>`<span class="tag tn" style="font-size:.68rem">${t}</span>`).join('')}</div>`:''}
-              <div class="blog-card-title">${post.title}</div>
-              <div class="blog-card-excerpt">${isLocked?(post.excerpt||post.body.slice(0,120))+'…':post.excerpt||post.body.slice(0,160)+'…'}</div>
-              <div class="blog-card-meta">
-                <span>By ${post.authorName||'Deji Lasisi'}</span>
-                <span>·</span>
-                <span>${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Recently'}</span>
-                ${isLocked?`<span class="tag tpur" style="font-size:.65rem;margin-left:auto"><i data-lucide="lock" style="width:9px;height:9px"></i>Pro</span>`:''}
-              </div>
+      :`<div class="blog-grid" style="margin-bottom:0">${blogPosts.map(blogCard).join('')}</div>`}
+
+      <!-- ── HOW-TO GUIDES SECTION ── -->
+      <div style="display:flex;align-items:center;gap:12px;margin:52px 0 18px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-family:var(--fd);font-size:1.35rem">How-To Guides</span>
+          <span class="tag tg" style="font-size:.68rem">Free</span>
+        </div>
+        <div style="flex:1;height:1px;background:var(--bdr)"></div>
+      </div>
+      <p style="font-size:.875rem;color:var(--t2);margin-bottom:28px;line-height:1.6">Everything you need to get the most out of Toomuchcoin — free for everyone, no account required.</p>
+
+      ${loading?`<div style="text-align:center;padding:40px;color:var(--t3)"><div class="spin"></div></div>`
+      :GUIDE_CATS.map(cat=>{
+        const catPosts=guidePosts.filter(p=>p.guideCategory===cat.id);
+        return`<div style="margin-bottom:40px">
+          <!-- Category header -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <div style="width:32px;height:32px;border-radius:var(--rsm);background:var(--t1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i data-lucide="${cat.icon}" style="width:15px;height:15px;color:#fff"></i>
             </div>
-          </div>`;
-        }).join('')}
-      </div>`}
+            <span style="font-weight:700;font-size:.9375rem">${cat.label}</span>
+            <span style="font-size:.75rem;color:var(--t3)">${catPosts.length} guide${catPosts.length!==1?'s':''}</span>
+            ${isAdmin?`<button class="btn bg bsm" style="margin-left:auto" onclick="S._newGuideCategory='${cat.id}';M.newBlogPost()"><i data-lucide="plus" style="width:11px;height:11px"></i>Add</button>`:''}
+          </div>
+          ${catPosts.length===0
+            ?`<div style="border:1.5px dashed var(--bdr);border-radius:var(--rmd);padding:24px;text-align:center;color:var(--t3);font-size:.8125rem">
+                No guides in this category yet.${isAdmin?' Click "Add" to write the first one.':''}
+              </div>`
+            :`<div class="blog-grid">${catPosts.map(blogCard).join('')}</div>`
+          }
+        </div>`;
+      }).join('')}
     </div>`;
   },
 
   blogPost(){
     const post=S._currentPost;
     if(!post) return`<div style="padding:80px 24px;text-align:center;color:var(--t3)" class="page"><div class="spin"></div></div>`;
-    const isLocked=!S.subscribed&&S.subStatus!=='trial';
+    const isGuide=post.type==='guide';
+    const isLocked=!isGuide&&!S.subscribed&&S.subStatus!=='trial';
     const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
     // Always show back button — fixed at top
     // Body is now stored as rich HTML directly from the Quill editor — no conversion needed
@@ -3544,9 +3608,12 @@ const P = {
       <h1 style="font-family:var(--fd);font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.15;margin-bottom:12px">${post.title}</h1>
 
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--bdr)">
-        ${S._adminProfile?.avatarId
-          ?`<img src="${fileUrl(S._adminProfile.avatarId)}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block" onerror="this.outerHTML='<div style=width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0>DL</div>'">`
-          :`<div style="width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0">DL</div>`}
+        ${(()=>{
+      const _aUrl=S._adminProfile?.avatarId?fileUrl(S._adminProfile.avatarId):null;
+      return _aUrl
+        ?`<img src="${_aUrl}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block;object-position:${S._adminProfile?.avatarFocus||'center center'}">`
+        :`<div style="width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0">${S._adminProfile?.inits||'DL'}</div>`;
+    })()}
         <div>
           <div style="font-weight:600;font-size:.875rem">${post.authorName||'Deji Lasisi'}</div>
           <div style="font-size:.75rem;color:var(--t3)">${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'Recently'}</div>
@@ -3785,7 +3852,7 @@ const P = {
 
 const M = {
   show(html){ document.getElementById('mroot').innerHTML=html; lucide.createIcons(); },
-  close(){ document.getElementById('mroot').innerHTML=''; S.authTab='login'; S.signupType=null; },
+  close(){ document.getElementById('mroot').innerHTML=''; S.authTab='login'; S.signupType=null; S._newGuideCategory=null; },
 
   auth(){
     const login=S.authTab!=='signup';
@@ -4599,6 +4666,22 @@ const M = {
         </div>
         <div class="fg"><label>Title</label><input type="text" id="bp-title" placeholder="Your post title…"/></div>
         <div class="fg"><label>Slug (URL)</label><input type="text" id="bp-slug" placeholder="e.g. why-bitcoin-matters" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'-')"/></div>
+        <div class="fg"><label>Post Type</label>
+          <select id="bp-type" onchange="document.getElementById('bp-cat-row').style.display=this.value==='guide'?'block':'none'">
+            <option value="blog">Blog Post (Pro only)</option>
+            <option value="guide" ${S._newGuideCategory?'selected':''}>How-To Guide (Free)</option>
+          </select>
+        </div>
+        <div class="fg" id="bp-cat-row" style="display:${S._newGuideCategory?'block':'none'}">
+          <label>Guide Category</label>
+          <select id="bp-guide-cat">
+            <option value="datum_basics" ${S._newGuideCategory==='datum_basics'?'selected':''}>Datum Basics</option>
+            <option value="datum_marketplace" ${S._newGuideCategory==='datum_marketplace'?'selected':''}>Datum Marketplace</option>
+            <option value="coin_markets" ${S._newGuideCategory==='coin_markets'?'selected':''}>Coin Markets & Datum List</option>
+            <option value="kaykay_ai" ${S._newGuideCategory==='kaykay_ai'?'selected':''}>KayKay AI</option>
+            <option value="pro_billing" ${S._newGuideCategory==='pro_billing'?'selected':''}>Pro & Billing</option>
+          </select>
+        </div>
         <div class="fg"><label>Excerpt (short preview)</label><input type="text" id="bp-excerpt" placeholder="One or two sentences that appear on the blog card…"/></div>
         <div class="fg"><label>Tags (comma separated)</label><input type="text" id="bp-tags" placeholder="e.g. crypto, opinion, africa"/></div>
         <div class="fg">
@@ -4641,6 +4724,22 @@ const M = {
           <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
         </div>
         <div class="fg"><label>Title</label><input type="text" id="bp-title" value="${post.title?.replace(/"/g,'&quot;')||''}"/></div>
+        <div class="fg"><label>Post Type</label>
+          <select id="bp-type" onchange="document.getElementById('bp-cat-row').style.display=this.value==='guide'?'block':'none'">
+            <option value="blog" ${(!post.type||post.type==='blog')?'selected':''}>Blog Post (Pro only)</option>
+            <option value="guide" ${post.type==='guide'?'selected':''}>How-To Guide (Free)</option>
+          </select>
+        </div>
+        <div class="fg" id="bp-cat-row" style="display:${post.type==='guide'?'block':'none'}">
+          <label>Guide Category</label>
+          <select id="bp-guide-cat">
+            <option value="datum_basics" ${post.guideCategory==='datum_basics'?'selected':''}>Datum Basics</option>
+            <option value="datum_marketplace" ${post.guideCategory==='datum_marketplace'?'selected':''}>Datum Marketplace</option>
+            <option value="coin_markets" ${post.guideCategory==='coin_markets'?'selected':''}>Coin Markets & Datum List</option>
+            <option value="kaykay_ai" ${post.guideCategory==='kaykay_ai'?'selected':''}>KayKay AI</option>
+            <option value="pro_billing" ${post.guideCategory==='pro_billing'?'selected':''}>Pro & Billing</option>
+          </select>
+        </div>
         <div class="fg"><label>Excerpt</label><input type="text" id="bp-excerpt" value="${post.excerpt?.replace(/"/g,'&quot;')||''}"/></div>
         <div class="fg"><label>Tags (comma separated)</label><input type="text" id="bp-tags" value="${(post.tags||[]).join(', ')}"/></div>
         <div class="fg">
@@ -4697,7 +4796,10 @@ const R = {
     if(page==='crypto'&&S.coinsState==='idle') loadCoins();
     if(page==='kaykay'){kkLoadLocal();kkBuildPersona();}
     if(page==='blog'&&!S._blogPosts) A.loadBlogPosts();
-    if((page==='blog'||page==='blogpost')&&!S._adminProfile) A.loadAdminProfile();
+  if(page==='blog'||page==='blogpost'){
+    if(!S._adminProfile) A.loadAdminProfile();
+    else if(!S._adminProfile.avatarId) A.loadAdminProfile();
+  }
     render();
     window.scrollTo({top:0,behavior:'smooth'});
   },
@@ -7690,14 +7792,32 @@ Rules:
     }
     const tags=tagsRaw.split(',').map(t=>t.trim()).filter(Boolean);
     try{
+      const bpType=document.getElementById('bp-type')?.value||'blog';
+      const bpGuideCat=bpType==='guide'?(document.getElementById('bp-guide-cat')?.value||'datum_basics'):'';
+      // Guides are always published immediately
+      const finalPublished=bpType==='guide'?true:published;
+      S._newGuideCategory=null;
       const doc=await DB.create('blog',{
-        title,slug,excerpt:excerpt||'',body,coverImageId,tags,
-        published,publishedAt:published?new Date().toISOString():'',
+        title,slug:slug||title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50),
+        excerpt:excerpt||'',body,coverImageId,tags,
+        published:finalPublished,
+        publishedAt:finalPublished?new Date().toISOString():'',
         authorName:'Deji Lasisi',
+        type:bpType,
+        guideCategory:bpGuideCat,
       });
       if(!S._blogPosts) S._blogPosts=[];
-      S._blogPosts.unshift({id:doc.$id,title,slug,body,excerpt,coverImageId,tags,authorName:'Deji Lasisi',publishedAt:doc.publishedAt});
+      S._blogPosts.unshift({
+        id:doc.$id,title,
+        slug:slug||title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50),
+        body,excerpt:excerpt||'',coverImageId,tags,
+        authorName:'Deji Lasisi',
+        publishedAt:doc.publishedAt||new Date().toISOString(),
+        type:bpType,
+        guideCategory:bpGuideCat,
+      });
       M.close();
+      S._blogPosts=null; // force fresh reload
       R.go('blog');
       toast('Post published!','ok');
       // Notify all users about new blog post
@@ -7727,10 +7847,12 @@ Rules:
     btn.disabled=true;btn.textContent='Saving…';
     const tags=tagsRaw.split(',').map(t=>t.trim()).filter(Boolean);
     try{
-      await DB.update('blog',id,{title,excerpt:excerpt||'',body,tags});
+      const bpType=document.getElementById('bp-type')?.value||'blog';
+      const bpGuideCat=bpType==='guide'?(document.getElementById('bp-guide-cat')?.value||'datum_basics'):'';
+      await DB.update('blog',id,{title,excerpt:excerpt||'',body,tags,type:bpType,guideCategory:bpGuideCat});
       if(S._blogPosts){
         const idx=S._blogPosts.findIndex(p=>p.id===id);
-        if(idx>=0) S._blogPosts[idx]={...S._blogPosts[idx],title,excerpt,body,tags};
+        if(idx>=0) S._blogPosts[idx]={...S._blogPosts[idx],title,excerpt,body,tags,type:bpType,guideCategory:bpGuideCat};
       }
       if(S._currentPost?.id===id) S._currentPost={...S._currentPost,title,excerpt,body,tags};
       M.close();render();
@@ -7752,33 +7874,48 @@ Rules:
     }catch(e){toast('Could not delete post.','err');}
   },
 
-  async loadAdminProfile(){
-    try{
-      const r=await DB.list('profiles',[Query.equal('userId',[ADMIN_ID]),Query.limit(1)]);
-      const p=r.documents[0];
-      S._adminProfile={name:p?.name||'Deji Lasisi',avatarId:p?.avatarId||null,inits:initials(p?.name||'Deji Lasisi')};
-      render();
-    }catch(e){S._adminProfile={name:'Deji Lasisi',avatarId:null,inits:'DL'};}
+  loadAdminProfile(){
+    S._adminProfile={
+      name:'Deji Lasisi',
+      avatarId:'6a3e9106003c9e3fd1e4',
+      avatarFocus:'center center',
+      inits:'DL',
+    };
+    if(S.page==='blog'||S.page==='blogpost') render();
   },
   async loadBlogPosts(){
     S._blogLoading=true;render();
-    const r=await DB.list('blog',[
-      Query.equal('published',[true]),
-      Query.orderDesc('publishedAt'),
-      Query.limit(50),
-    ]);
-    S._blogPosts=r.documents.map(d=>({
-      id:d.$id,title:d.title,slug:d.slug,body:d.body,
-      excerpt:d.excerpt,coverImageId:d.coverImageId,
-      tags:d.tags||[],authorName:d.authorName,
-      publishedAt:d.publishedAt,
-    }));
+    try{
+      const r=await DB.list('blog',[
+        Query.equal('published',[true]),
+        Query.orderDesc('$createdAt'),
+        Query.limit(100),
+      ]);
+      S._blogPosts=r.documents.map(d=>({
+        id:d.$id,title:d.title,slug:d.slug||'',body:d.body||'',
+        excerpt:d.excerpt||'',coverImageId:d.coverImageId||'',
+        tags:d.tags||[],authorName:d.authorName||'Deji Lasisi',
+        publishedAt:d.publishedAt||d.$createdAt,
+        type:d.type||'blog',
+        guideCategory:d.guideCategory||'',
+      }));
+    }catch(e){
+      console.warn('loadBlogPosts:',e.message);
+      S._blogPosts=[];
+    }
     S._blogLoading=false;render();
   },
 
   openBlogPost(id){
     const post=(S._blogPosts||[]).find(p=>p.id===id);
-    if(post){S._currentPost=post;S.page='blogpost';render();}
+    if(!post) return;
+    S._currentPost=post;
+    S.page='blogpost';
+    // Make sure admin profile is loaded before rendering
+    if(!S._adminProfile){
+      A.loadAdminProfile().then(()=>render());
+    }
+    render();
   },
 
   async shareBlogPost(id,title,slug){
