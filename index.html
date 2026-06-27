@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/toomuchcoin.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/toomuchcoin.png">
   <link rel="shortcut icon" href="/toomuchcoin.png">
+  <link rel="manifest" href="/manifest.json">
   
   <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -7874,6 +7875,15 @@ Rules:
     }catch(e){toast('Could not delete post.','err');}
   },
 
+  async installPWA(){
+    const prompt=window._pwaPromptRef?.();
+    if(!prompt) return;
+    prompt.prompt();
+    const result=await prompt.userChoice;
+    window._clearPwaPrompt?.();
+    document.getElementById('pwa-banner')?.remove();
+    if(result.outcome==='accepted') toast('Toomuchcoin installed!','ok');
+  },
   loadAdminProfile(){
     S._adminProfile={
       name:'Deji Lasisi',
@@ -8308,6 +8318,39 @@ document.addEventListener('DOMContentLoaded', async()=>{
   render();
   loadCoins();
   A.loadAdminProfile();
+  // Register PWA service worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js')
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.warn('SW failed:',e));
+  }
+  // PWA install prompt
+  let _pwaPrompt=null;
+  window.addEventListener('beforeinstallprompt', e=>{
+    e.preventDefault();
+    _pwaPrompt=e;
+    // Show banner after 3 seconds if not already installed
+    setTimeout(()=>{
+      if(!_pwaPrompt) return;
+      const banner=document.createElement('div');
+      banner.id='pwa-banner';
+      banner.innerHTML=`
+        <div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:999;background:var(--t1);color:#fff;border-radius:var(--rlg);padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:var(--s3);max-width:calc(100vw - 32px);width:380px;animation:pup .3s ease">
+          <img src="/toomuchcoin.png" style="width:38px;height:38px;border-radius:10px;flex-shrink:0">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:.875rem">Install Toomuchcoin</div>
+            <div style="font-size:.75rem;opacity:.7;margin-top:2px">Add to your home screen for the best experience</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="document.getElementById('pwa-banner').remove();_pwaPrompt=null" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:var(--rsm);padding:7px 12px;font-size:.78rem;cursor:pointer;font-family:var(--fb)">Later</button>
+            <button onclick="A.installPWA()" style="background:#fff;border:none;color:var(--t1);border-radius:var(--rsm);padding:7px 12px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--fb)">Install</button>
+          </div>
+        </div>`;
+      document.body.appendChild(banner);
+    }, 3000);
+  });
+  window._pwaPromptRef=()=>_pwaPrompt;
+  window._clearPwaPrompt=()=>{_pwaPrompt=null;};
   // Initialize KayKay
   kkLoadLocal();
   kkBuildPersona();
