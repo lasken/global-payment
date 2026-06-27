@@ -4,10 +4,10 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Toomuchcoin</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="/toomuchcoin.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/toomuchcoin.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/toomuchcoin.png">
-  <link rel="shortcut icon" href="/toomuchcoin.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="toomuchcoin.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="toomuchcoin.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="toomuchcoin.png">
+  <link rel="shortcut icon" href="toomuchcoin.png">
   
   <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-title" content="Toomuchcoin"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="theme-color" content="#1A1916"/>
-  <link rel="apple-touch-icon" sizes="180x180" href="/toomuchcoin.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="toomuchcoin.png"/>
   <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta property="og:description" content="Agentic Commerce: Your passport to trade and access the globe 🌎"/>
   <meta property="og:image" content="https://toomuchcoin.com/toomuchcoin.png"/>
@@ -428,8 +428,6 @@
     .back{display:inline-flex;align-items:center;gap:7px;font-size:.875rem;font-weight:500;color:var(--t2);cursor:pointer;padding:8px 0;margin-bottom:18px;background:none;border:none;transition:var(--ease)}
     @media(min-width:769px){.back{margin-top:22px}}
     .back:hover{color:var(--t1)}
-    .blogpost-back{display:inline-flex;align-items:center;gap:7px;font-size:.875rem;font-weight:500;color:var(--t2);cursor:pointer;padding:8px 14px;margin-bottom:18px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;text-decoration:none;transition:var(--ease)}
-    .blogpost-back:hover{color:var(--t1);border-color:var(--t1)}
 
     /* ── KayKay AI Assistant ── */
     .kk-fab{position:fixed;bottom:90px;right:32px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(124,58,237,.45);z-index:200;transition:all .3s cubic-bezier(.4,0,.2,1);animation:kkBreath 3s ease-in-out infinite}
@@ -494,7 +492,6 @@
     .blog-card:hover{border-color:var(--bdr2);transform:translateY(-3px);box-shadow:var(--s3)}
     .blog-card-img{width:100%;height:200px;object-fit:cover;display:block;background:var(--surf)}
     .blog-card-img-placeholder{width:100%;height:200px;background:linear-gradient(135deg,var(--off),var(--surf));display:flex;align-items:center;justify-content:center;color:var(--t3)}
-    @media(max-width:768px){.blog-card-img, .blog-card-img-placeholder { height: 160px; }}
     .blog-card-body{padding:20px;flex:1;display:flex;flex-direction:column}
     .blog-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
     .blog-card-title{font-family:var(--fd);font-size:1.2rem;line-height:1.3;color:var(--t1);margin-bottom:8px}
@@ -541,7 +538,7 @@
     .lightbox-nav.next{right:14px}
     /* ── End Lightbox ── */
     /* ── End Blog ── */
-    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--t1);color:var(--white);padding:11px 20px;border-radius:var(--rmd);font-size:.875rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .28s,transform .28s;pointer-events:none;white-space:normal;max-width:calc(100vw - 32px);width:max-content;max-width:min(420px,calc(100vw - 32px));text-align:center;word-break:break-word;box-sizing:border-box}
+    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--t1);color:var(--white);padding:11px 20px;border-radius:var(--rmd);font-size:.875rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .28s,transform .28s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 48px)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .toast.ok{background:var(--grn)}
     .toast.err{background:var(--red)}
@@ -572,15 +569,13 @@
     @media(max-width:480px){
       .aheroprice{font-size:1.7rem}
       .modal-lg{max-width:100%}
-      .toast{bottom:20px;font-size:.8rem;padding:10px 16px;left:16px;right:16px;width:auto;max-width:none;transform:translateY(14px)}
-      .toast.show{transform:translateY(0)}
     }
   </style>
 </head>
 <body>
 <nav id="gnav">
   <div class="nbrand" onclick="R.go('land')" style="display:flex;align-items:center;gap:4px">
-    <img src="/toomuchcoin.png" alt="Toomuchcoin" style="width:38px;height:38px;object-fit:contain;display:block;flex-shrink:0">
+    <img src="toomuchcoin.png" alt="Toomuchcoin" style="width:38px;height:38px;object-fit:contain;display:block;flex-shrink:0">
     Toomuchcoin<span>.</span>
   </div>
   <div class="nact" id="nact"></div>
@@ -753,7 +748,7 @@ const KK_LOCAL={
   faq:{
     commission  :'The platform charges a 2% commission on the final agreed value of every completed deal. 10% of every commission is automatically donated to three global charities we support.',
     verify      :'To get verified, go to your profile and tap "Get Verified". Submit your government-issued ID and our team will review it within 24 to 48 hours.',
-    'pro'      :'Pro membership is ₦10,000 per month (special Nigeria rate, down from $20) and gives you full access to the marketplace, open forum, 500 plus crypto assets, Datum List, and KayKay — your AI assistant.',
+    pro         :'Pro membership is $5 per month and gives you full access to the marketplace, open forum, 500 plus crypto assets, Datum List, and KayKay — your AI assistant.',
     trial       :'You can activate a 7-day free trial using an exclusive coupon code. Ask your Toomuchcoin contact for a code.',
     listing     :'To post a listing, go to the marketplace and tap the "Post Listing" button. Fill in the title, category, price, and description.',
     charity     :'10% of every platform commission is split equally across Feed the Future Africa, Code for Kids Foundation, and Clean Water Initiative NG.',
@@ -941,12 +936,12 @@ Active listings on marketplace: ${listings}
 
 PLATFORM KNOWLEDGE (answer these accurately):
 - Toomuchcoin is a P2P marketplace + Coin Markets tracker + vendor directory
-- Pro membership: ₦10,000/month for Nigerians (discounted from $20). Unlocks marketplace, forum, 500+ crypto, Datum List, Vendor directory, KayKay
+- Pro membership: ₦10,000/month. Unlocks marketplace, forum, 500+ crypto, Datum List, Vendor directory, KayKay
 - Free trial: 7 days via exclusive coupon code (max 8 users per code)
 - Platform commission: 1% of final deal value. 10% of that goes to 3 charities: Feed the Future Africa, Code for Kids Foundation, Clean Water Initiative NG
 - Verification: Submit NIN, BVN, Passport, Driver's licence, or Voter's card → reviewed in 24-48hrs
 - Vendor showcase: Community-voted quarterly. Businesses join waitlist → community votes → winner showcased
-- Blog: Published by Deji Lasisi — thoughts on commerce, coin, Africa, culture
+- Blog: Published by Deji Lasisi — thoughts on commerce, crypto, Africa, culture
 - Payment options: Card (Flutterwave), Bank transfer (Zenith Bank acc: 1312154595), USDT Solana, USDT TRC-20
 - KayKay (that's you): AI assistant, Pro feature, accessible via the brain icon
 
@@ -1428,7 +1423,7 @@ function userAvatar(userId,initials,size=34,style=''){
   if(S.user && userId === S.user.id){
     const aid = S.user.avatarId;
     if(aid){
-      return`<img src="${fileUrl(aid)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;object-position:${S.user.avatarFocus||'center center'};display:block;flex-shrink:0;${style}" onerror="this.outerHTML='<div style=width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0>${initials}</div>'">`;
+      return`<img src="${fileUrl(aid)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;${style}" onerror="this.outerHTML='<div style=width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0>${initials}</div>'">`;
     }
     return`<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.35)}px;font-weight:600;font-family:var(--fd);flex-shrink:0;${style}">${initials}</div>`;
   }
@@ -1513,8 +1508,7 @@ function coinIcon(coin,idx,size=34){
 }
 function mockBars(id,iv){
   const seed=[...id].reduce((a,c)=>a+c.charCodeAt(0),0);
-  const nowM=new Date().getMonth()+1;
-      const n=iv==='ytd'?nowM:iv==='5y'?20:40;
+  const n=iv==='ytd'?12:iv==='5y'?20:40;
   return Array.from({length:n},(_,i)=>({h:30+((seed*(i+7)*13)%220),up:(seed+i)%3!==0}));
 }
 function mockMetrics(id,iv){
@@ -1522,7 +1516,8 @@ function mockMetrics(id,iv){
   const m=iv==='ytd'?1:iv==='5y'?5:10;
   const r=(a,b,k)=>+(a+((s*k)%(b-a))).toFixed(2);
   return{'All-Time High':'$'+r(100,9999,17)*m,'All-Time Low':'$'+r(1,200,3),
-    'Avg. Return':r(-15,80,7)+'%','Max Drawdown':'-'+r(20,85,5)+'%',
+    'Avg. Return':r(-15,80,7)+'%','Volatility':r(20,95,11)+'%',
+    'Sharpe Ratio':r(0.4,3.2,13).toFixed(2),'Max Drawdown':'-'+r(20,85,5)+'%',
     'Total Volume':'$'+r(1,900,9)+'B','Market Cap':'$'+r(5,8000,19)+'B'};
 }
 
@@ -2223,7 +2218,7 @@ const P = {
       <!-- Whitepaper below the grid -->
       <div style="margin-top:36px;display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--t3);justify-content:center">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <a href="/Toomuchcoin x Datum Whitepaper.pdf" download="Toomuchcoin-Whitepaper" type="application/pdf" style="color:var(--t3);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">Download Whitepaper</a>
+        <a href="Toomuchcoin x Datum Whitepaper.pdf" download="Toomuchcoin-Whitepaper" type="application/pdf" style="color:var(--t3);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">Download Whitepaper</a>
       </div>
     </div>`;
   },
@@ -2256,9 +2251,9 @@ const P = {
       pending:{cls:'vstat-pending',icon:'clock',col:'var(--gld)',title:'Payment Under Review',
         desc:'Your payment reference is being confirmed. Access granted within 24 hours.'},
       expired:{cls:'vstat-rejected',icon:'clock',col:'var(--red)',title:'Free Trial Ended',
-        desc:'Your 7-day free trial has ended. Upgrade to Pro for ₦10,000/month to restore full access.'},
+        desc:'Your 7-day free trial has ended. Upgrade to Pro for $20/month to restore full access.'},
     }[S.subStatus]||{cls:'vstat-unverified',icon:'lock',col:'var(--t3)',title:'Free Plan',
-      desc:'Upgrade to Pro (₦10,000/month) to unlock full marketplace, forum, and financial freedom.'};
+      desc:'Upgrade to Pro ($20/month) to unlock full marketplace, forum, and financial freedom.'};
 
     const vTag=S.verifyStatus==='verified'?`<span class="tag tg"><i data-lucide="check-circle" style="width:11px;height:11px"></i>Verified</span>`
       :S.verifyStatus==='pending'?`<span class="tag tgd"><i data-lucide="clock" style="width:11px;height:11px"></i>Pending Review</span>`
@@ -2280,7 +2275,7 @@ const P = {
       <div class="phero">
         <div class="uavatar-wrap">
           ${u.avatarId
-            ?`<img src="${fileUrl(u.avatarId)}" class="uavatar" style="object-position:${u.avatarFocus||'center center'}" onerror="this.style.display='none';document.getElementById('pav-fb').style.display='flex'">`
+            ?`<img src="${fileUrl(u.avatarId)}" class="uavatar" onerror="this.style.display='none';document.getElementById('pav-fb').style.display='flex'">`
             :''}
           <div class="pavat" id="pav-fb" style="${u.avatarId?'display:none':'display:flex'}">${u.inits}</div>
           <button class="uavatar-edit" onclick="A.changeAvatar()" title="${u.avatarId?'Change photo':'Add photo'}">
@@ -2317,7 +2312,7 @@ const P = {
       <div class="psec">
         <div class="psect">Subscription
           ${!S.subscribed&&S.subStatus!=='pending'
-            ?`<button class="btn bpur bsm" onclick="R.go('sub')"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — ₦10k/mo</button>`:''}
+            ?`<button class="btn bpur bsm" onclick="R.go('sub')"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — $20/mo</button>`:''}
         </div>
         <div class="vstat-box ${subInfo.cls}">
           <i data-lucide="${subInfo.icon}" style="width:20px;height:20px;color:${subInfo.col};flex-shrink:0;margin-top:1px"></i>
@@ -2642,7 +2637,7 @@ const P = {
       </div>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:6px;font-size:.8125rem;color:var(--t3)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <a href="/Toomuchcoin x Datum Whitepaper.pdf" download="Toomuchcoin-Whitepaper" type="application/pdf" style="color:var(--t2);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">Download Whitepaper</a>
+        <a href="Toomuchcoin x Datum Whitepaper.pdf" download="Toomuchcoin-Whitepaper" type="application/pdf" style="color:var(--t2);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">Download Whitepaper</a>
       </div>
     </div>`;
   },
@@ -2727,8 +2722,8 @@ const P = {
     if(!S.subscribed){return`<div class="gate-banner">
       <div class="gate-icon"><i data-lucide="message-circle" style="width:24px;height:24px"></i></div>
       <h3 class="gate-t">Open Forum is a Pro Feature</h3>
-      <p class="gate-d">Join the community, share market insights, and connect with traders — included in the ₦10,000/month Pro plan.</p>
-      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — ₦10,000/month</button>
+      <p class="gate-d">Join the community, share market insights, and connect with traders — included in the $20/month Pro plan.</p>
+      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/month</button>
     </div>`;}
     if(S.msgsLoading)return`<div class="chat-wrap"><div class="chat-empty"><div class="spin"></div><br>Loading forum…</div></div>`;
     const msgs=S.msgs||[];
@@ -2858,7 +2853,7 @@ const P = {
     const idx=S.coins.indexOf(coin);const pos=coin.chg>=0;const iv=S.interval;
     const bars=mockBars(coin.id,iv);const maxH=Math.max(...bars.map(b=>b.h));
     const mets=mockMetrics(coin.id,iv);
-    const xlabels={'1d':['00:00','04:00','08:00','12:00','16:00','20:00','24:00'],'7d':['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],'30d':['W1','W2','W3','W4'],'ytd':(()=>{const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mn.slice(0,new Date().getMonth()+1);})(),'5y':['2020','2021','2022','2023','2024'],'10y':['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024']};
+    const xlabels={'1d':['00:00','04:00','08:00','12:00','16:00','20:00','24:00'],'7d':['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],'30d':['W1','W2','W3','W4'],'ytd':['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],'5y':['2020','2021','2022','2023','2024'],'10y':['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024']};
     const st=S.watchlist.has(coin.id);const[bg,fg]=COLORS[idx%COLORS.length];
     return`
       <button class="back" onclick="A.setCryptoSub('market')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Market</button>
@@ -2879,8 +2874,7 @@ const P = {
       </div>
         </div>
       </div>
-      <div class="itabs">${['ytd','5y'].map(iv2=>`<button class="ibtn ${iv===iv2?'on':''}" onclick="A.setIv('${iv2}')">${iv2.toUpperCase()}</button>`).join('')}
-<button class="ibtn" id="teny-tab-btn" onclick="A.show10yComingSoon();this.classList.toggle('on')" style="color:var(--t2)">10Y</button></div>
+      <div class="itabs">${['ytd','5y','10y'].map(iv2=>`<button class="ibtn ${iv===iv2?'on':''}" onclick="A.setIv('${iv2}')">${iv2.toUpperCase()}</button>`).join('')}</div>
       <div class="chartwrap" style="position:relative">
         ${S._chartLoading?`<div style="height:280px;display:flex;align-items:center;justify-content:center;background:var(--off)"><div class="spin"></div></div>`:`
         <div style="position:relative">
@@ -2946,7 +2940,7 @@ const P = {
       <div class="gate-icon"><i data-lucide="layout-grid" style="width:24px;height:24px"></i></div>
       <h3 class="gate-t">Datum List is a Pro Feature</h3>
       <p class="gate-d">Access our curated tracker — handpicked assets with live prices and returns across YTD, 5-year, 10-year, and your personal return since joining Datum.</p>
-      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — ₦10,000/month</button>
+      <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/month</button>
     </div>`;}
 
     const lp=S.alPrices;const loading=S.alLoading;
@@ -3428,12 +3422,12 @@ const P = {
       </div>`:''}
 
       <h3 style="font-family:var(--fd);font-size:1.2rem;margin-bottom:5px">Choose Payment Method</h3>
-      <p style="font-size:.8rem;color:var(--t2);margin-bottom:18px;line-height:1.6">₦10,000/month — instant activation for card and bank payments.</p>
+      <p style="font-size:.8rem;color:var(--t2);margin-bottom:18px;line-height:1.6">$20/month — instant activation for card and bank payments.</p>
       ${!S.user
         ?`<div style="text-align:center;padding:14px;background:var(--surf);border-radius:var(--rsm);font-size:.875rem;color:var(--t2)"><button type="button" onclick="M.auth()" style="color:var(--t1);font-weight:500;cursor:pointer;background:none;border:none;font-family:var(--fb);font-size:.875rem;text-decoration:underline">Sign in first</button> to continue to payment.</div>`
         :`<div style="display:flex;flex-direction:column;gap:10px">
           <button class="btn bp" style="width:100%;justify-content:center;padding:13px;font-size:.9rem" onclick="PAY.withFlutterwave()">
-            <i data-lucide="credit-card" style="width:15px;height:15px"></i>Pay ₦10,000 by Card or Bank
+            <i data-lucide="credit-card" style="width:15px;height:15px"></i>Pay by Card or Bank Transfer
           </button>
           <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:13px;font-size:.9rem" onclick="PAY.showCryptoDetails()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a3 3 0 0 1 5 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -3455,7 +3449,7 @@ const P = {
             <button class="btn bo" style="width:100%;justify-content:center;padding:11px" id="subbtn" onclick="A.submitSub()"><i data-lucide="send" style="width:14px;height:14px"></i>Submit Reference</button>
           </div>
         </details>
-        <p style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:14px;line-height:1.6">₦10,000/month — card/bank activates instantly. Crypto activates after 1 confirmation. Non-refundable after access is granted.</p>`}
+        <p style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:14px;line-height:1.6">Card/bank payments activate instantly. Crypto activates after 1 confirmation. Non-refundable after access is granted.</p>`}
     </div>`;
   },
 
@@ -3463,7 +3457,7 @@ const P = {
     const posts=S._blogPosts||[];
     const loading=S._blogLoading;
     const isAdmin=S.user?.id===ADMIN_ID;
-    return`<div style="max-width:1080px;margin:0 auto;padding:clamp(16px,4vw,80px) 16px 80px" class="page">
+    return`<div style="max-width:1080px;margin:0 auto;padding:80px 24px 80px" class="page">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:8px">
         <div>
           <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
@@ -3518,7 +3512,6 @@ const P = {
     if(!post) return`<div style="padding:80px 24px;text-align:center;color:var(--t3)" class="page"><div class="spin"></div></div>`;
     const isLocked=!S.subscribed&&S.subStatus!=='trial';
     const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
-    // Always show back button — fixed at top
     // Body is now stored as rich HTML directly from the Quill editor — no conversion needed
     const looksLikeHtml=/<[a-z][\s\S]*>/i.test(post.body||'');
     const bodyHtml=looksLikeHtml?post.body:(post.body||'')
@@ -3529,24 +3522,19 @@ const P = {
       .replace(/\n\n/g,'</p><p>')
       .replace(/^(?!<[h|b])/,'<p>')
       +'</p>';
-    return`<div style="max-width:780px;margin:0 auto;padding:24px 16px 80px" class="page">
-      <div style="position:sticky;top:60px;z-index:50;padding:10px 0 4px;background:var(--white)">
-        <button onclick="R.go('blog')" style="display:inline-flex;align-items:center;gap:8px;background:var(--white);border:1.5px solid var(--bdr);border-radius:100px;padding:8px 16px;font-size:.8125rem;font-weight:500;color:var(--t1);cursor:pointer;font-family:var(--fb);transition:var(--ease);box-shadow:var(--s1)" onmouseover="this.style.borderColor='var(--t1)'" onmouseout="this.style.borderColor='var(--bdr)'">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Back to Blog
-        </button>
-      </div>
+    return`<div style="max-width:780px;margin:0 auto;padding:80px 24px 80px" class="page">
+      <button class="back" style="margin-top:0" onclick="R.go('blog')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back to Blog</button>
 
-      ${imgUrl?`<div style="width:100%;max-height:420px;border-radius:var(--rlg);margin-bottom:28px;overflow:hidden;background:var(--surf)"><img src="${imgUrl}" style="width:100%;height:auto;max-height:420px;object-fit:contain;display:block;margin:0 auto" alt="${post.title}" onerror="this.parentNode.remove()"></div>`:''}
+      ${imgUrl?`<div style="width:100%;max-height:420px;border-radius:var(--rlg);margin-bottom:28px;overflow:hidden"><img src="${imgUrl}" style="width:100%;height:clamp(200px,40vw,420px);object-fit:cover;display:block" alt="${post.title}" onerror="this.parentNode.remove()"></div>`:''}
 
       ${post.tags?.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${post.tags.map(t=>`<span class="tag tn" style="font-size:.72rem">${t}</span>`).join('')}</div>`:''}
 
       <h1 style="font-family:var(--fd);font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.15;margin-bottom:12px">${post.title}</h1>
 
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--bdr)">
-        ${S._adminProfile?.avatarId
-          ?`<img src="${fileUrl(S._adminProfile.avatarId)}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block" onerror="this.outerHTML='<div style=width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0>DL</div>'">`
-          :`<div style="width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0">DL</div>`}
+        ${S.user?.avatarId
+          ?`<img src="${fileUrl(S.user.avatarId)}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block" onerror="this.outerHTML='<div style=width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0>${S.user.inits}</div>'">`
+          :`<div style="width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0">${S.user?.inits||'DL'}</div>`}
         <div>
           <div style="font-weight:600;font-size:.875rem">${post.authorName||'Deji Lasisi'}</div>
           <div style="font-size:.75rem;color:var(--t3)">${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'Recently'}</div>
@@ -3560,17 +3548,13 @@ const P = {
       </div>
 
       ${isLocked?`
-      <div class="blog-post-body">
-        <div style="position:relative;overflow:hidden;max-height:180px;pointer-events:none;user-select:none">
-          <div style="opacity:.6">${bodyHtml}</div>
-          <div style="position:absolute;bottom:0;left:0;right:0;height:100px;background:linear-gradient(to bottom,transparent,var(--white))"></div>
-        </div>
-        <div style="border:1.5px solid #D4C8F0;border-radius:var(--rlg);padding:32px 24px;text-align:center;background:linear-gradient(135deg,#F3EEFF,#ede8fb);margin-top:0">
+      <div class="blog-post-body" style="position:relative">
+        <div style="filter:blur(3px);pointer-events:none;user-select:none;opacity:.5">${bodyHtml}</div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
           <div style="width:52px;height:52px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff"><i data-lucide="lock" style="width:22px;height:22px"></i></div>
-          <div style="font-family:var(--fd);font-size:1.3rem;margin-bottom:8px">Continue reading</div>
-          <p style="font-size:.875rem;color:var(--t2);margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.6">This post is for Pro members. Upgrade to read the full article and all future posts.</p>
-          <button class="btn bpur" onclick="R.go('sub')" style="padding:12px 28px"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — ₦10k/mo</button>
-          <div style="font-size:.72rem;color:var(--t3);margin-top:12px">Have a coupon? <span onclick="R.go('sub')" style="color:var(--pur);cursor:pointer;text-decoration:underline">Redeem it here</span></div>
+          <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:8px">This is a Pro post</div>
+          <p style="font-size:.875rem;color:var(--t2);margin-bottom:18px;max-width:300px;line-height:1.6">Upgrade to Pro to read this and all future posts.</p>
+          <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/mo</button>
         </div>
       </div>`
       :`<div class="blog-post-body">${bodyHtml}</div>`}
@@ -3715,13 +3699,7 @@ const P = {
       <div style="text-align:center;margin-bottom:8px">
         <div class="sub-badge"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro Membership</div>
         <h1 class="l-h" style="font-size:clamp(1.8rem,4vw,2.8rem);margin-bottom:10px">Unlock <em>everything</em> on Datum.</h1>
-        <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:4px">
-          <div class="sub-price" style="margin-bottom:0">₦10,000 <span>/ month</span></div>
-          <div style="display:flex;flex-direction:column;align-items:flex-start">
-            <span style="font-size:.78rem;background:#FDEAEA;color:var(--red);border-radius:100px;padding:2px 10px;font-weight:700;text-decoration:line-through;margin-bottom:3px">$20 / month</span>
-            <span style="font-size:.72rem;color:var(--grn);font-weight:600">Special rate for Nigeria 🇳🇬</span>
-          </div>
-        </div>
+        <div class="sub-price">$20 <span>/ month</span></div>
         <p style="font-size:.95rem;color:var(--t2);max-width:420px;margin:10px auto 0;line-height:1.6">One flat rate. Full access to marketplace, open forum, and 500+ live crypto assets.</p>
       </div>
 
@@ -3732,9 +3710,6 @@ const P = {
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="sub-feat-t">Watchlist & Charts</div><div class="sub-feat-d">Track your favourites and access historical performance charts.</div></div>
         <div class="sub-feat" style="border-color:rgba(124,58,237,.3);background:linear-gradient(135deg,#F3EEFF,#ede8fb)"><div class="sub-feat-i" style="background:var(--pur)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div><div class="sub-feat-t" style="color:var(--pur)">KayKay AI Assistant</div><div class="sub-feat-d">Voice and text AI that navigates the app, answers questions, and announces your notifications.</div></div>
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="sub-feat-t">Vendor Directory</div><div class="sub-feat-d">City-by-city vendor discovery with community voting and showcase.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg></div><div class="sub-feat-t">Blog Access</div><div class="sub-feat-d">Full access to all blog posts — in-depth market insight and platform updates from Deji.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="sub-feat-t">Price Alerts</div><div class="sub-feat-d">Set custom alerts for any asset — get notified the moment your target price is hit.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="sub-feat-t">AI News Summaries</div><div class="sub-feat-d">Tap any headline on the Datum List for an instant AI-generated briefing on what it means for your portfolio.</div></div>
       </div>
 
       ${S.subStatus==='trial'?`
@@ -3751,7 +3726,7 @@ const P = {
           <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:20px">You have full Pro access — marketplace, open forum, 500+ live crypto assets, Datum List, and more. Upgrade before your trial ends to keep access.</p>
           <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
             <button class="btn bc" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Go to Marketplace</button>
-            <button class="btn bpur" onclick="PAY.withFlutterwave()"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade Now — ₦10k/mo</button>
+            <button class="btn bpur" onclick="PAY.withFlutterwave()"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade Now — $20/mo</button>
           </div>
         </div>`
 
@@ -3759,7 +3734,7 @@ const P = {
         <div style="max-width:500px;margin:0 auto;background:#FDEAEA;border:1.5px solid #F0BFBF;border-radius:var(--rlg);padding:28px;text-align:center;margin-bottom:20px">
           <i data-lucide="clock" style="width:28px;height:28px;color:var(--red);display:block;margin:0 auto 12px"></i>
           <div style="font-family:var(--fd);font-size:1.2rem;margin-bottom:7px;color:var(--red)">Your Free Trial Has Ended</div>
-          <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:18px">Upgrade to Pro for ₦10,000/month to restore full access to the marketplace, forum, and 500+ crypto assets.</p>
+          <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:18px">Upgrade to Pro for $20/month to restore full access to the marketplace, forum, and 500+ crypto assets.</p>
         </div>
         ${P._payBlock()}`
 
@@ -4011,14 +3986,14 @@ const M = {
         <div style="text-align:center;padding:8px 0 20px">
           <div style="width:56px;height:56px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff"><i data-lucide="lock" style="width:24px;height:24px"></i></div>
           <p style="font-family:var(--fd);font-size:1.35rem;margin-bottom:8px">This is a Pro feature</p>
-          <p style="font-size:.875rem;color:var(--t2);margin-bottom:0;line-height:1.6">Upgrade to Pro for ₦10,000/month to unlock full marketplace access, the open forum, and 500+ crypto assets.</p>
+          <p style="font-size:.875rem;color:var(--t2);margin-bottom:0;line-height:1.6">Upgrade to Pro for $20/month to unlock full marketplace access, the open forum, and 500+ crypto assets.</p>
         </div>
         ${S.user
           ?`<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
-              <button class="btn bp" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withFlutterwave()"><i data-lucide="credit-card" style="width:14px;height:14px"></i>Pay by Card or Bank — ₦10,000/month</button>
-              <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withCrypto()"><i data-lucide="bitcoin" style="width:14px;height:14px"></i>Pay with Crypto — ₦10,000/month</button>
+              <button class="btn bp" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withFlutterwave()"><i data-lucide="credit-card" style="width:14px;height:14px"></i>Pay by Card or Bank — $20/month</button>
+              <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withCrypto()"><i data-lucide="bitcoin" style="width:14px;height:14px"></i>Pay with Crypto — $20/month</button>
             </div>`
-          :`<button class="btn bpur" style="width:100%;justify-content:center;padding:12px;margin-bottom:10px" onclick="M.close();R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — ₦10,000/month</button>`}
+          :`<button class="btn bpur" style="width:100%;justify-content:center;padding:12px;margin-bottom:10px" onclick="M.close();R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — $20/month</button>`}
         <button class="btn bo" style="width:100%;justify-content:center" onclick="M.close()">Maybe Later</button>
       </div>
     </div>`);
@@ -4029,7 +4004,7 @@ const M = {
       {icon:'user-check',title:'Complete your profile',desc:'Upload a photo and submit your ID for the Verified badge — buyers trust verified sellers.'},
       {icon:'store',title:'Post your first listing',desc:'Head to the Marketplace and tap "Post Listing" to sell, buy, or request a service.'},
       {icon:'bar-chart-2',title:'Track live markets',desc:'Check real-time prices for 500+ crypto and financial assets in the Markets section.'},
-      {icon:'zap',title:'Upgrade to Pro',desc:'Unlock the Open Forum, full marketplace access, and the Datum List for ₦10,000/month.'},
+      {icon:'zap',title:'Upgrade to Pro',desc:'Unlock the Open Forum, full marketplace access, and the Datum List for $20/month.'},
     ];
     let step=0;
     const show=()=>{
@@ -4687,17 +4662,13 @@ const M = {
 const R = {
   go(page){
     stopAR();
+    // Remember where we came from before entering KayKay
     if(page==='kaykay'&&S.page!=='kaykay') S._kkPrevPage=S.page||'land';
     S.page=page;
-    // Push pretty URL to browser history
-    const _prettyMap={market:'/marketplace/orderboard',crypto:'/financial/coinmarkets',blog:'/blog',land:'/',profile:'/profile',sub:'/subscribe',kaykay:'/kaykay'};
-    const _prettyUrl=_prettyMap[page]||'/';
-    if(window.location.pathname!==_prettyUrl) history.pushState({},'',_prettyUrl);
     if(page==='market'){S.mTab='board';S.mFilter='all';loadOrders();startAR();}
     if(page==='crypto'&&S.coinsState==='idle') loadCoins();
     if(page==='kaykay'){kkLoadLocal();kkBuildPersona();}
     if(page==='blog'&&!S._blogPosts) A.loadBlogPosts();
-    if((page==='blog'||page==='blogpost')&&!S._adminProfile) A.loadAdminProfile();
     render();
     window.scrollTo({top:0,behavior:'smooth'});
   },
@@ -4952,8 +4923,7 @@ const A = {
     const minP=Math.min(...prices);
     const maxP=Math.max(...prices);
     const range=maxP-minP||1;
-    // Add 0.5% right padding so the last point never sits flush against the edge
-    const xScale=(i)=>pad.left+(i*(chartW/Math.max(data.length-1,1))*(1-0.005));
+    const xScale=(i)=>pad.left+(i*(chartW/(data.length-1)));
     const yScale=(p)=>pad.top+chartH-(((p-minP)/range)*chartH);
 
     // Draw grid lines
@@ -5133,11 +5103,8 @@ const A = {
     if(!S._chartData) S._chartData={};
     if(!S._chartData[coinId]) S._chartData[coinId]={};
 
-    const now2=new Date();
-    const jan1=new Date(now2.getFullYear(),0,1);
-    const ytdDays=Math.ceil((now2-jan1)/(24*60*60*1000))+1;
-    const daysMap={'1d':1,'7d':7,'30d':30,'ytd':ytdDays,'1y':365,'5y':1825};
-    const days=daysMap[interval]||ytdDays;
+    const daysMap={'1d':1,'7d':7,'30d':30,'ytd':365,'1y':365,'5y':1825};
+    const days=daysMap[interval]||365;
 
     const makeMockData=()=>{
       const coin=S.coins.find(c=>c.id===coinId);
@@ -5384,8 +5351,6 @@ const A = {
   setMTab(t){
     if(t==='forum'&&!S.subscribed){M.subscribe();return;}
     S.mTab=t;
-    const _tabUrl={board:'/marketplace/orderboard',vendors:'/marketplace/vendorlist',forum:'/marketplace/openforum'}[t]||'/marketplace/orderboard';
-    if(window.location.pathname!==_tabUrl) history.pushState({},'',_tabUrl);
     if(t==='board') loadOrders();
     if(t==='forum'){loadChat();A._loadAllUsersForMention();}
     render();
@@ -5813,98 +5778,22 @@ const A = {
       const file=e.target.files[0];
       if(!file) return;
       if(file.size>3*1024*1024){toast('Image must be under 3MB','err');return;}
-      // Show crop focus picker before uploading
-      const previewUrl=URL.createObjectURL(file);
-      A._pendingAvatarFile=file;
-      A._pendingAvatarUrl=previewUrl;
-      M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
-        <div class="modal" style="max-width:420px">
-          <div class="mhdr">
-            <div><div class="mey">Profile Photo</div><h2 class="mtitle">Set Focus Point</h2></div>
-            <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
-          </div>
-          <div style="font-size:.8rem;color:var(--t2);margin-bottom:12px;line-height:1.5">Click anywhere on the image to set where the circular crop focuses. This ensures your face shows correctly in the avatar.</div>
-          <!-- Preview of how it will look -->
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:12px;background:var(--surf);border-radius:var(--rsm)">
-            <div id="av-preview-circle" style="width:68px;height:68px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid var(--bdr)">
-              <img src="${previewUrl}" id="av-preview-img" style="width:100%;height:100%;object-fit:cover;object-position:center center;display:block">
-            </div>
-            <div>
-              <div style="font-weight:600;font-size:.875rem">${S.user.name}</div>
-              <div style="font-size:.75rem;color:var(--t3)">Preview of your avatar</div>
-            </div>
-          </div>
-          <!-- Full image with click-to-focus -->
-          <div style="position:relative;cursor:crosshair;border-radius:var(--rsm);overflow:hidden;border:1.5px solid var(--bdr)" id="av-focus-wrap">
-            <img src="${previewUrl}" id="av-focus-full" style="width:100%;max-height:320px;object-fit:contain;display:block;background:var(--off)">
-            <div id="av-focus-dot" style="display:none;position:absolute;width:22px;height:22px;border-radius:50%;border:3px solid #fff;background:var(--pur);box-shadow:0 2px 8px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none"></div>
-          </div>
-          <input type="hidden" id="av-focus-val" value="center center"/>
-          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn bg bsm" onclick="document.getElementById('av-focus-val').value='center center';document.getElementById('av-focus-dot').style.display='none';document.getElementById('av-preview-img').style.objectPosition='center center'">Reset to Center</button>
-            <span style="font-size:.72rem;color:var(--t3)" id="av-focus-label">Click the image to set focus</span>
-          </div>
-          <div class="ferr" id="av-err"></div>
-          <button class="btn bp" id="av-btn" style="width:100%;justify-content:center;padding:12px;margin-top:16px" onclick="A.uploadAvatar()">
-            <i data-lucide="upload" style="width:14px;height:14px"></i>Save Photo
-          </button>
-        </div>
-      </div>`);
-      // Wire up click-to-focus on the full image
-      setTimeout(()=>{
-        const wrap=document.getElementById('av-focus-wrap');
-        const fullImg=document.getElementById('av-focus-full');
-        const previewImg=document.getElementById('av-preview-img');
-        const dot=document.getElementById('av-focus-dot');
-        const label=document.getElementById('av-focus-label');
-        const valInput=document.getElementById('av-focus-val');
-        if(!wrap) return;
-        wrap.addEventListener('click',ev=>{
-          const rect=fullImg.getBoundingClientRect();
-          const xPct=Math.round(((ev.clientX-rect.left)/rect.width)*100);
-          const yPct=Math.round(((ev.clientY-rect.top)/rect.height)*100);
-          const focusVal=xPct+'% '+yPct+'%';
-          valInput.value=focusVal;
-          // Move dot
-          dot.style.display='block';
-          dot.style.left=xPct+'%';
-          dot.style.top=yPct+'%';
-          // Update preview
-          previewImg.style.objectPosition=focusVal;
-          label.textContent='Focus: '+focusVal;
-        });
-      },100);
+      toast('Uploading photo…');
+      try{
+        if(S.user.avatarId){
+          try{await _storage.deleteFile(BUCKET_ID,S.user.avatarId);}catch(e){}
+        }
+        const uploaded=await _storage.createFile(BUCKET_ID,ID.unique(),file);
+        const profRes=await DB.list('profiles',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
+        if(profRes.documents[0]){
+          await DB.update('profiles',profRes.documents[0].$id,{avatarId:uploaded.$id});
+        }
+        S.user.avatarId=uploaded.$id;
+        render();
+        toast('Profile photo updated!','ok');
+      }catch(e){toast('Upload failed: '+e.message,'err');}
     };
     input.click();
-  },
-
-  async uploadAvatar(){
-    const file=A._pendingAvatarFile;
-    const focusVal=document.getElementById('av-focus-val')?.value||'center center';
-    const btn=document.getElementById('av-btn');
-    const err=document.getElementById('av-err');
-    if(!file){err.textContent='No file selected.';return;}
-    btn.disabled=true;btn.textContent='Uploading…';
-    try{
-      if(S.user.avatarId){
-        try{await _storage.deleteFile(BUCKET_ID,S.user.avatarId);}catch(e){}
-      }
-      const uploaded=await _storage.createFile(BUCKET_ID,ID.unique(),file);
-      const profRes=await DB.list('profiles',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
-      if(profRes.documents[0]){
-        await DB.update('profiles',profRes.documents[0].$id,{avatarId:uploaded.$id,avatarFocus:focusVal});
-      }
-      S.user.avatarId=uploaded.$id;
-      S.user.avatarFocus=focusVal;
-      A._pendingAvatarFile=null;
-      A._pendingAvatarUrl=null;
-      M.close();
-      render();
-      toast('Profile photo updated!','ok');
-    }catch(e){
-      err.textContent='Upload failed: '+e.message;
-      btn.disabled=false;btn.textContent='Save Photo';
-    }
   },
 
   previewOrderImgs(input){
@@ -6612,8 +6501,6 @@ Rules:
   },
   setCryptoSub(s){
     S.cryptoSub=s;
-    const _subUrl={market:'/financial/coinmarkets',watchlist:'/financial/watchlist',assetlist:'/financial/datumlist',portfolio:'/financial/portfolio'}[s]||'/financial/coinmarkets';
-    if(window.location.pathname!==_subUrl) history.pushState({},'',_subUrl);
     if(s==='assetlist'){
       S.selDatumAsset=null;
       if(!S.alLoading&&Object.keys(S.alPrices).length===0) loadAlData();
@@ -6633,39 +6520,6 @@ Rules:
     } else {
       render();
     }
-  },
-  show10yComingSoon(){
-    const wrap=document.querySelector('.chartwrap');
-    if(!wrap) return;
-    // Toggle off if already showing
-    let el=document.getElementById('teny-coming-soon');
-    if(el){
-      el.remove();
-      // Restore all hidden elements
-      ['chart-scroll-wrap','chart-scroll-hint','chart-xlabels','chart-fixed-label'].forEach(id=>{
-        const e=document.getElementById(id);
-        if(e) e.style.display='';
-      });
-      return;
-    }
-    // Hide everything inside chartwrap
-    Array.from(wrap.children).forEach(child=>{
-      child.style.display='none';
-    });
-    // Insert coming soon in its place
-    el=document.createElement('div');
-    el.id='teny-coming-soon';
-    el.style.cssText='background:var(--white)';
-    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;padding:56px 24px;background:var(--white);border-radius:var(--rmd)">
-      <div class="cscard" style="max-width:460px;border:2px dashed var(--bdr)">
-        <div class="csgfx"><i data-lucide="bar-chart-2" style="width:48px;height:48px"></i></div>
-        <div class="csbadge"><i data-lucide="clock" style="width:11px;height:11px"></i>Coming Soon</div>
-        <h2 class="cst">10-Year View</h2>
-        <p class="css">Deep historical decade charts with inflation-adjusted returns and cycle analysis are in development.</p>
-      </div>
-    </div>`;
-    wrap.appendChild(el);
-    lucide.createIcons();
   },
   cSearch(q){ S.csearch=q; S.cpage=1; render(); },
   cPage(p){
@@ -7752,14 +7606,6 @@ Rules:
     }catch(e){toast('Could not delete post.','err');}
   },
 
-  async loadAdminProfile(){
-    try{
-      const r=await DB.list('profiles',[Query.equal('userId',[ADMIN_ID]),Query.limit(1)]);
-      const p=r.documents[0];
-      S._adminProfile={name:p?.name||'Deji Lasisi',avatarId:p?.avatarId||null,inits:initials(p?.name||'Deji Lasisi')};
-      render();
-    }catch(e){S._adminProfile={name:'Deji Lasisi',avatarId:null,inits:'DL'};}
-  },
   async loadBlogPosts(){
     S._blogLoading=true;render();
     const r=await DB.list('blog',[
@@ -7948,8 +7794,8 @@ const PAY = {
     FlutterwaveCheckout({
       public_key   : TMC.FW_PUBLIC_KEY,
       tx_ref       : ref,
-      amount       : 10000,
-      currency     : 'NGN',
+      amount       : 20,
+      currency     : 'USD',
       payment_options: 'card, banktransfer, ussd',
       customer: {
         email: S.user.email,
@@ -7957,7 +7803,7 @@ const PAY = {
       },
       customizations: {
         title      : 'Toomuchcoin Pro',
-        description: '₦10,000/month — Full platform access (Nigeria rate)',
+        description: '$20/month — Full platform access',
         logo       : '',
       },
       callback: async function(data){
@@ -7967,7 +7813,7 @@ const PAY = {
               userId       : S.user.id,
               status       : 'active',
               plan         : 'monthly',
-              amount       : '10000',
+              amount       : '20',
               reference    : data.transaction_id + '',
               paymentMethod: 'flutterwave',
             });
@@ -7996,7 +7842,7 @@ const PAY = {
     panel.style.display='block';
     panel.innerHTML=`
     <div style="background:var(--off);border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:20px;margin-top:2px">
-      <div style="font-weight:600;font-size:.9rem;margin-bottom:4px">Pay ₦10,000.00 to one of the accounts below</div>
+      <div style="font-weight:600;font-size:.9rem;margin-bottom:4px">Pay $20.00 to one of the accounts below</div>
       <div style="font-size:.78rem;color:var(--t2);margin-bottom:16px;line-height:1.5">Copy the account details, make your payment, then click "I Have Paid" at the bottom.</div>
 
       <!-- Bank Transfer -->
@@ -8016,7 +7862,7 @@ const PAY = {
               Copy
             </button>
           </div>
-          <div style="font-size:.72rem;color:var(--t3)">Amount: <strong style="color:var(--t1)">₦10,000</strong></div>
+          <div style="font-size:.72rem;color:var(--t3)">Amount: <strong style="color:var(--t1)">₦ equivalent of $20.00</strong></div>
         </div>
       </div>
 
@@ -8024,7 +7870,7 @@ const PAY = {
       <div style="border:1.5px solid var(--pur);border-radius:var(--rsm);padding:14px;margin-bottom:10px;background:#F9F6FF;position:relative">
         <div style="position:absolute;top:-1px;right:10px;background:var(--pur);color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:0 0 6px 6px;text-transform:uppercase">Recommended</div>
         <div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pur);margin-bottom:10px">USDT — Solana (SOL)</div>
-        <div style="font-size:.72rem;color:var(--t2);margin-bottom:8px;line-height:1.4">Fastest confirmation · Low fees · Send exactly <strong>7.27 USDT</strong></div>
+        <div style="font-size:.72rem;color:var(--t2);margin-bottom:8px;line-height:1.4">Fastest confirmation · Low fees · Send exactly <strong>20 USDT</strong></div>
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
           <div style="flex:1;min-width:0">
             <div style="font-size:.68rem;color:var(--t3);margin-bottom:3px">Wallet Address</div>
@@ -8040,7 +7886,7 @@ const PAY = {
       <!-- USDT TRC-20 -->
       <div style="border:1px solid var(--bdr);border-radius:var(--rsm);padding:14px;margin-bottom:16px;background:var(--white)">
         <div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:10px">USDT — TRON (TRC-20)</div>
-        <div style="font-size:.72rem;color:var(--t2);margin-bottom:8px">Send exactly <strong>7.27 USDT</strong></div>
+        <div style="font-size:.72rem;color:var(--t2);margin-bottom:8px">Send exactly <strong>20 USDT</strong></div>
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
           <div style="flex:1;min-width:0">
             <div style="font-size:.68rem;color:var(--t3);margin-bottom:3px">Wallet Address</div>
@@ -8081,7 +7927,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
   if(u){
     const res=await DB.list('profiles',[Query.equal('userId',[u.$id]),Query.limit(1)]);
     const p=res.documents[0];
-    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null,avatarFocus:p?.avatarFocus||'center center',profileDocId:p?.$id||null};
+    S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null,profileDocId:p?.$id||null};
     // Load baselines from Appwrite profile so they're consistent across all devices
     if(p?.joinBaselines){
       try{
@@ -8170,7 +8016,6 @@ document.addEventListener('DOMContentLoaded', async()=>{
     .catch(()=>{}); 
   render();
   loadCoins();
-  A.loadAdminProfile();
   // Initialize KayKay
   kkLoadLocal();
   kkBuildPersona();
@@ -8185,37 +8030,6 @@ document.addEventListener('DOMContentLoaded', async()=>{
   // if(S.user&&KK.wakeWord){
   //   setTimeout(()=>kkStartWakeWord(),2000);
   // }
-  // Pretty URL routing — map clean paths to SPA state
-  const _path=window.location.pathname;
-  if(_path==='/marketplace/orderboard'){
-    history.replaceState({},'','/marketplace/orderboard');
-    S.page='market';S.mTab='board';loadOrders();startAR();render();
-  } else if(_path==='/marketplace/vendorlist'){
-    history.replaceState({},'','/marketplace/vendorlist');
-    S.page='market';S.mTab='vendors';render();
-  } else if(_path==='/marketplace/openforum'){
-    history.replaceState({},'','/marketplace/openforum');
-    S.page='market';S.mTab='forum';loadChat();render();
-  } else if(_path==='/financial/coinmarkets'){
-    history.replaceState({},'','/financial/coinmarkets');
-    S.page='crypto';S.cryptoSub='market';loadCoins();render();
-  } else if(_path==='/financial/datumlist'){
-    history.replaceState({},'','/financial/datumlist');
-    S.page='crypto';S.cryptoSub='assetlist';loadCoins();render();
-  } else if(_path==='/financial/watchlist'){
-    history.replaceState({},'','/financial/watchlist');
-    S.page='crypto';S.cryptoSub='watchlist';loadCoins();render();
-  } else if(_path.startsWith('/blog/')){
-    const _blogSlug=_path.replace('/blog/','');
-    history.replaceState({},'',_path);
-    (async()=>{
-      await A.loadBlogPosts();
-      const post=(S._blogPosts||[]).find(p=>p.slug===_blogSlug||p.id===_blogSlug);
-      if(post){S._currentPost=post;S.page='blogpost';render();}
-      else R.go('blog');
-    })();
-  }
-
   const _qs=new URLSearchParams(window.location.search);
   const _vCat=_qs.get('vendors');
   const _vCity=_qs.get('city');
