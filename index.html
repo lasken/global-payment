@@ -40,7 +40,7 @@
     :root{
       --white:#fff;--off:#F8F7F4;--surf:#F2F1EE;--bdr:#E4E2DC;--bdr2:#C8C5BC;
       --t1:#1A1916;--t2:#6B6860;--t3:#A8A49C;
-      --grn:#1A7A4A;--red:#C43030;--blu:#2B5BE0;--org:#C4622D;--gld:#B8892A;--pur:#7C3AED;
+      --grn:#1A7A4A;--red:#C43030;--blu:#2B5BE0;--org:#C4622D;--gld:#B8892A;--pur:#D4AF37;
       --rsm:6px;--rmd:12px;--rlg:20px;
       --s1:0 1px 3px rgba(26,25,22,.06),0 1px 2px rgba(26,25,22,.04);
       --s2:0 4px 16px rgba(26,25,22,.08),0 2px 6px rgba(26,25,22,.05);
@@ -77,10 +77,10 @@
     .to{background:#FDF0EA;color:var(--org)}
     .tgd{background:#FBF4E6;color:var(--gld)}
     .tn{background:var(--surf);color:var(--t2)}
-    .tpur{background:#F3EEFF;color:var(--pur)}
+    .tpur{background:#FBF8EC;color:var(--pur)}
 
     input,textarea,select{font-family:var(--fb);font-size:.875rem;border:1.5px solid var(--bdr);border-radius:var(--rsm);padding:10px 14px;width:100%;background:var(--white);color:var(--t1);outline:none;transition:var(--ease);appearance:none}
-    input:focus,textarea:focus,select:focus{border-color:var(--t1);box-shadow:0 0 0 3px rgba(26,25,22,.08)}
+    input:focus,textarea:focus,select:focus{border-color:#D4AF37;box-shadow:0 0 0 3px rgba(212,175,55,.12)}
     input::placeholder,textarea::placeholder{color:var(--t3)}
     input:disabled,textarea:disabled{background:var(--surf);cursor:not-allowed;color:var(--t3)}
     label{display:block;font-size:.8125rem;font-weight:500;color:var(--t2);margin-bottom:6px}
@@ -92,7 +92,7 @@
 
     #gnav{position:fixed;top:0;left:0;right:0;z-index:900;background:rgba(255,255,255,.93);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform;}
     .nbrand{font-family:var(--fd);font-size:1.375rem;color:var(--t1);cursor:pointer;user-select:none}
-    .nbrand span{color:var(--org)}
+    .nbrand span{color:#D4AF37}
     .nact{display:flex;align-items:center;gap:8px}
     .nubadge{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:100px;background:var(--surf);font-size:.8125rem;font-weight:500;cursor:pointer;transition:var(--ease)}
     .nubadge:hover{background:var(--bdr)}
@@ -105,20 +105,20 @@
     #pg-land{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:80px 24px 60px}
     .l-ey{font-size:.72rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:20px}
     .l-h{font-family:var(--fd);font-size:clamp(2.2rem,5vw,3.5rem);line-height:1.12;letter-spacing:-.02em;color:var(--t1);text-align:center;max-width:640px;margin-bottom:16px}
-    .l-h em{font-style:italic;color:var(--org)}
+    .l-h em{font-style:italic;color:#D4AF37}
     .l-sub{font-size:1rem;color:var(--t2);text-align:center;max-width:440px;line-height:1.6;margin-bottom:60px}
     .ggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;width:100%}
     .gcard{background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rlg);padding:36px 32px;cursor:pointer;transition:var(--ease);display:flex;flex-direction:column}
-    .gcard:hover{border-color:var(--bdr2);transform:translateY(-4px);box-shadow:var(--s3)}
+    .gcard:hover{border-color:#D4AF37;transform:translateY(-4px);box-shadow:0 16px 48px rgba(212,175,55,.15),0 6px 20px rgba(212,175,55,.10)}
     .gci{width:48px;height:48px;border-radius:var(--rmd);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
-    .id{background:var(--t1);color:var(--white)}
-    .iw{background:#FDF0EA;color:var(--org)}
-    .ib{background:#E8EEFB;color:var(--blu)}
+    .id{background:#D4AF37;color:var(--white)}
+    .iw{background:#FBF6E3;color:#D4AF37}
+    .ib{background:#FBF6E3;color:#D4AF37}
     .gcl{font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
     .gct{font-family:var(--fd);font-size:1.5rem;line-height:1.2;color:var(--t1);margin-bottom:12px}
     .gcd{font-size:.875rem;color:var(--t2);line-height:1.6;flex:1}
     .gca{display:flex;align-items:center;gap:6px;margin-top:28px;font-size:.8125rem;font-weight:500;color:var(--t1);transition:var(--ease)}
-    .gcard:hover .gca{gap:10px}
+    .gcard:hover .gca{gap:10px;color:#D4AF37}
 
     .mback{position:fixed;inset:0;z-index:1000;background:rgba(26,25,22,.52);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fin .2s ease}
     @keyframes fin{from{opacity:0}to{opacity:1}}
@@ -132,7 +132,7 @@
     .mclose:hover{background:var(--bdr);color:var(--t1)}
     .mtabs{display:flex;border-bottom:1.5px solid var(--bdr);margin-bottom:26px}
     .mtab{padding:10px 20px;font-size:.875rem;font-weight:500;color:var(--t3);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:var(--ease)}
-    .mtab.on{color:var(--t1);border-bottom-color:var(--t1)}
+    .mtab.on{color:#D4AF37;border-bottom-color:#D4AF37}
     .utgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 22px}
     .utcard{border:2px solid var(--bdr);border-radius:var(--rmd);padding:20px 16px;cursor:pointer;transition:var(--ease);text-align:center}
     .utcard.on{border-color:var(--t1);background:var(--off)}
@@ -202,7 +202,7 @@
     flex-shrink: 0;      
   }
 }
-    .tbtn.on{background:var(--white);color:var(--t1);box-shadow:var(--s1)}
+    .tbtn.on{background:var(--white);color:#D4AF37;box-shadow:var(--s1)}
     .fbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:22px}
     .flbl{font-size:.8125rem;font-weight:500;color:var(--t2);margin-right:4px}
     .ftag{padding:6px 14px;border-radius:100px;border:1.5px solid var(--bdr);background:var(--white);font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;transition:var(--ease)}
@@ -244,7 +244,7 @@
     .cform{background:var(--off);border-radius:var(--rmd);padding:18px;border:1.5px solid var(--bdr)}
     .cformtitle{font-weight:600;font-size:.875rem;margin-bottom:14px}
 
-    .gate-banner{background:linear-gradient(135deg,#F3EEFF,#E8EEFB);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:36px 24px;text-align:center}
+    .gate-banner{background:linear-gradient(135deg,#FBF8EC,#E8EEFB);border:1.5px solid #E8D9A0;border-radius:var(--rmd);padding:36px 24px;text-align:center}
     .gate-icon{width:52px;height:52px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--white)}
     .gate-t{font-family:var(--fd);font-size:1.2rem;margin-bottom:7px}
     .gate-d{font-size:.875rem;color:var(--t2);margin-bottom:18px;line-height:1.6;max-width:380px;margin-left:auto;margin-right:auto}
@@ -254,12 +254,12 @@
     .crypto-gate-overlay>div{pointer-events:all;text-align:center}
 
     #pg-sub{padding:60px 24px 80px;max-width:800px;margin:0 auto}
-    .sub-badge{display:inline-flex;align-items:center;gap:6px;background:#F3EEFF;color:var(--pur);border:1px solid #D4C8F0;border-radius:100px;padding:6px 16px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px}
+    .sub-badge{display:inline-flex;align-items:center;gap:6px;background:#FBF8EC;color:var(--pur);border:1px solid #E8D9A0;border-radius:100px;padding:6px 16px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px}
     .sub-price{font-family:var(--fd);font-size:3rem;margin-bottom:6px}
     .sub-price span{font-size:1.1rem;color:var(--t2);font-family:var(--fb)}
     .sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:32px 0}
     .sub-feat{background:var(--white);border:1px solid var(--bdr);border-radius:var(--rmd);padding:20px}
-    .sub-feat-i{width:36px;height:36px;border-radius:var(--rsm);background:#F3EEFF;color:var(--pur);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+    .sub-feat-i{width:36px;height:36px;border-radius:var(--rsm);background:#FBF8EC;color:var(--pur);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
     .sub-feat-t{font-weight:600;font-size:.9rem;margin-bottom:5px}
     .sub-feat-d{font-size:.8rem;color:var(--t2);line-height:1.5}
     .pay-card{background:var(--off);border:1.5px solid var(--bdr);border-radius:var(--rlg);padding:30px;max-width:500px;margin:0 auto}
@@ -404,7 +404,7 @@
     .aheroprice{font-family:var(--fd);font-size:2.4rem;letter-spacing:-.02em}
     .itabs{display:flex;gap:4px;background:var(--surf);border-radius:8px;padding:4px;width:fit-content;margin-bottom:14px}
     .ibtn{padding:7px 15px;border-radius:6px;border:none;font-size:.8125rem;font-weight:500;cursor:pointer;background:transparent;color:var(--t2);transition:var(--ease)}
-    .ibtn.on{background:var(--white);color:var(--t1);box-shadow:var(--s1)}
+    .ibtn.on{background:var(--white);color:#D4AF37;box-shadow:var(--s1)}
     .chartwrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden;margin-bottom:22px}
     .chartarea{height:260px;background:var(--off);display:flex;align-items:flex-end;padding:0 6px 0;gap:2px;position:relative}
     .cbar{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:height .4s ease}
@@ -433,19 +433,19 @@
     .blogpost-back:hover{color:var(--t1);border-color:var(--t1)}
 
     /* ── KayKay AI Assistant ── */
-    .kk-fab{position:fixed;bottom:90px;right:32px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(124,58,237,.45);z-index:200;transition:all .3s cubic-bezier(.4,0,.2,1);animation:kkBreath 3s ease-in-out infinite}
-    .kk-fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(124,58,237,.6)}
+    .kk-fab{position:fixed;bottom:90px;right:32px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(212,175,55,.45);z-index:200;transition:all .3s cubic-bezier(.4,0,.2,1);animation:kkBreath 3s ease-in-out infinite}
+    .kk-fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(212,175,55,.6)}
     .kk-fab.listening{animation:kkPulse 1.2s ease-in-out infinite;background:linear-gradient(135deg,#DC2626,#7C3AED)}
     .kk-fab.speaking{animation:kkSpeak .6s ease-in-out infinite alternate;background:linear-gradient(135deg,#059669,#7C3AED)}
-    @keyframes kkBreath{0%,100%{box-shadow:0 4px 20px rgba(124,58,237,.45),0 0 0 0 rgba(124,58,237,.3)}50%{box-shadow:0 4px 20px rgba(124,58,237,.45),0 0 0 10px rgba(124,58,237,0)}}
+    @keyframes kkBreath{0%,100%{box-shadow:0 4px 20px rgba(212,175,55,.45),0 0 0 0 rgba(212,175,55,.3)}50%{box-shadow:0 4px 20px rgba(212,175,55,.45),0 0 0 10px rgba(212,175,55,0)}}
     @keyframes kkPulse{0%,100%{box-shadow:0 4px 20px rgba(220,38,38,.5),0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 4px 20px rgba(220,38,38,.5),0 0 0 14px rgba(220,38,38,0)}}
     @keyframes kkSpeak{from{box-shadow:0 4px 20px rgba(5,150,105,.5),0 0 0 4px rgba(5,150,105,.2)}to{box-shadow:0 4px 20px rgba(5,150,105,.5),0 0 0 12px rgba(5,150,105,0)}}
     .kk-panel{position:fixed;bottom:0;right:0;width:100%;max-width:420px;height:100vh;max-height:100vh;background:linear-gradient(180deg,#0D0B1A 0%,#110D2E 40%,#0D1528 100%);z-index:500;display:flex;flex-direction:column;animation:kkSlideIn .35s cubic-bezier(.4,0,.2,1);box-shadow:-8px 0 40px rgba(0,0,0,.5)}
     @keyframes kkSlideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
     .kk-panel-hdr{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
     .kk-brand{display:flex;align-items:center;gap:10px}
-    .kk-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
-    .kk-avatar-ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(124,58,237,.4);animation:kkBreath 3s ease-in-out infinite;will-change:box-shadow;backface-visibility:hidden}
+    .kk-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+    .kk-avatar-ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(212,175,55,.4);animation:kkBreath 3s ease-in-out infinite;will-change:box-shadow;backface-visibility:hidden}
     .kk-avatar.speaking .kk-avatar-ring{border-color:rgba(5,150,105,.6);animation:kkSpeak .6s ease-in-out infinite alternate}
     .kk-avatar.listening .kk-avatar-ring{border-color:rgba(220,38,38,.6);animation:kkPulse 1.2s ease-in-out infinite}
     .kk-name{font-family:var(--fd);font-size:1.1rem;color:#fff;letter-spacing:.02em}
@@ -467,26 +467,26 @@
     .kk-msg.user{align-self:flex-end}
     .kk-msg.kk{align-self:flex-start}
     .kk-bubble{padding:10px 14px;border-radius:14px;font-size:.8375rem;line-height:1.6}
-    .kk-msg.user .kk-bubble{background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;border-radius:14px 14px 4px 14px}
+    .kk-msg.user .kk-bubble{background:linear-gradient(135deg,#D4AF37,#B8922A);color:#fff;border-radius:14px 14px 4px 14px}
     .kk-msg.kk .kk-bubble{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.08);border-radius:14px 14px 14px 4px}
     .kk-msg.kk .kk-bubble a{color:#A78BFA;text-decoration:underline;cursor:pointer}
     .kk-prompts{padding:12px 16px;flex-shrink:0}
     .kk-prompts-label{font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px}
     .kk-prompt-chips{display:flex;flex-wrap:wrap;gap:6px}
-    .kk-chip{padding:6px 12px;border-radius:100px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);color:rgba(255,255,255,.7);font-size:.72rem;cursor:pointer;transition:all .2s;white-space:nowrap}
-    .kk-chip:hover{background:rgba(124,58,237,.35);color:#fff;border-color:rgba(124,58,237,.5)}
+    .kk-chip{padding:6px 12px;border-radius:100px;background:rgba(212,175,55,.2);border:1px solid rgba(212,175,55,.3);color:rgba(255,255,255,.7);font-size:.72rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+    .kk-chip:hover{background:rgba(212,175,55,.35);color:#fff;border-color:rgba(212,175,55,.5)}
     .kk-ibar{padding:12px 16px 24px;flex-shrink:0;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;align-items:center}
     .kk-input{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:10px 16px;color:#fff;font-size:.8375rem;font-family:var(--fb);outline:none;transition:all .2s}
     .kk-input::placeholder{color:rgba(255,255,255,.3)}
-    .kk-input:focus{border-color:rgba(124,58,237,.6);background:rgba(255,255,255,.1)}
-    .kk-mic{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+    .kk-input:focus{border-color:rgba(212,175,55,.6);background:rgba(255,255,255,.1)}
+    .kk-mic{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
     .kk-mic:hover{transform:scale(1.08)}
     .kk-mic.active{background:linear-gradient(135deg,#DC2626,#EF4444);animation:kkPulse 1.2s infinite}
     .kk-settings-bar{display:flex;gap:6px;padding:8px 16px 0;flex-shrink:0;flex-wrap:wrap}
     .kk-sel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:5px 12px;color:rgba(255,255,255,.7);font-size:.7rem;font-family:var(--fb);outline:none;cursor:pointer;transition:all .2s;appearance:none;-webkit-appearance:none}
-    .kk-sel:focus{border-color:rgba(124,58,237,.5);color:#fff}
+    .kk-sel:focus{border-color:rgba(212,175,55,.5);color:#fff}
     .kk-locked{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:32px 24px;text-align:center}
-    .kk-locked-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(79,70,229,.3));border:2px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;animation:kkBreath 3s ease-in-out infinite}
+    .kk-locked-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(212,175,55,.3),rgba(184,146,42,.3));border:2px solid rgba(212,175,55,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;animation:kkBreath 3s ease-in-out infinite}
     @media(max-width:768px){.kk-panel{max-width:100%;border-radius:20px 20px 0 0;height:88vh;bottom:0}.kk-fab{bottom:80px;right:16px}.kk-panel-hdr{padding:14px 14px 0}.kk-settings-bar{padding:6px 12px 0;gap:4px}.kk-sel{font-size:.65rem;padding:4px 8px}.kk-hdr-sel{display:none!important}}
     /* ── End KayKay ── */
     /* ── Blog ── */
@@ -1288,7 +1288,7 @@ function kkUpdatePanel(){
       <div class="kk-msg ${m.role==='user'?'user':'kk'}">
         <div class="kk-bubble">${m.text}</div>
       </div>`).join('');
-    if(KK.loading) feed.innerHTML+=`<div class="kk-msg kk"><div class="kk-bubble" style="display:flex;flex-direction:column;gap:7px;min-width:180px"><div style="display:flex;gap:5px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .4s infinite"></span></div><div id="kk-thinking-text" style="font-size:.72rem;color:rgba(255,255,255,.4);font-style:italic"></div></div></div>`;
+    if(KK.loading) feed.innerHTML+=`<div class="kk-msg kk"><div class="kk-bubble" style="display:flex;flex-direction:column;gap:7px;min-width:180px"><div style="display:flex;gap:5px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s .4s infinite"></span></div><div id="kk-thinking-text" style="font-size:.72rem;color:rgba(255,255,255,.4);font-style:italic"></div></div></div>`;
     feed.scrollTop=feed.scrollHeight;
   }
   // Update mic button
@@ -1926,17 +1926,17 @@ function kkUpdatePageInPlace(){
   if(feed){
     const msgs=KK.history.map(m=>`
       <div style="display:flex;${m.role==='user'?'justify-content:flex-end':'justify-content:flex-start'}">
-        ${m.role==='kk'?`<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;margin-top:2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>`:''}
+        ${m.role==='kk'?`<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;margin-top:2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>`:''}
         <div style="max-width:78%;padding:10px 14px;border-radius:${m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px'};font-size:.8375rem;line-height:1.65;background:${m.role==='user'?'linear-gradient(135deg,#7C3AED,#4F46E5)':'rgba(255,255,255,.08)'};color:${m.role==='user'?'#fff':'rgba(255,255,255,.92)'};border:${m.role==='kk'?'1px solid rgba(255,255,255,.08)':'none'}">${m.text}</div>
       </div>`).join('');
     const loading=KK.loading?`
       <div style="display:flex;justify-content:flex-start">
-        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>
         <div style="padding:12px 16px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:8px;min-width:200px">
             <div style="display:flex;gap:5px;align-items:center">
-              <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s infinite"></div>
-              <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .2s infinite"></div>
-              <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .4s infinite"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s infinite"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s .2s infinite"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s .4s infinite"></div>
             </div>
             <div id="kk-thinking-text" style="font-size:.72rem;color:rgba(255,255,255,.4);font-style:italic;animation:kkMsgIn .3s ease"></div>
           </div>
@@ -1987,7 +1987,7 @@ function kkRenderPanel(){
     ${isLocked?`
     <div class="kk-locked">
       <div class="kk-locked-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
       <div style="font-family:var(--fd);font-size:1.3rem;color:#fff;margin-bottom:8px">Meet KayKay</div>
       <div style="font-size:.875rem;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:24px;max-width:280px">Your AI assistant. Navigate the app, get answers, and hear live updates — all by voice or text. Pro feature.</div>
@@ -1995,7 +1995,7 @@ function kkRenderPanel(){
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         Upgrade to Pro
       </button>
-      <div style="font-size:.72rem;color:rgba(255,255,255,.2);margin-top:14px">Have a coupon? <span onclick="kkClose();R.go('sub')" style="color:rgba(124,58,237,.7);cursor:pointer;text-decoration:underline">Redeem it here</span></div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.2);margin-top:14px">Have a coupon? <span onclick="kkClose();R.go('sub')" style="color:rgba(212,175,55,.7);cursor:pointer;text-decoration:underline">Redeem it here</span></div>
     </div>`:`
 
     <div class="kk-settings-bar">
@@ -2190,31 +2190,35 @@ const P = {
     return `<div id="pg-land" class="page">
       <p class="l-ey">The unified commerce layer</p>
       <h1 class="l-h">Your passport to <em>trade & access</em> the globe. 🌎</h1>
-      <p class="l-sub">Your profile, a live peer-to-peer marketplace, and real-time Coin Markets — all in one place.</p>
+      <p class="l-sub">Your profile, a your profile, global marketplace, and real-time Coin Markets — all in one place.</p>
       <!-- Blog link where whitepaper was -->
       <div style="margin-top:-40px;margin-bottom:48px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
-        <button onclick="R.go('blog')" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:7px 18px;font-family:var(--fb);font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;transition:var(--ease)" onmouseover="this.style.borderColor='var(--t1)';this.style.color='var(--t1)'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)'">
+        <button onclick="R.go('blog')" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:7px 18px;font-family:var(--fb);font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;transition:var(--ease)" onmouseover="this.style.borderColor='#D4AF37';this.style.color='#D4AF37'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           Resources & Blog
         </button>
       </div>
       <div class="ggrid">
         <div class="gcard" onclick="R.acct()">
-          <div class="gci id" style="background:var(--t1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>${S.user?'<polyline points="16 11 18 13 22 9" stroke="#4ade80" stroke-width="2"/>':''}</svg></div>
+          ${S.user?.avatarId
+          ?`<div class="gci" style="background:transparent;padding:0;overflow:hidden;width:48px;height:48px;border-radius:var(--rmd);flex-shrink:0">
+              <img src="${fileUrl(S.user.avatarId)}" style="width:48px;height:48px;object-fit:cover;object-position:${S.user.avatarFocus||'center center'};display:block;border-radius:var(--rmd)">
+            </div>`
+          :`<div class="gci id"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>${S.user?'<polyline points="16 11 18 13 22 9" stroke="#4ade80" stroke-width="2"/>':''}</svg></div>`}
           <span class="gcl">Identity</span>
           <h2 class="gct">${S.user?S.user.name.split(' ')[0]+"'s Profile":'Account Gateway'}</h2>
           <p class="gcd">${S.user?'View your profile, track your orders, and manage account settings.':'Sign in or create an account to access personalised features and trade on the marketplace.'}</p>
           <div class="gca"><span>${S.user?'View Profile':'Sign In / Register'}</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
         <div class="gcard" onclick="R.go('market')">
-          <div class="gci iw"><i data-lucide="store" style="width:22px;height:22px"></i></div>
+          <div class="gci iw"><i data-lucide="store" style="width:22px;height:22px;color:#D4AF37"></i></div>
           <span class="gcl">Commerce</span>
           <h2 class="gct">Datum Marketplace</h2>
           <p class="gcd">Logistics, P2P, goods, and service requests — live order board with a community forum.</p>
           <div class="gca"><span>Enter Marketplace</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
         <div class="gcard" onclick="R.go('crypto')">
-          <div class="gci ib" style="background:#E8EEFB"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blu)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg></div>
+          <div class="gci ib" style="background:#FBF6E3"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg></div>
           <span class="gcl">Markets</span>
           <h2 class="gct">Financial Rates</h2>
           <p class="gcd">Live prices for 500+ coins, deep-dive analytics, interval charts, and your personal financial watchlist.</p>
@@ -3408,7 +3412,7 @@ const P = {
     return`<div class="pay-card" style="max-width:500px;margin:0 auto">
       <!-- Coupon / Trial CTA -->
       ${!S.subStatus||S.subStatus===null?`
-      <div style="background:linear-gradient(135deg,#F3EEFF,#ede8fb);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:18px 20px;margin-bottom:20px">
+      <div style="background:linear-gradient(135deg,#FBF8EC,#F5EEC8);border:1.5px solid #E8D9A0;border-radius:var(--rmd);padding:18px 20px;margin-bottom:20px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
           <span style="font-weight:700;font-size:.9rem;color:var(--pur)">Have a coupon code?</span>
@@ -3530,7 +3534,7 @@ const P = {
       </div>
 
       ${isLocked?`
-      <div style="background:linear-gradient(135deg,#F3EEFF,#ede8fb);border:1.5px solid #D4C8F0;border-radius:var(--rmd);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="background:linear-gradient(135deg,#FBF8EC,#F5EEC8);border:1.5px solid #E8D9A0;border-radius:var(--rmd);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <div style="flex:1;min-width:200px">
           <div style="font-weight:700;font-size:.875rem;color:var(--pur);margin-bottom:3px;display:flex;align-items:center;gap:6px"><i data-lucide="lock" style="width:13px;height:13px"></i>Pro members only</div>
           <div style="font-size:.78rem;color:var(--t2);line-height:1.5">Top-tier market insight, culture, and opinion — content you won't find anywhere else. Upgrade to read in full.</div>
@@ -3639,7 +3643,7 @@ const P = {
           <div style="opacity:.6">${bodyHtml}</div>
           <div style="position:absolute;bottom:0;left:0;right:0;height:100px;background:linear-gradient(to bottom,transparent,var(--white))"></div>
         </div>
-        <div style="border:1.5px solid #D4C8F0;border-radius:var(--rlg);padding:32px 24px;text-align:center;background:linear-gradient(135deg,#F3EEFF,#ede8fb);margin-top:0">
+        <div style="border:1.5px solid #E8D9A0;border-radius:var(--rlg);padding:32px 24px;text-align:center;background:linear-gradient(135deg,#FBF8EC,#F5EEC8);margin-top:0">
           <div style="width:52px;height:52px;background:var(--pur);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff"><i data-lucide="lock" style="width:22px;height:22px"></i></div>
           <div style="font-family:var(--fd);font-size:1.3rem;margin-bottom:8px">Continue reading</div>
           <p style="font-size:.875rem;color:var(--t2);margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.6">This post is for Pro members. Upgrade to read the full article and all future posts.</p>
@@ -3664,7 +3668,7 @@ const P = {
         </button>
         <div style="display:flex;align-items:center;gap:10px">
           <div style="position:relative">
-            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);display:flex;align-items:center;justify-content:center;animation:kkBreath 3s ease-in-out infinite" id="kk-avatar">
+            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);display:flex;align-items:center;justify-content:center;animation:kkBreath 3s ease-in-out infinite" id="kk-avatar">
               <div class="kk-avatar-ring"></div>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
             </div>
@@ -3703,8 +3707,8 @@ const P = {
 
       ${isLocked?`
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center">
-        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(79,70,229,.3));border:2px solid rgba(124,58,237,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:kkBreath 3s ease-in-out infinite">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,.9)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,rgba(212,175,55,.3),rgba(184,146,42,.3));border:2px solid rgba(212,175,55,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:kkBreath 3s ease-in-out infinite">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,.9)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
         </div>
         <div style="font-family:var(--fd);font-size:1.8rem;color:#fff;margin-bottom:10px">Meet KayKay</div>
         <div style="font-size:.9rem;color:rgba(255,255,255,.45);line-height:1.8;margin-bottom:28px;max-width:320px">Your AI brain. Navigate the app by voice, get answers, hear live updates, and find listings — all hands-free. A Pro feature.</div>
@@ -3712,7 +3716,7 @@ const P = {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           Upgrade to Pro
         </button>
-        <div style="font-size:.75rem;color:rgba(255,255,255,.2);margin-top:14px">Have a coupon? <span onclick="R.go('sub')" style="color:rgba(124,58,237,.6);cursor:pointer;text-decoration:underline">Redeem it here</span></div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.2);margin-top:14px">Have a coupon? <span onclick="R.go('sub')" style="color:rgba(212,175,55,.6);cursor:pointer;text-decoration:underline">Redeem it here</span></div>
       </div>`:`
 
       <!-- Waveform -->
@@ -3722,7 +3726,7 @@ const P = {
         </div>
         ${KK.listening?`<div style="position:absolute;bottom:6px;font-size:.7rem;color:rgba(220,38,38,.8);letter-spacing:.08em;text-transform:uppercase;animation:kkPulse 1.5s infinite">● Listening</div>`:''}
         ${KK.speaking?`<div style="position:absolute;bottom:6px;font-size:.7rem;color:rgba(5,150,105,.8);letter-spacing:.08em;text-transform:uppercase">▶ Speaking</div>`:''}
-        ${KK.loading?`<div style="position:absolute;bottom:6px;font-size:.7rem;color:rgba(124,58,237,.8);letter-spacing:.08em;text-transform:uppercase">◌ Thinking</div>`:''}
+        ${KK.loading?`<div style="position:absolute;bottom:6px;font-size:.7rem;color:rgba(212,175,55,.8);letter-spacing:.08em;text-transform:uppercase">◌ Thinking</div>`:''}
       </div>
 
       <!-- Transcript -->
@@ -3736,21 +3740,21 @@ const P = {
         <div style="text-align:center;padding:20px 0 10px">
           <div style="font-size:.68rem;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px">What can I help you with?</div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:420px;margin:0 auto">
-            ${KK_PROMPTS.map(p=>`<div onclick="kkChipSend('${p.replace(/'/g,'\\\'')}')" style="padding:8px 14px;border-radius:100px;background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.3);color:rgba(255,255,255,.75);font-size:.75rem;cursor:pointer;transition:all .2s;line-height:1.3;text-align:center" onmouseover="this.style.background='rgba(124,58,237,.3)';this.style.color='#fff'" onmouseout="this.style.background='rgba(124,58,237,.18)';this.style.color='rgba(255,255,255,.75)'">${p}</div>`).join('')}
+            ${KK_PROMPTS.map(p=>`<div onclick="kkChipSend('${p.replace(/'/g,'\\\'')}')" style="padding:8px 14px;border-radius:100px;background:rgba(212,175,55,.18);border:1px solid rgba(212,175,55,.3);color:rgba(255,255,255,.75);font-size:.75rem;cursor:pointer;transition:all .2s;line-height:1.3;text-align:center" onmouseover="this.style.background='rgba(212,175,55,.3)';this.style.color='#fff'" onmouseout="this.style.background='rgba(212,175,55,.18)';this.style.color='rgba(255,255,255,.75)'">${p}</div>`).join('')}
           </div>
         </div>`:''}
         ${KK.history.map(m=>`
         <div style="display:flex;${m.role==='user'?'justify-content:flex-end':'justify-content:flex-start'}">
-          ${m.role==='kk'?`<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;margin-top:2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>`:''}
+          ${m.role==='kk'?`<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;margin-top:2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>`:''}
           <div style="max-width:78%;padding:10px 14px;border-radius:${m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px'};font-size:.8375rem;line-height:1.65;background:${m.role==='user'?'linear-gradient(135deg,#7C3AED,#4F46E5)':'rgba(255,255,255,.08)'};color:${m.role==='user'?'#fff':'rgba(255,255,255,.92)'};border:${m.role==='kk'?'1px solid rgba(255,255,255,.08)':'none'}">${m.text}</div>
         </div>`).join('')}
         ${KK.loading?`
         <div style="display:flex;justify-content:flex-start">
-          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>
           <div style="padding:12px 16px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);display:flex;gap:5px;align-items:center">
-            <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s infinite"></div>
-            <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .2s infinite"></div>
-            <div style="width:7px;height:7px;border-radius:50%;background:rgba(124,58,237,.8);animation:kkDot .8s .4s infinite"></div>
+            <div style="width:7px;height:7px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s infinite"></div>
+            <div style="width:7px;height:7px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s .2s infinite"></div>
+            <div style="width:7px;height:7px;border-radius:50%;background:rgba(212,175,55,.8);animation:kkDot .8s .4s infinite"></div>
           </div>
         </div>`:''}
       </div>
@@ -3768,11 +3772,11 @@ const P = {
 
       <!-- Input bar -->
       <div style="padding:10px 16px 28px;flex-shrink:0;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.2)">
-        <button class="kk-page-mic" onclick="kkVoiceComingSoon()" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;opacity:.55">
+        <button class="kk-page-mic" onclick="kkVoiceComingSoon()" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;opacity:.55">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </button>
-        <input style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:100px;padding:11px 18px;color:#fff;font-size:.875rem;font-family:var(--fb);outline:none;transition:border .2s" placeholder="Ask KayKay anything…" id="kk-input" onkeydown="if(event.key==='Enter')KK_send()" onfocus="this.style.borderColor='rgba(124,58,237,.6)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
-        <button onclick="KK_send()" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+        <input style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:100px;padding:11px 18px;color:#fff;font-size:.875rem;font-family:var(--fb);outline:none;transition:border .2s" placeholder="Ask KayKay anything…" id="kk-input" onkeydown="if(event.key==='Enter')KK_send()" onfocus="this.style.borderColor='rgba(212,175,55,.6)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
+        <button onclick="KK_send()" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>`}
@@ -3804,7 +3808,7 @@ const P = {
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="sub-feat-t">Open Forum</div><div class="sub-feat-d">Join the community conversation and share market insights.</div></div>
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="sub-feat-t">500+ Crypto Assets</div><div class="sub-feat-d">Full market table with search, pagination, and deep-dive analytics.</div></div>
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="sub-feat-t">Watchlist & Charts</div><div class="sub-feat-d">Track your favourites and access historical performance charts.</div></div>
-        <div class="sub-feat" style="border-color:rgba(124,58,237,.3);background:linear-gradient(135deg,#F3EEFF,#ede8fb)"><div class="sub-feat-i" style="background:var(--pur)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div><div class="sub-feat-t" style="color:var(--pur)">KayKay AI Assistant</div><div class="sub-feat-d">Voice and text AI that navigates the app, answers questions, and announces your notifications.</div></div>
+        <div class="sub-feat" style="border-color:rgba(212,175,55,.3);background:linear-gradient(135deg,#FBF8EC,#F5EEC8)"><div class="sub-feat-i" style="background:var(--pur)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div><div class="sub-feat-t" style="color:var(--pur)">KayKay AI Assistant</div><div class="sub-feat-d">Voice and text AI that navigates the app, answers questions, and announces your notifications.</div></div>
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="sub-feat-t">Vendor Directory</div><div class="sub-feat-d">City-by-city vendor discovery with community voting and showcase.</div></div>
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg></div><div class="sub-feat-t">Blog Access</div><div class="sub-feat-d">Full access to all blog posts — in-depth market insight and platform updates from Deji.</div></div>
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="sub-feat-t">Price Alerts</div><div class="sub-feat-d">Set custom alerts for any asset — get notified the moment your target price is hit.</div></div>
@@ -4668,7 +4672,7 @@ const M = {
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal modal-lg" style="max-width:680px">
         <div class="mhdr">
-          <div><div class="mey">New Post</div><h2 class="mtitle">Write a Blog Post</h2></div>
+          <div><div class="mey">New Post</div><h2 class="mtitle">Write new Post</h2></div>
           <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
         </div>
         <div class="fg"><label>Title</label><input type="text" id="bp-title" placeholder="Your post title…"/></div>
