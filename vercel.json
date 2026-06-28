@@ -1,5 +1,10 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/howtoguides/:cat/:slug", "destination": "/index.html" },
+    { "source": "/blog/:slug", "destination": "/index.html" },
+    { "source": "/marketplace/vendorlist/:slug", "destination": "/index.html" },
+    { "source": "/marketplace/:tab", "destination": "/index.html" },
+    { "source": "/financial/:tab", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
