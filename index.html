@@ -3037,7 +3037,7 @@ const P = {
         emoji:'🌏', name:'Asia',
         desc:'Top picks from Asian markets',
         assets:[
-          {id:'tet',  n:'#', name:'$TET',  sym:'TET',  bg:'#26A17B',fg:'#fff',    fp:'$0.9986',    ytd:-92.59, y1:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
+          {id:'tet',  n:'#', name:'$TET',  sym:'TET',  bg:'#26A17B',fg:'#fff',    fp:'$0.3',    ytd:-92.59, y1:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
           {id:'tsmc', n:'#', name:'TSMC',  sym:'TSM',  bg:'#E31837',fg:'#fff',    fp:'$446.81',  ytd:35.29,  y1:131.58,   y5:273.43,   y10:2095,  sj:0},
         ],
       },
@@ -3105,12 +3105,12 @@ const P = {
         ?fmtAP(livePrice,a.id)+(isManual?`<span title="Manually updated" style="font-size:.6rem;color:var(--t3);margin-left:3px;vertical-align:middle">✎</span>`:'')
         :loading?`<span style="display:inline-block;width:14px;height:14px;border:1.5px solid var(--bdr);border-top-color:var(--t3);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle"></span>`
         :a.fp;
-      const currentPrice = livePrice!=null ? livePrice : parseFloat(a.fp.replace(/[^0-9.-]+/g,""));
-      const userBaselinePrice = localBaselines[a.id];
-      
-      let computedSinceJoined = 0.00; 
-      if (userBaselinePrice && !isNaN(currentPrice)) {
-        computedSinceJoined = ((currentPrice - userBaselinePrice) / userBaselinePrice) * 100;
+      const currentPrice=livePrice!=null?livePrice:parseFloat(a.fp.replace(/[^0-9.-]+/g,''));
+      // Use EXACT same baseline logic as detail page
+      const userBaselinePrice=localBaselines[a.id]||(S._manualPrices?.[a.id])||null;
+      let computedSinceJoined=0.00;
+      if(userBaselinePrice&&!isNaN(currentPrice)&&userBaselinePrice>0){
+        computedSinceJoined=((currentPrice-userBaselinePrice)/userBaselinePrice)*100;
       }
 
       const get=(key,fb)=>d?.[key]!=null&&!isNaN(d[key])?d[key]:fb;
@@ -6445,7 +6445,7 @@ const A = {
       tsmc:       {2024:100,   2025:195,   2026:446.81},
       dangcem:    {2024:620,   2025:1180,  2026:1180.00},
       eth:        {2024:2300,  2025:3400,  2026:2013.93},
-      tet:        {2024:1,     2025:0.50,  2026:0.9986},
+      tet:        {2024:1,     2025:0.50,  2026:0.3},
     };
 
     if(hist.length<2&&joinDate){
@@ -6472,11 +6472,12 @@ const A = {
     // Read from same source as datum list table for consistency
     let _localBaselines2={};
     try{const _r2=localStorage.getItem('datum_user_baselines');_localBaselines2=_r2?JSON.parse(_r2):{};}catch(e){}
-    const realEntryPrice=_localBaselines2[id]||hist[0]?.p||livePrice||1;
+    // MUST match exact fallback chain used in the table row above
+    const realEntryPrice=_localBaselines2[id]||(S._manualPrices?.[id])||null;
+    const joinPrice=realEntryPrice||livePrice||1;
 
-    const joinPrice=realEntryPrice;
     const currentP=livePrice||hist[hist.length-1]?.p||joinPrice;
-    const sinceJoinedPct=joinPrice?((currentP-joinPrice)/joinPrice*100):0;
+    const sinceJoinedPct=(joinPrice&&joinPrice>0)?((currentP-joinPrice)/joinPrice*100):0;
     const isUp=sinceJoinedPct>=0;
     const news=S._assetNews?.[id];
     const thesis=THESIS[id]||'';
@@ -8292,8 +8293,8 @@ document.addEventListener('DOMContentLoaded', async()=>{
     startNotifPoll();
   }
   // Load manual stock prices from prices.json (cache-busted each page load)
-  fetch('prices.json?v='+Date.now())
-    .then(r=>r.json())
+  fetch('/prices.json?v='+Date.now())
+    .then(r=>{if(!r.ok)throw new Error('prices.json '+r.status);return r.json();})
     .then(async data=>{
       S._manualPrices=data;
 
@@ -8315,27 +8316,29 @@ document.addEventListener('DOMContentLoaded', async()=>{
         });
         if(changed) localStorage.setItem('datum_price_history',JSON.stringify(hist));
       }catch(e){}
-      const STOCK_IDS=['gold','nvda','spx','dxy','tsla','mstr','nasdaq','lvmh','tsmc'];
-      let baselines={};
-      try{baselines=JSON.parse(localStorage.getItem('datum_user_baselines'))||{};}catch(e){}
-      let changed=false;
-      STOCK_IDS.forEach(id=>{
-        if(!baselines[id]&&data[id]!=null){
-          baselines[id]=data[id];
-          changed=true;
-        }
-      });
-      // Also set crypto baselines from live CoinGecko data if not already set
-      const cgMap={btc:'bitcoin',eth:'ethereum'};
-      Object.entries(cgMap).forEach(([id,cgId])=>{
-        const c=S.coins.find(x=>x.id===cgId);
-        if(c?.price!=null&&!baselines[id]){
-          baselines[id]=c.price;
-          changed=true;
-        }
-      });
-      if(changed){
-        localStorage.setItem('datum_user_baselines',JSON.stringify(baselines));
+      // FIXED HISTORICAL BASELINES — prices on June 5 2026 (platform launch reference)
+      // These never change — they represent what prices were when Datum List launched
+      const BASELINE_SET_KEY='datum_baselines_locked';
+      const alreadyLocked=localStorage.getItem(BASELINE_SET_KEY);
+      if(!alreadyLocked){
+        const LAUNCH_BASELINES={
+          gold    : 4492.70,
+          nvda    : 211.14,
+          spx     : 7580.06,
+          btc     : 73893.85,
+          dxy     : 98.942,
+          eth     : 2013.93,
+          tet     : 0.3,
+          mstr    : 159.09,
+          tsla    : 435.79,
+          nasdaq  : 26972.62,
+          lvmh    : 748.20,
+          tsmc    : 446.81,
+          dangcem : 1180.00,
+        };
+        localStorage.setItem('datum_user_baselines',JSON.stringify(LAUNCH_BASELINES));
+        localStorage.setItem(BASELINE_SET_KEY,'true');
+        const changed=true;
         // Only save to Appwrite if the profile doesn't already have baselines set
         // This ensures the baseline is always from the first device/session (signup moment)
         // and never overwritten by a later login on a different device
@@ -8355,22 +8358,15 @@ document.addEventListener('DOMContentLoaded', async()=>{
       render();
     })
     .catch(()=>{}); 
+  // Reset to fixed launch baselines — run once per device
+  if(localStorage.getItem('datum_baselines_version')!=='3'){
+    localStorage.removeItem('datum_user_baselines');
+    localStorage.removeItem('datum_baselines_locked');
+    localStorage.removeItem('datum_baselines_version');
+    localStorage.setItem('datum_baselines_version','3');
+  }
   render();
-  loadCoins().then(()=>{
-    // Set baselines for crypto from live prices if not already set
-    try{
-      const _b=JSON.parse(localStorage.getItem('datum_user_baselines')||'{}');
-      let _changed=false;
-      const _cgMap={btc:'bitcoin',eth:'ethereum',tet:'tether'};
-      Object.entries(_cgMap).forEach(([id,cgId])=>{
-        if(!_b[id]){
-          const c=S.coins.find(x=>x.id===cgId);
-          if(c?.price){_b[id]=c.price;_changed=true;}
-        }
-      });
-      if(_changed) localStorage.setItem('datum_user_baselines',JSON.stringify(_b));
-    }catch(e){}
-  }).catch(()=>{});
+  loadCoins();
   A.loadAdminProfile();
   // Register PWA service worker
   if('serviceWorker' in navigator){
