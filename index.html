@@ -1636,7 +1636,7 @@ async function markAllRead(){
 }
 
 async function loadCoins(){
-  if(S.coinsState==='loading')return;
+  if(S.coinsState==='loading')return Promise.resolve();
   S.coinsState='loading';render();
   try{
     const pages=await Promise.all([1,2,3,4,5].map(pg=>
@@ -2958,7 +2958,8 @@ const P = {
 
     let localBaselines = {};
     try {
-      localBaselines = JSON.parse(localStorage.getItem('datum_user_baselines')) || {};
+      const _raw = localStorage.getItem('datum_user_baselines');
+      localBaselines = _raw ? JSON.parse(_raw) : {};
     } catch(e) { localBaselines = {}; }
 
     if(!hasPrices){
@@ -3486,7 +3487,8 @@ const P = {
 
     const blogCard=(post)=>{
       const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
-      return`<div class="blog-card" onclick="A.openBlogPost('${post.id}')">
+      return`${isAdmin&&!post.published?`<div style="position:absolute;top:${isAdmin?'48px':'10px'};left:10px;z-index:10"><span class="tag tgd" style="font-size:.65rem"><i data-lucide="file" style="width:9px;height:9px"></i>Draft</span></div>`:''}
+      <div class="blog-card" onclick="A.openBlogPost('${post.id}')">
         ${imgUrl
           ?`<img src="${imgUrl}" class="blog-card-img" alt="${post.title}" style="width:100%;height:200px;object-fit:cover;display:block" onerror="this.outerHTML=''">`
           :`<div class="blog-card-img-placeholder"><i data-lucide="pen-line" style="width:32px;height:32px"></i></div>`}
@@ -3619,7 +3621,11 @@ const P = {
           <div style="font-weight:600;font-size:.875rem">${post.authorName||'Deji Lasisi'}</div>
           <div style="font-size:.75rem;color:var(--t3)">${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'Recently'}</div>
         </div>
-        <div style="margin-left:auto;display:flex;gap:8px">
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+          ${!post.published&&S.user?.id===ADMIN_ID?`
+          <button class="btn bc bsm" onclick="A.publishDraft('${post.id}')">
+            <i data-lucide="send" style="width:12px;height:12px"></i>Publish Now
+          </button>`:''}
           <button class="btn bg bsm" onclick="A.shareBlogPost('${post.id}','${post.title.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}','${post.slug||''}')">
             <i data-lucide="share-2" style="width:12px;height:12px"></i>Share
           </button>
@@ -4700,16 +4706,15 @@ const M = {
           <div id="bp-editor" style="background:#fff"></div>
           <input type="file" id="bp-inline-img" accept="image/jpeg,image/png,image/webp" style="display:none"/>
         </div>
-        <div class="fg">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="bp-published" checked style="width:16px;height:16px"/>
-            Publish immediately
-          </label>
-        </div>
         <div class="ferr" id="bp-err"></div>
-        <button class="btn bp" id="bp-btn" style="width:100%;justify-content:center;padding:12px" onclick="A.submitBlogPost()">
-          <i data-lucide="send" style="width:14px;height:14px"></i>Publish Post
-        </button>
+        <div style="display:flex;gap:10px">
+          <button class="btn bo" id="bp-draft-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.submitBlogPost(true)">
+            <i data-lucide="file" style="width:14px;height:14px"></i>Save Draft
+          </button>
+          <button class="btn bp" id="bp-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.submitBlogPost(false)">
+            <i data-lucide="send" style="width:14px;height:14px"></i>Publish
+          </button>
+        </div>
       </div>
     </div>`);
     A.initBlogEditor('');
@@ -4750,11 +4755,14 @@ const M = {
           <input type="file" id="bp-inline-img" accept="image/jpeg,image/png,image/webp" style="display:none"/>
         </div>
         <div class="ferr" id="bp-err"></div>
-        <div style="display:flex;gap:10px">
-          <button class="btn bp" id="bp-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.updateBlogPost('${id}')">
-            <i data-lucide="save" style="width:14px;height:14px"></i>Save Changes
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn bo" id="bp-draft-btn" style="flex:1;justify-content:center;padding:12px;min-width:120px" onclick="A.updateBlogPost('${id}',true)">
+            <i data-lucide="file" style="width:14px;height:14px"></i>Save as Draft
           </button>
-          <button class="btn bo" style="padding:12px 16px" onclick="A.deleteBlogPost('${id}')">
+          <button class="btn bp" id="bp-btn" style="flex:1;justify-content:center;padding:12px;min-width:120px" onclick="A.updateBlogPost('${id}',false)">
+            <i data-lucide="save" style="width:14px;height:14px"></i>Save & Publish
+          </button>
+          <button class="btn bo" style="padding:12px 16px;color:var(--red);border-color:var(--red)" onclick="A.deleteBlogPost('${id}')">
             <i data-lucide="trash-2" style="width:14px;height:14px"></i>
           </button>
         </div>
@@ -6462,9 +6470,9 @@ const A = {
 
     // Entry price = first historical data point or real join-date price
     // Read from same source as datum list table for consistency
-    let localBaselines={};
-    try{localBaselines=JSON.parse(localStorage.getItem('datum_user_baselines'))||{};}catch(e){}
-    const realEntryPrice=localBaselines[id]||hist[0]?.p||livePrice||1;
+    let _localBaselines2={};
+    try{const _r2=localStorage.getItem('datum_user_baselines');_localBaselines2=_r2?JSON.parse(_r2):{};}catch(e){}
+    const realEntryPrice=_localBaselines2[id]||hist[0]?.p||livePrice||1;
 
     const joinPrice=realEntryPrice;
     const currentP=livePrice||hist[hist.length-1]?.p||joinPrice;
@@ -7770,20 +7778,20 @@ Rules:
     preview.innerHTML=`<img src="${url}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr)">`;
   },
 
-  async submitBlogPost(){
+  async submitBlogPost(asDraft=false){
     if(S.user?.id!==ADMIN_ID) return;
     const title=document.getElementById('bp-title')?.value?.trim();
-    const slug=document.getElementById('bp-slug')?.value?.trim()||title?.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    const slug=document.getElementById('bp-slug')?.value?.trim()||title?.toLowerCase().replace(/[^a-z0-9-]+/g,'-');
     const excerpt=document.getElementById('bp-excerpt')?.value?.trim();
     const tagsRaw=document.getElementById('bp-tags')?.value||'';
     const body=window._bpQuill?window._bpQuill.root.innerHTML.trim():'';
-    const published=document.getElementById('bp-published')?.checked||false;
+    const published=!asDraft;
     const imgInput=document.getElementById('bp-img');
     const err=document.getElementById('bp-err');
-    const btn=document.getElementById('bp-btn');
+    const btn=asDraft?document.getElementById('bp-draft-btn'):document.getElementById('bp-btn');
     if(!title){err.textContent='Please add a title.';return;}
-    if(!body){err.textContent='Please write the post body.';return;}
-    btn.disabled=true;btn.textContent='Publishing…';
+    if(!asDraft&&(!body||body==='<p><br></p>')){err.textContent='Please write the post body.';return;}
+    btn.disabled=true;btn.textContent=asDraft?'Saving draft…':'Publishing…';
     let coverImageId='';
     if(imgInput?.files[0]){
       try{
@@ -7818,9 +7826,9 @@ Rules:
         guideCategory:bpGuideCat,
       });
       M.close();
-      S._blogPosts=null; // force fresh reload
+      S._blogPosts=null;
       R.go('blog');
-      toast('Post published!','ok');
+      toast(asDraft?'Draft saved! Only you can see it.':'Post published!','ok');
       // Notify all users about new blog post
       if(published){
         await notifyAllUsers(
@@ -7835,35 +7843,51 @@ Rules:
     }
   },
 
-  async updateBlogPost(id){
+  async updateBlogPost(id,asDraft=false){
     if(S.user?.id!==ADMIN_ID) return;
     const title=document.getElementById('bp-title')?.value?.trim();
     const excerpt=document.getElementById('bp-excerpt')?.value?.trim();
     const tagsRaw=document.getElementById('bp-tags')?.value||'';
     const body=window._bpQuill?window._bpQuill.root.innerHTML.trim():'';
     const err=document.getElementById('bp-err');
-    const btn=document.getElementById('bp-btn');
+    const btn=asDraft?document.getElementById('bp-draft-btn'):document.getElementById('bp-btn');
     if(!title){err.textContent='Title is required.';return;}
-    if(!body||body==='<p><br></p>'||body==='<p></p>'){err.textContent='Body is required.';return;}
-    btn.disabled=true;btn.textContent='Saving…';
+    btn.disabled=true;btn.textContent=asDraft?'Saving draft…':'Saving…';
     const tags=tagsRaw.split(',').map(t=>t.trim()).filter(Boolean);
+    const published=!asDraft;
     try{
       const bpType=document.getElementById('bp-type')?.value||'blog';
       const bpGuideCat=bpType==='guide'?(document.getElementById('bp-guide-cat')?.value||'datum_basics'):'';
-      await DB.update('blog',id,{title,excerpt:excerpt||'',body,tags,type:bpType,guideCategory:bpGuideCat});
+      await DB.update('blog',id,{
+        title,excerpt:excerpt||'',body,tags,
+        type:bpType,guideCategory:bpGuideCat,
+        published,
+        publishedAt:published?new Date().toISOString():'',
+      });
       if(S._blogPosts){
         const idx=S._blogPosts.findIndex(p=>p.id===id);
-        if(idx>=0) S._blogPosts[idx]={...S._blogPosts[idx],title,excerpt,body,tags,type:bpType,guideCategory:bpGuideCat};
+        if(idx>=0) S._blogPosts[idx]={...S._blogPosts[idx],title,excerpt,body,tags,type:bpType,guideCategory:bpGuideCat,published};
       }
-      if(S._currentPost?.id===id) S._currentPost={...S._currentPost,title,excerpt,body,tags};
+      if(S._currentPost?.id===id) S._currentPost={...S._currentPost,title,excerpt,body,tags,type:bpType,guideCategory:bpGuideCat,published};
       M.close();render();
-      toast('Post updated!','ok');
+      toast(asDraft?'Saved as draft.':'Post updated and published!','ok');
     }catch(e){
-      err.textContent='Something went wrong.';
-      btn.disabled=false;btn.textContent='Save Changes';
+      err.textContent='Something went wrong: '+e.message;
+      btn.disabled=false;btn.textContent=asDraft?'Save as Draft':'Save & Publish';
     }
   },
 
+  async publishDraft(id){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      await DB.update('blog',id,{published:true,publishedAt:new Date().toISOString()});
+      const p=S._blogPosts?.find(x=>x.id===id);
+      if(p){p.published=true;p.publishedAt=new Date().toISOString();}
+      if(S._currentPost?.id===id){S._currentPost.published=true;}
+      render();
+      toast('Post published!','ok');
+    }catch(e){toast('Could not publish: '+e.message,'err');}
+  },
   async deleteBlogPost(id){
     if(S.user?.id!==ADMIN_ID) return;
     if(!confirm('Delete this post permanently?')) return;
@@ -7896,18 +7920,34 @@ Rules:
   async loadBlogPosts(){
     S._blogLoading=true;render();
     try{
-      const r=await DB.list('blog',[
+      // Load published posts for everyone
+      // Admin also loads drafts
+      const queries=[
         Query.equal('published',[true]),
         Query.orderDesc('$createdAt'),
         Query.limit(100),
-      ]);
-      S._blogPosts=r.documents.map(d=>({
+      ];
+      const r=await DB.list('blog',queries);
+      let docs=r.documents;
+      // Admin: also load drafts
+      if(S.user?.id===ADMIN_ID){
+        const draftR=await DB.list('blog',[
+          Query.equal('published',[false]),
+          Query.orderDesc('$createdAt'),
+          Query.limit(50),
+        ]);
+        // Merge, deduplicate
+        const seen=new Set(docs.map(d=>d.$id));
+        draftR.documents.forEach(d=>{if(!seen.has(d.$id))docs.push(d);});
+      }
+      S._blogPosts=docs.map(d=>({
         id:d.$id,title:d.title,slug:d.slug||'',body:d.body||'',
         excerpt:d.excerpt||'',coverImageId:d.coverImageId||'',
         tags:d.tags||[],authorName:d.authorName||'Deji Lasisi',
         publishedAt:d.publishedAt||d.$createdAt,
         type:d.type||'blog',
         guideCategory:d.guideCategory||'',
+        published:d.published!==false,
       }));
     }catch(e){
       console.warn('loadBlogPosts:',e.message);
@@ -8316,7 +8356,21 @@ document.addEventListener('DOMContentLoaded', async()=>{
     })
     .catch(()=>{}); 
   render();
-  loadCoins();
+  loadCoins().then(()=>{
+    // Set baselines for crypto from live prices if not already set
+    try{
+      const _b=JSON.parse(localStorage.getItem('datum_user_baselines')||'{}');
+      let _changed=false;
+      const _cgMap={btc:'bitcoin',eth:'ethereum',tet:'tether'};
+      Object.entries(_cgMap).forEach(([id,cgId])=>{
+        if(!_b[id]){
+          const c=S.coins.find(x=>x.id===cgId);
+          if(c?.price){_b[id]=c.price;_changed=true;}
+        }
+      });
+      if(_changed) localStorage.setItem('datum_user_baselines',JSON.stringify(_b));
+    }catch(e){}
+  }).catch(()=>{});
   A.loadAdminProfile();
   // Register PWA service worker
   if('serviceWorker' in navigator){
