@@ -2190,7 +2190,7 @@ const P = {
     return `<div id="pg-land" class="page">
       <p class="l-ey">The unified commerce layer</p>
       <h1 class="l-h">Your passport to <em>trade & access</em> the globe. 🌎</h1>
-      <p class="l-sub">Your profile, global marketplace, and real-time Coin Markets — all in one place.</p>
+      <p class="l-sub">Your Profile, Global Marketplace, and real-time Coin Markets — all in one place.</p>
       <!-- Blog link where whitepaper was -->
       <div style="margin-top:-40px;margin-bottom:48px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
         <button onclick="R.go('blog')" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:7px 18px;font-family:var(--fb);font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;transition:var(--ease)" onmouseover="this.style.borderColor='#D4AF37';this.style.color='#D4AF37'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)'">
@@ -4734,6 +4734,21 @@ const M = {
           <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
         </div>
         <div class="fg"><label>Title</label><input type="text" id="bp-title" value="${post.title?.replace(/"/g,'&quot;')||''}"/></div>
+        <div class="fg">
+          <label>Cover Image</label>
+          ${post.coverImageId?`
+          <div style="position:relative;margin-bottom:10px">
+            <img id="bp-cover-preview" src="${fileUrl(post.coverImageId)}" style="width:100%;height:160px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);display:block">
+            <button onclick="A.removeBlogCover('${post.coverImageId}')" style="position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem">×</button>
+          </div>`:`
+          <div id="bp-cover-preview"></div>`}
+          <div class="img-drop" onclick="document.getElementById('bp-edit-img').click()" style="margin-top:${post.coverImageId?'0':'0'}">
+            <i data-lucide="image" style="width:18px;height:18px;color:var(--t3);display:block;margin:0 auto 6px"></i>
+            <div style="font-size:.76rem;color:var(--t3)">${post.coverImageId?'Replace cover image':'Upload cover image'}</div>
+          </div>
+          <input type="file" id="bp-edit-img" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="A.previewEditCover(this)"/>
+          <input type="hidden" id="bp-cover-id" value="${post.coverImageId||''}"/>
+        </div>
         <div class="fg"><label>Post Type</label>
           <select id="bp-type" onchange="document.getElementById('bp-cat-row').style.display=this.value==='guide'?'block':'none'">
             <option value="blog" ${(!post.type||post.type==='blog')?'selected':''}>Blog Post (Pro only)</option>
@@ -7848,6 +7863,24 @@ Rules:
     }
   },
 
+  previewEditCover(input){
+    if(!input.files[0]) return;
+    const url=URL.createObjectURL(input.files[0]);
+    const preview=document.getElementById('bp-cover-preview');
+    if(preview) preview.innerHTML=`
+      <div style="position:relative;margin-bottom:10px">
+        <img src="${url}" style="width:100%;height:160px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);display:block">
+        <button onclick="this.closest('div').remove();document.getElementById('bp-cover-id').value='';document.getElementById('bp-edit-img').value=''" style="position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem">×</button>
+      </div>`;
+  },
+  removeBlogCover(oldId){
+    const preview=document.getElementById('bp-cover-preview');
+    if(preview) preview.innerHTML='';
+    const hiddenInput=document.getElementById('bp-cover-id');
+    if(hiddenInput) hiddenInput.value='';
+    // Mark old cover for deletion
+    S._removedBlogCoverId=oldId;
+  },
   async updateBlogPost(id,asDraft=false){
     if(S.user?.id!==ADMIN_ID) return;
     const title=document.getElementById('bp-title')?.value?.trim();
@@ -7863,17 +7896,39 @@ Rules:
     try{
       const bpType=document.getElementById('bp-type')?.value||'blog';
       const bpGuideCat=bpType==='guide'?(document.getElementById('bp-guide-cat')?.value||'datum_basics'):'';
+      // Handle cover image
+      let coverImageId=document.getElementById('bp-cover-id')?.value||'';
+      const newCoverFile=document.getElementById('bp-edit-img')?.files?.[0];
+      if(newCoverFile){
+        btn.textContent='Uploading cover…';
+        try{
+          // Delete old cover if replacing
+          if(S._removedBlogCoverId||coverImageId){
+            const oldId=S._removedBlogCoverId||coverImageId;
+            _storage.deleteFile(BUCKET_ID,oldId).catch(()=>{});
+          }
+          const up=await _storage.createFile(BUCKET_ID,ID.unique(),newCoverFile);
+          coverImageId=up.$id;
+        }catch(e){console.warn('cover upload:',e.message);}
+      } else if(S._removedBlogCoverId){
+        // Cover was removed with no replacement
+        _storage.deleteFile(BUCKET_ID,S._removedBlogCoverId).catch(()=>{});
+        coverImageId='';
+      }
+      S._removedBlogCoverId=null;
+      btn.textContent=asDraft?'Saving draft…':'Saving…';
       await DB.update('blog',id,{
         title,excerpt:excerpt||'',body,tags,
+        coverImageId,
         type:bpType,guideCategory:bpGuideCat,
         published,
         publishedAt:published?new Date().toISOString():'',
       });
       if(S._blogPosts){
         const idx=S._blogPosts.findIndex(p=>p.id===id);
-        if(idx>=0) S._blogPosts[idx]={...S._blogPosts[idx],title,excerpt,body,tags,type:bpType,guideCategory:bpGuideCat,published};
+        if(idx>=0) S._blogPosts[idx]={...S._blogPosts[idx],title,excerpt,body,tags,coverImageId,type:bpType,guideCategory:bpGuideCat,published};
       }
-      if(S._currentPost?.id===id) S._currentPost={...S._currentPost,title,excerpt,body,tags,type:bpType,guideCategory:bpGuideCat,published};
+      if(S._currentPost?.id===id) S._currentPost={...S._currentPost,title,excerpt,body,tags,coverImageId,type:bpType,guideCategory:bpGuideCat,published};
       M.close();render();
       toast(asDraft?'Saved as draft.':'Post updated and published!','ok');
     }catch(e){
