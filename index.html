@@ -272,10 +272,10 @@
 
     @media(max-width:768px){.pricing-grid{grid-template-columns:1fr}.plan-card.featured{transform:none}}
 
-    .al-hero{background:linear-gradient(135deg,#0f0f0f,#1a1410 50%,#0f0f15);border-radius:var(--rmd);padding:26px 28px;margin-bottom:20px;border:1px solid rgba(255,255,255,.08)}
-    .al-title{font-family:var(--fd);font-size:1.45rem;color:#fff;margin-bottom:5px}
-    .al-subtitle{font-size:.8rem;color:rgba(255,255,255,.4);line-height:1.55;max-width:560px}
-    .al-updated{font-size:.7rem;color:rgba(255,255,255,.22);margin-top:10px;display:flex;align-items:center;gap:5px}
+    .al-hero{background:linear-gradient(135deg,#1a1408,#2a1f00 40%,#1a1205 70%,#0f0d00);border-radius:var(--rmd);padding:26px 28px;margin-bottom:20px;border:1px solid rgba(212,175,55,.25);box-shadow:0 0 0 1px rgba(212,175,55,.08),inset 0 1px 0 rgba(212,175,55,.12)}
+    .al-title{font-family:var(--fd);font-size:1.45rem;color:#F5E9C0;margin-bottom:5px}
+    .al-subtitle{font-size:.8rem;color:rgba(245,233,192,.55);line-height:1.55;max-width:560px}
+    .al-updated{font-size:.7rem;color:rgba(212,175,55,.4);margin-top:10px;display:flex;align-items:center;gap:5px}
     .al-section-hdr{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
     .al-section-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);white-space:nowrap}
     .al-section-line{flex:1;height:1px;background:var(--bdr)}
@@ -3148,8 +3148,8 @@ const P = {
             <div class="al-subtitle">Handpicked assets tracking long-term wealth creation across traditional and digital markets — updated live.</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-            <span class="tag tpur"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro</span>
-            <button class="btn bg bsm" onclick="loadAlData()" ${loading?'disabled':''} style="color:rgba(255,255,255,.6);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">
+            <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(212,175,55,.15);color:#D4AF37;border:1px solid rgba(212,175,55,.3);border-radius:100px;padding:3px 10px;font-size:.72rem;font-weight:600"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro</span>
+            <button class="btn bg bsm" onclick="loadAlData()" ${loading?'disabled':''} style="color:rgba(212,175,55,.8);background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2)">
               <i data-lucide="refresh-cw" style="width:12px;height:12px"></i>${loading?'Updating…':'Refresh'}
             </button>
           </div>
@@ -3518,7 +3518,7 @@ const P = {
       <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px">
         <div>
           <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
-          <h1 style="font-family:var(--fd);font-size:clamp(2rem,4vw,3rem);line-height:1.1;margin-bottom:6px">Resources <em style="color:var(--org);font-style:italic">&</em> Blog</h1>
+          <h1 style="font-family:var(--fd);font-size:clamp(2rem,4vw,3rem);line-height:1.1;margin-bottom:6px">Resources <em style="color: rgba(212, 175, 55, 0.4);";font-style:italic">&</em> Blog</h1>
           <p style="font-size:.9375rem;color:var(--t2);max-width:520px;line-height:1.6">Thoughts on commerce, coin, culture, and everything in between.</p>
         </div>
         ${isAdmin?`<button class="btn bp" style="margin-top:22px" onclick="M.newBlogPost()"><i data-lucide="plus" style="width:14px;height:14px"></i>Write New Post</button>`:''}
