@@ -8104,6 +8104,8 @@ Rules:
     const url=postType==='guide'
       ?`https://www.toomuchcoin.com/howtoguides/${guideCategory||post?.guideCategory||'datum_basics'}/${cleanSlug}`
       :`https://www.toomuchcoin.com/blog/${cleanSlug}`;
+    // OG preview URL for bots — wraps the clean URL
+    const ogUrl=`https://www.toomuchcoin.com/api/blog-preview?type=${postType}&slug=${encodeURIComponent(cleanSlug)}&title=${encodeURIComponent(title)}&excerpt=${encodeURIComponent((post?.excerpt||'').slice(0,200))}&image=${encodeURIComponent(post?.coverImageId?fileUrl(post.coverImageId):'https://www.toomuchcoin.com/toomuchcoin.png')}&canonical=${encodeURIComponent(url)}`;
     const shareText=title+'\n'+url;
     if(navigator.share){
       try{await navigator.share({title,text:shareText,url});return;}catch(e){if(e.name==='AbortError')return;}
@@ -8158,18 +8160,21 @@ Rules:
       :'https://www.toomuchcoin.com/toomuchcoin.png';
     const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music_entertainment:'Music & Entertainment',events:'Event Planner',electronics:'Electronics & Gadgets',catering:'Food Catering'}[catId]||catId;
     const excerpt=v?.tagline||(catLabel+' in '+city+', found on Toomuchcoin');
-    const shareUrl='https://www.toomuchcoin.com/api/blog-preview'
+    // Clean URL for vendor
+    const cleanVendorUrl=`https://www.toomuchcoin.com/marketplace/vendorlist/${encodeURIComponent(slug)}`;
+    const ogVendorUrl='https://www.toomuchcoin.com/api/blog-preview'
       +'?type=vendor'
       +'&slug='+encodeURIComponent(slug)
       +'&title='+encodeURIComponent(bizName)
       +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
-      +'&image='+encodeURIComponent(imgUrl);
+      +'&image='+encodeURIComponent(imgUrl)
+      +'&canonical='+encodeURIComponent(cleanVendorUrl);
     const text='Check out '+bizName+' on Toomuchcoin — '+catLabel+' in '+city;
     if(navigator.share){
-      try{await navigator.share({title:bizName,text,url:shareUrl});return;}catch(e){if(e.name==='AbortError')return;}
+      try{await navigator.share({title:bizName,text,url:ogVendorUrl});return;}catch(e){if(e.name==='AbortError')return;}
     }
-    try{await navigator.clipboard.writeText(shareUrl);toast('Link copied!','ok');}
-    catch(e){prompt('Copy this link to share:',shareUrl);}
+    try{await navigator.clipboard.writeText(ogVendorUrl);toast('Link copied!','ok');}
+    catch(e){prompt('Copy this link:',ogVendorUrl);}
   },
 
   async shareOrder(id,title){
@@ -8190,18 +8195,20 @@ Rules:
     const firstImgId=(order?.imageId||'').split(',').filter(Boolean)[0];
     const imgUrl=firstImgId?fileUrl(firstImgId):'https://www.toomuchcoin.com/toomuchcoin.png';
     const excerpt=order?.desc?(order.desc.slice(0,160)):(order?.price?order.price+' — '+title:title);
-    const shareUrl='https://www.toomuchcoin.com/api/blog-preview'
+    const cleanListingUrl=`https://www.toomuchcoin.com/marketplace/orderboard?listing=${encodeURIComponent(slug)}`;
+    const ogListingUrl='https://www.toomuchcoin.com/api/blog-preview'
       +'?type=listing'
       +'&slug='+encodeURIComponent(slug)
       +'&title='+encodeURIComponent(title)
       +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
-      +'&image='+encodeURIComponent(imgUrl);
+      +'&image='+encodeURIComponent(imgUrl)
+      +'&canonical='+encodeURIComponent(cleanListingUrl);
     const text='Check out this listing on Toomuchcoin: '+title;
     if(navigator.share){
-      try{await navigator.share({title,text,url:shareUrl});return;}catch(e){if(e.name==='AbortError')return;}
+      try{await navigator.share({title,text,url:ogListingUrl});return;}catch(e){if(e.name==='AbortError')return;}
     }
-    try{await navigator.clipboard.writeText(shareUrl);toast('Link copied!','ok');}
-    catch(e){prompt('Copy this link to share:',shareUrl);}
+    try{await navigator.clipboard.writeText(ogListingUrl);toast('Link copied!','ok');}
+    catch(e){prompt('Copy this link:',ogListingUrl);}
   },
 
   toggleWatch(id){
@@ -8544,6 +8551,63 @@ document.addEventListener('DOMContentLoaded', async()=>{
   // }
   // Pretty URL routing — map clean paths to SPA state
   const _path=window.location.pathname;
+
+  // Clean blog URL: /blog/slug
+  if(_path.startsWith('/blog/')){
+    const _bSlug=_path.replace('/blog/','').replace(/\/$/,'');
+    if(_bSlug){
+      history.replaceState({},'',_path);
+      (async()=>{
+        await A.loadBlogPosts();
+        const post=(S._blogPosts||[]).find(p=>
+          p.slug===_bSlug||
+          (p.title||'').toLowerCase().trim().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,50)===_bSlug
+        );
+        if(post){S._currentPost=post;S.page='blogpost';render();}
+        else R.go('blog');
+      })();
+    }
+  }
+
+  // Clean guide URL: /howtoguides/category/slug
+  if(_path.startsWith('/howtoguides/')){
+    const _parts=_path.replace('/howtoguides/','').split('/');
+    const _gCat=_parts[0]||'datum_basics';
+    const _gSlug=_parts[1]||'';
+    history.replaceState({},'',_path);
+    (async()=>{
+      await A.loadBlogPosts();
+      const post=(S._blogPosts||[]).find(p=>
+        p.type==='guide'&&(
+          p.slug===_gSlug||
+          (p.title||'').toLowerCase().trim().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,50)===_gSlug
+        )
+      );
+      if(post){S._currentPost=post;S.page='blogpost';render();}
+      else{S.page='blog';render();}
+    })();
+  }
+
+  // Clean vendor URL: /marketplace/vendorlist/slug
+  if(_path.startsWith('/marketplace/vendorlist/')){
+    const _vSlug=_path.replace('/marketplace/vendorlist/','').replace(/\/$/,'');
+    if(_vSlug&&_vSlug!==''){
+      history.replaceState({},'',_path);
+      S.page='market';S.mTab='vendors';render();
+      setTimeout(async()=>{
+        try{
+          const r=await DB.list('vendors',[Query.limit(200)]);
+          const match=r.documents.find(d=>{
+            const s=(d.bizName||'').toLowerCase().trim()
+              .replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').slice(0,48).replace(/-$/,'');
+            return s===_vSlug||d.$id===_vSlug;
+          });
+          if(match) A.openVendorProfile(match.$id);
+        }catch(e){console.warn('vendor deep link:',e);}
+      },400);
+    }
+  }
+
   if(_path==='/marketplace/orderboard'){
     history.replaceState({},'','/marketplace/orderboard');
     S.page='market';S.mTab='board';loadOrders();startAR();render();
