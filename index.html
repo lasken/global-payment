@@ -1519,12 +1519,34 @@ function mockBars(id,iv){
   return Array.from({length:n},(_,i)=>({h:30+((seed*(i+7)*13)%220),up:(seed+i)%3!==0}));
 }
 function mockMetrics(id,iv){
-  const s=[...id].reduce((a,c)=>a+c.charCodeAt(0),0);
-  const m=iv==='ytd'?1:iv==='5y'?5:10;
-  const r=(a,b,k)=>+(a+((s*k)%(b-a))).toFixed(2);
-  return{'All-Time High':'$'+r(100,9999,17)*m,'All-Time Low':'$'+r(1,200,3),
-    'Avg. Return':r(-15,80,7)+'%','Max Drawdown':'-'+r(20,85,5)+'%',
-    'Total Volume':'$'+r(1,900,9)+'B','Market Cap':'$'+r(5,8000,19)+'B'};
+  const detail=S._coinDetail?.[id];
+  const coin=S.coins.find(c=>c.id===id);
+  const fmt=(n)=>{
+    if(n==null||isNaN(n)) return'—';
+    if(n<0.0001) return'$'+n.toFixed(8);
+    if(n<0.01) return'$'+n.toFixed(6);
+    if(n<1) return'$'+n.toFixed(4);
+    return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  };
+  const fmtB=(n)=>{
+    if(n==null||isNaN(n)) return'—';
+    if(n>=1e12) return'$'+(n/1e12).toFixed(2)+'T';
+    if(n>=1e9) return'$'+(n/1e9).toFixed(2)+'B';
+    if(n>=1e6) return'$'+(n/1e6).toFixed(2)+'M';
+    return'$'+n.toLocaleString();
+  };
+  const fmtDate=(iso)=>{
+    if(!iso) return'—';
+    return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  };
+  return{
+    'All-Time High'  : detail?.ath!=null?fmt(detail.ath):'Loading…',
+    'ATH Date'       : detail?.athDate?fmtDate(detail.athDate):'—',
+    'All-Time Low'   : detail?.atl!=null?fmt(detail.atl):'Loading…',
+    'ATL Date'       : detail?.atlDate?fmtDate(detail.atlDate):'—',
+    'Market Cap'     : coin?.mcap?fmtB(coin.mcap):'—',
+    'Total Volume'   : coin?.vol?fmtB(coin.vol):'—',
+  };
 }
 
 function initOneSignal(userId){
@@ -1714,11 +1736,12 @@ async function loadSubscription(){
 
   S._trialDoc=doc;
   const status=doc.status||null;
+  const now=new Date();
 
   // Handle trial expiry
   if(status==='trial'){
     if(doc.trialEnd){
-      const expired=new Date(doc.trialEnd)<new Date();
+      const expired=new Date(doc.trialEnd)<now;
       if(expired){
         S.subStatus='expired';
         S.subscribed=false;
@@ -1726,9 +1749,44 @@ async function loadSubscription(){
         return;
       }
     }
-    // Trial is still valid
     S.subStatus='trial';
     S.subscribed=true;
+    return;
+  }
+
+  // Handle paid subscription expiry
+  if(status==='active'){
+    if(doc.periodEnd){
+      const expired=new Date(doc.periodEnd)<now;
+      if(expired){
+        S.subStatus='expired';
+        S.subscribed=false;
+        try{await DB.update('subscription',doc.$id,{status:'expired'});}catch(e){}
+        // Notify user
+        await createNotif(S.user.id,'subscription',
+          'Your Pro subscription has ended',
+          'Your monthly subscription expired. Renew now to restore full access.',
+          'sub'
+        );
+        return;
+      }
+    } else {
+      // No periodEnd set — calculate it from $createdAt + 30 days
+      const subStart=new Date(doc.$createdAt);
+      const periodEnd=new Date(subStart.getTime()+30*24*60*60*1000);
+      if(periodEnd<now){
+        S.subStatus='expired';
+        S.subscribed=false;
+        try{await DB.update('subscription',doc.$id,{status:'expired',periodEnd:periodEnd.toISOString()});}catch(e){}
+        return;
+      }
+      // Save periodEnd so future checks are faster
+      try{await DB.update('subscription',doc.$id,{periodEnd:periodEnd.toISOString()});}catch(e){}
+    }
+    S.subStatus='active';
+    S.subscribed=true;
+    // Store periodEnd for countdown display
+    S._subPeriodEnd=doc.periodEnd||(new Date(new Date(doc.$createdAt).getTime()+30*24*60*60*1000)).toISOString();
     return;
   }
 
@@ -2254,7 +2312,7 @@ const P = {
     const trialDoc=S._trialDoc;
     const trialDaysLeft=trialDoc?.trialEnd?Math.max(0,Math.ceil((new Date(trialDoc.trialEnd)-new Date())/(1000*60*60*24))):null;
     const subInfo={
-      active:{cls:'vstat-verified',icon:'zap',col:'var(--pur)',title:'Pro Membership Active',
+      active:{cls:'vstat-verified',icon:'zap',col:'var(--pur)',title:'Pro Membership Active'+(S._subPeriodEnd?` — ${Math.max(0,Math.ceil((new Date(S._subPeriodEnd)-new Date())/(1000*60*60*24)))} day${Math.ceil((new Date(S._subPeriodEnd)-new Date())/(1000*60*60*24))!==1?'s':''} remaining`:''),
         desc:'Full access to all marketplace, forum, and 500+ crypto features.'},
       trial:{cls:'vstat-verified',icon:'gift',col:'var(--grn)',title:'Free Trial Active'+(trialDaysLeft!==null?' — '+trialDaysLeft+' day'+(trialDaysLeft===1?'':'s')+' remaining':''),
         desc:'You\'re on a free 30-day Pro trial. Enjoy full access to all features. Upgrade before your trial ends to keep access.'},
@@ -3504,7 +3562,7 @@ const P = {
             ${adminAvatar}
             <span>Deji Lasisi</span>
             <span style="color:var(--bdr2)">·</span>
-            <span>${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Recently'}</span>
+            <span>${(post.originalCreatedAt||post.publishedAt)?new Date(post.originalCreatedAt||post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Recently'}</span>
             ${post.type!=='guide'&&isLocked?`<span class="tag tpur" style="font-size:.65rem;margin-left:auto"><i data-lucide="lock" style="width:9px;height:9px"></i>Pro</span>`:''}
             ${post.type==='guide'?`<span class="tag tg" style="font-size:.65rem;margin-left:auto">Free</span>`:''}
           </div>
@@ -3630,7 +3688,7 @@ const P = {
           <button class="btn bc bsm" onclick="A.publishDraft('${post.id}')">
             <i data-lucide="send" style="width:12px;height:12px"></i>Publish Now
           </button>`:''}
-          <button class="btn bg bsm" onclick="A.shareBlogPost('${post.id}','${post.title.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}','${post.slug||''}')">
+          <button class="btn bg bsm" onclick="A.shareBlogPost('${post.id}','${post.title.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}','${post.slug||''}','${post.type||'blog'}','${post.guideCategory||''}')">
             <i data-lucide="share-2" style="width:12px;height:12px"></i>Share
           </button>
           ${S.user?.id===ADMIN_ID?`<button class="btn bg bsm" onclick="M.editBlogPost('${post.id}')"><i data-lucide="pencil" style="width:12px;height:12px"></i>Edit</button>`:''}
@@ -5244,15 +5302,18 @@ const A = {
       if(!d) return;
       if(!S._coinDetail) S._coinDetail={};
       S._coinDetail[coinId]={
-        ath:d.ath,
-        athDate:d.ath_date,
-        atl:d.atl,
-        atlDate:d.atl_date,
-        supply:d.circulating_supply,
-        maxSupply:d.max_supply,
-        chg7d:d.price_change_percentage_7d_in_currency,
-        chg30d:d.price_change_percentage_30d_in_currency,
+        ath     : d.ath,
+        athDate : d.ath_date,
+        atl     : d.atl,
+        atlDate : d.atl_date,
+        supply  : d.circulating_supply,
+        maxSupply: d.max_supply,
+        chg7d   : d.price_change_percentage_7d_in_currency,
+        chg30d  : d.price_change_percentage_30d_in_currency,
+        mcap    : d.market_cap,
+        vol     : d.total_volume,
       };
+      render(); // re-render so metrics update once detail loads
       render();
     }catch(e){console.warn('coinDetail:',e.message);}
   },
@@ -8005,6 +8066,7 @@ Rules:
         excerpt:d.excerpt||'',coverImageId:d.coverImageId||'',
         tags:d.tags||[],authorName:d.authorName||'Deji Lasisi',
         publishedAt:d.publishedAt||d.$createdAt,
+        originalCreatedAt:d.$createdAt,
         type:d.type||'blog',
         guideCategory:d.guideCategory||'',
         published:d.published!==false,
@@ -8028,7 +8090,9 @@ Rules:
     render();
   },
 
-  async shareBlogPost(id,title,slug){
+  async shareBlogPost(id,title,slug,type,guideCategory){
+    const post=(S._blogPosts||[]).find(p=>p.id===id);
+    const postType=type||post?.type||'blog';
     const cleanSlug=slug&&slug.length<60&&!slug.match(/^[a-f0-9]{20,}$/)
       ?slug
       :title.toLowerCase().trim()
@@ -8037,7 +8101,9 @@ Rules:
         .replace(/-+/g,'-')
         .slice(0,50)
         .replace(/-$/,'');
-    const url='https://www.toomuchcoin.com/?blog='+cleanSlug;
+    const url=postType==='guide'
+      ?`https://www.toomuchcoin.com/howtoguides/${guideCategory||post?.guideCategory||'datum_basics'}/${cleanSlug}`
+      :`https://www.toomuchcoin.com/blog/${cleanSlug}`;
     const shareText=title+'\n'+url;
     if(navigator.share){
       try{await navigator.share({title,text:shareText,url});return;}catch(e){if(e.name==='AbortError')return;}
@@ -8210,6 +8276,7 @@ const PAY = {
       callback: async function(data){
         if(data.status === 'successful' || data.status === 'completed'){
           try{
+            const _periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
             await DB.create('subscription',{
               userId       : S.user.id,
               status       : 'active',
@@ -8217,6 +8284,7 @@ const PAY = {
               amount       : '10000',
               reference    : data.transaction_id + '',
               paymentMethod: 'flutterwave',
+              periodEnd    : _periodEnd,
             });
             S.subStatus  = 'active';
             S.subscribed = true;
