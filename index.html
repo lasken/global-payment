@@ -1655,7 +1655,7 @@ async function loadCoins(){
     try{
       const today=new Date().toISOString().split('T')[0];
       const hist=JSON.parse(localStorage.getItem('datum_price_history')||'{}');
-      const CRYPTO_MAP={btc:'bitcoin',eth:'ethereum',tet:'tether'};
+      const CRYPTO_MAP={btc:'bitcoin',eth:'ethereum'};
       let changed=false;
       Object.entries(CRYPTO_MAP).forEach(([datumId,cgId])=>{
         const c=S.coins.find(x=>x.id===cgId);
@@ -2981,7 +2981,7 @@ const P = {
     };
     // For crypto assets, always prefer live CoinGecko price from S.coins
     const cgPriceMap={
-      btc:'bitcoin', eth:'ethereum', tet:'tether',
+      btc:'bitcoin', eth:'ethereum',
     };
     const getLivePrice=(id)=>{
       if(cgPriceMap[id]){
@@ -6302,7 +6302,7 @@ const A = {
       const hist=JSON.parse(localStorage.getItem('datum_price_history')||'{}');
       if(!hist[id]) hist[id]=[];
       const mp=S._manualPrices||{};
-      const cgMap={btc:'bitcoin',eth:'ethereum',tet:'tether'};
+      const cgMap={btc:'bitcoin',eth:'ethereum'};
       const coin=S.coins.find(c=>c.id===cgMap[id]);
       const price=coin?.price||mp[id]||null;
       if(price&&!hist[id].find(e=>e.d===today)){
@@ -6401,7 +6401,7 @@ const A = {
     const COLORS_MAP={gold:'#B8892A',nvda:'#76B900',spx:'#2B5BE0',btc:'#F7931A',dxy:'#26A17B',eth:'#627EEA',tet:'#26A17B',mstr:'#F7931A',tsla:'#E84142',nasdaq:'#2B5BE0',lvmh:'#2C1810',tsmc:'#E31837',dangcem:'#C4622D'};
     const NAIRA_IDS=['dangcem'];
     const mp=S._manualPrices||{};
-    const cgMap={btc:'bitcoin',eth:'ethereum',tet:'tether'};
+    const cgMap={btc:'bitcoin',eth:'ethereum'};
     const coin=S.coins.find(c=>c.id===cgMap[id]);
     const livePrice=coin?.price||mp[id]||null;
     const sym=SYMS[id]||id.toUpperCase();
