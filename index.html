@@ -624,7 +624,7 @@ const AW_COL = {
   vendors        : 'vendors',
   price_alerts   : 'price_alerts',
   tmc_wallet     : 'tmc_wallet',
-  tmc_transactions: 'tmc_transactions_',
+  tmc_transactions: 'tmc_transactions',
   tmc_config     : 'tmc_config',
 };
 
@@ -801,15 +801,15 @@ const W={
         W.txs=txR.documents.map(d=>({
           id          :d.$id,
           type        :d.type,
-          amount      :d.amount,
-          balanceAfter:d.balanceAfter,
-          description :d.description||'',
+          amount      :Number(d.amount),
+          balanceAfter:Number(d.balanceAfter),
+          description :d.description||d.type||'',
           refId       :d.refId||'',
           createdAt   :d.$createdAt,
         }));
-        console.log('TMC: transactions loaded',W.txs.length);
+        console.log('TMC: transactions loaded',W.txs.length,W.txs);
       }catch(e){
-        console.warn('TMC: tx history failed',e.message);
+        console.error('TMC: tx history FAILED',e.message,e);
         W.txs=[];
       }
 
@@ -4229,7 +4229,7 @@ const P = {
           <button class="btn bc bsm" onclick="A.publishDraft('${post.id}')">
             <i data-lucide="send" style="width:12px;height:12px"></i>Publish Now
           </button>`:''}
-          <button class="btn bg bsm" onclick="A.shareBlogPost('${post.id}','${post.title.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}','${post.slug||''}','${post.type||'blog'}','${post.guideCategory||''}')">
+          <button class="btn bg bsm" onclick="A.shareBlogPost('${post.id}','${(post.title||'').replace(/'/g,'\\\'' ).replace(/"/g,'&quot;')}','${post.slug||''}','${post.type||'blog'}','${post.guideCategory||''}')">
             <i data-lucide="share-2" style="width:12px;height:12px"></i>Share
           </button>
           ${S.user?.id===ADMIN_ID?`<button class="btn bg bsm" onclick="M.editBlogPost('${post.id}')"><i data-lucide="pencil" style="width:12px;height:12px"></i>Edit</button>`:''}
@@ -4258,7 +4258,7 @@ const P = {
           <i data-lucide="eye" style="width:14px;height:14px"></i>
           <span>${(post.views||0).toLocaleString()} view${(post.views||0)!==1?'s':''}</span>
         </div>
-        <button class="btn bo bsm" onclick="A.shareBlogPost('${post.id}','${post.title.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}','${post.slug||''}','${post.type||'blog'}','${post.guideCategory||''}')">
+        <button class="btn bo bsm" onclick="A.shareBlogPost('${post.id}','${(post.title||'').replace(/'/g,'\\\'' ).replace(/"/g,'&quot;')}','${post.slug||''}','${post.type||'blog'}','${post.guideCategory||''}')">
           <i data-lucide="share-2" style="width:12px;height:12px"></i>Share this ${post.type==='guide'?'guide':'post'}
         </button>
       </div>
@@ -8482,11 +8482,19 @@ Rules:
     try{
       const bpType=document.getElementById('bp-type')?.value||'blog';
       const bpGuideCat=bpType==='guide'?(document.getElementById('bp-guide-cat')?.value||'datum_basics'):'';
-      // Guides are always published immediately
       const finalPublished=bpType==='guide'?true:published;
       S._newGuideCategory=null;
+      // Generate clean slug from title if not manually entered
+      const finalSlug=slug&&slug.length>2
+        ?slug
+        :title.toLowerCase().trim()
+          .replace(/[^a-z0-9\s]/g,'')
+          .replace(/\s+/g,'-')
+          .replace(/-+/g,'-')
+          .slice(0,60)
+          .replace(/-$/,'');
       const doc=await DB.create('blog',{
-        title,slug:slug||title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50),
+        title,slug:finalSlug,
         excerpt:excerpt||'',body,coverImageId,tags,
         published:finalPublished,
         publishedAt:finalPublished?new Date().toISOString():'',
@@ -8716,18 +8724,23 @@ Rules:
   async shareBlogPost(id,title,slug,type,guideCategory){
     const post=(S._blogPosts||[]).find(p=>p.id===id);
     const postType=type||post?.type||'blog';
-    const cleanSlug=slug&&slug.length<60&&!slug.match(/^[a-f0-9]{20,}$/)
-      ?slug
-      :(title||'').toLowerCase().trim()
+    const postTitle=post?.title||title||'';
+    const postSlug=post?.slug||slug||'';
+    // Use saved slug first, fall back to generating from title
+    const cleanSlug=postSlug&&postSlug.length>2&&postSlug.length<80&&!postSlug.match(/^[a-f0-9]{20,}$/)
+      ?postSlug
+      :postTitle.toLowerCase().trim()
         .replace(/[^a-z0-9\s]/g,'')
         .replace(/\s+/g,'-')
         .replace(/-+/g,'-')
-        .slice(0,50)
+        .slice(0,60)
         .replace(/-$/,'');
-    const url=postType==='guide'
-      ?`https://www.toomuchcoin.com/howtoguides/${guideCategory||post?.guideCategory||'datum_basics'}/${cleanSlug}`
+    const postCat=post?.guideCategory||guideCategory||'datum_basics';
+    const cleanUrl=postType==='guide'
+      ?`https://www.toomuchcoin.com/howtoguides/${postCat}/${cleanSlug}`
       :`https://www.toomuchcoin.com/blog/${cleanSlug}`;
-    const shareText=title+'\n'+url;
+    const ogUrl=cleanUrl;
+    console.log('Share URL:',cleanUrl,'slug used:',cleanSlug,'post slug:',postSlug);
     if(navigator.share){
       try{await navigator.share({title,text:shareText,url});return;}catch(e){if(e.name==='AbortError')return;}
     }
@@ -9030,7 +9043,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
     }
     await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
     await A.loadPriceAlerts();
-    W.load().then(()=>{ if(S.page==='wallet') render(); }).catch((e)=>{ console.error('W.load failed:',e); });
+    W.load().catch(e=>console.warn('TMC startup load failed:',e.message));
     initOneSignal(S.user.id);
     startNotifPoll();
   }
