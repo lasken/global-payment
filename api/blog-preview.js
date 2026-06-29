@@ -2,24 +2,42 @@ export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
   const url = new URL(req.url);
-  const slug = url.searchParams.get('slug') || '';
-  const title = url.searchParams.get('title') || 'Toomuchcoin Blog';
-  const excerpt = url.searchParams.get('excerpt') || 'Thoughts on commerce, crypto, culture, and everything in between.';
-  const image = url.searchParams.get('image') || 'https://www.toomuchcoin.com/toomuchcoin.png';
-  const type = url.searchParams.get('type') || 'blog';
-  const customCanonical = url.searchParams.get('canonical') || '';
+  const path = url.pathname;
 
-  let canonical = customCanonical;
-  if(!canonical){
-    if(type==='blog') canonical='https://www.toomuchcoin.com/blog/'+encodeURIComponent(slug);
-    else if(type==='vendor') canonical='https://www.toomuchcoin.com/?vendor='+encodeURIComponent(slug);
-    else if(type==='listing') canonical='https://www.toomuchcoin.com/?listing='+encodeURIComponent(slug);
-    else canonical='https://www.toomuchcoin.com/';
+  // Parse clean URLs
+  let type = url.searchParams.get('type') || 'blog';
+  let slug = url.searchParams.get('slug') || '';
+  let title = url.searchParams.get('title') || 'Toomuchcoin';
+  let excerpt = url.searchParams.get('excerpt') || 'Your passport to trade and access the globe 🌎';
+  let image = url.searchParams.get('image') || 'https://www.toomuchcoin.com/toomuchcoin.png';
+  let canonical = url.searchParams.get('canonical') || 'https://www.toomuchcoin.com';
+
+  // Handle clean path routing — /blog/slug, /howtoguides/cat/slug, /marketplace/vendorlist/slug
+  if(path.startsWith('/blog/') && !url.searchParams.has('type')){
+    slug = path.replace('/blog/','').replace(/\/$/,'');
+    type = 'blog';
+    canonical = `https://www.toomuchcoin.com/blog/${slug}`;
+    title = slug.replace(/-/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) + ' — Toomuchcoin Blog';
+  } else if(path.startsWith('/howtoguides/')){
+    const parts = path.replace('/howtoguides/','').split('/');
+    const cat = parts[0]||'';
+    slug = parts[1]||'';
+    type = 'guide';
+    canonical = `https://www.toomuchcoin.com/howtoguides/${cat}/${slug}`;
+    title = slug.replace(/-/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) + ' — Toomuchcoin Guide';
+    excerpt = 'Free how-to guide from Toomuchcoin — no account required.';
+  } else if(path.startsWith('/marketplace/vendorlist/')){
+    slug = path.replace('/marketplace/vendorlist/','').replace(/\/$/,'');
+    type = 'vendor';
+    canonical = `https://www.toomuchcoin.com/marketplace/vendorlist/${slug}`;
+    title = slug.replace(/-/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) + ' — Toomuchcoin Vendors';
+    excerpt = 'Discover this business on the Toomuchcoin vendor directory.';
   }
 
   const ua = req.headers.get('user-agent') || '';
   const isBot = /facebookexternalhit|twitterbot|whatsapp|linkedinbot|telegrambot|slackbot|discordbot|googlebot|bingbot|applebot/i.test(ua);
 
+  // Non-bot — redirect to main app
   if (!isBot) {
     return new Response(null, {
       status: 302,
@@ -27,6 +45,7 @@ export default async function handler(req) {
     });
   }
 
+  // Bot — serve OG tags
   const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -44,6 +63,7 @@ export default async function handler(req) {
   <meta name="twitter:title" content="${esc(title)}"/>
   <meta name="twitter:description" content="${esc(excerpt)}"/>
   <meta name="twitter:image" content="${esc(image)}"/>
+  <link rel="canonical" href="${esc(canonical)}"/>
   <meta http-equiv="refresh" content="0;url=${esc(canonical)}"/>
 </head>
 <body><p>Redirecting...</p></body>
@@ -58,5 +78,5 @@ export default async function handler(req) {
 }
 
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
