@@ -738,180 +738,183 @@ const W={
 
   // ── Load wallet ──
   async load(){
-    if(!S.user) return;
+    if(!S.user){console.warn('TMC: no user');return;}
+    console.log('TMC: loading wallet for',S.user.id);
     try{
-      // Load config
-      const cfg=await DB.list('tmc_config',[Query.limit(1)]).catch(()=>({documents:[]}));
-      if(cfg.documents[0]){
-        const c=cfg.documents[0];
-        W.config={
-          login      :c.loginBonus||1.0,
-          listing    :c.listingBonus||0.5,
-          deal       :c.dealBonus||1.0,
-          review     :c.reviewBonus||0.3,
-          vote       :c.voteBonus||0.1,
-          guide_read :c.guideBonus||0.25,
-          referral   :c.referralBonus||2.0,
-          subsRate   :c.subsRate||45,
-          usdPerTmc  :c.usdPerTmc||0.222,
-          nairaPerTmc:c.nairaPerTmc||306.08,
-        };
+      // Load config from Appwrite
+      try{
+        const cfg=await _db.listDocuments(AW_DB_ID,'tmc_config',[Query.limit(1)]);
+        if(cfg.documents[0]){
+          const c=cfg.documents[0];
+          W.config={
+            login      :c.loginBonus!=null?c.loginBonus:1.0,
+            listing    :c.listingBonus!=null?c.listingBonus:0.5,
+            deal       :c.dealBonus!=null?c.dealBonus:1.0,
+            review     :c.reviewBonus!=null?c.reviewBonus:0.3,
+            vote       :c.voteBonus!=null?c.voteBonus:0.1,
+            guide_read :c.guideBonus!=null?c.guideBonus:0.25,
+            referral   :c.referralBonus!=null?c.referralBonus:2.0,
+            subsRate   :c.subsRate!=null?c.subsRate:45,
+            usdPerTmc  :c.usdPerTmc!=null?c.usdPerTmc:0.222,
+            nairaPerTmc:c.nairaPerTmc!=null?c.nairaPerTmc:306.08,
+          };
+          console.log('TMC: config loaded',W.config);
+        }
+      }catch(cfgErr){
+        console.warn('TMC: config load failed — using defaults',cfgErr.message);
       }
-      // Load wallet
-      const r=await DB.list('tmc_wallet',[
-        Query.equal('userId',[S.user.id]),
-        Query.limit(1),
-      ]).catch(()=>({documents:[]}));
-      if(r.documents[0]){
-        const d=r.documents[0];
+
+      // Load or create wallet
+      let walletDoc=null;
+      try{
+        const r=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
+          Query.equal('userId',[S.user.id]),
+          Query.limit(1),
+        ]);
+        walletDoc=r.documents[0]||null;
+        console.log('TMC: wallet doc found?',!!walletDoc);
+      }catch(e){
+        console.warn('TMC: wallet fetch failed',e.message);
+      }
+
+      if(walletDoc){
         W.wallet={
-          id            :d.$id,
-          balance       :d.balance||0,
-          lifetimeEarned:d.lifetimeEarned||0,
-          lifetimeSpent :d.lifetimeSpent||0,
-          lastLoginBonus:d.lastLoginBonus||'',
+          id            :walletDoc.$id,
+          balance       :walletDoc.balance||0,
+          lifetimeEarned:walletDoc.lifetimeEarned||0,
+          lifetimeSpent :walletDoc.lifetimeSpent||0,
+          lastLoginBonus:walletDoc.lastLoginBonus||'',
         };
+        console.log('TMC: wallet loaded',W.wallet);
       } else {
-        // First time — create wallet with retroactive balance
+        console.log('TMC: creating new wallet');
         await W.initNewWallet();
       }
-      // Load recent transactions
-      const txR=await DB.list('tmc_transactions',[
-        Query.equal('userId',[S.user.id]),
-        Query.orderDesc('$createdAt'),
-        Query.limit(50),
-      ]);
-      console.log('TMC transactions raw:',txR.documents.length,'docs',txR.documents);
-      console.log('TMC wallet doc:',W.wallet);
-      console.log('Current user ID:',S.user.id);
-      W.txs=txR.documents.map(d=>({
-        id         :d.$id,
-        type       :d.type,
-        amount     :d.amount,
-        balanceAfter:d.balanceAfter,
-        description:d.description,
-        refId      :d.refId||'',
-        createdAt  :d.$createdAt,
-      }));
-      // Backfill missing transactions if wallet has earnings but few tx records
-      if(W.txs.length<5&&W.wallet&&W.wallet.lifetimeEarned>0){
-        const backfillKey='tmc_backfilled_'+S.user.id;
-        if(!localStorage.getItem(backfillKey)){
-          localStorage.setItem(backfillKey,'true');
-          const earned=W.wallet.lifetimeEarned;
-          const loginCount=Math.floor(earned/(W.config.login||1));
-          const extraEarned=parseFloat((earned-(loginCount*(W.config.login||1))).toFixed(3));
-          const joinDate=new Date(S.user.joinedAt||Date.now());
-          // Write one tx per day of login bonus going back
-          for(let i=0;i<Math.min(loginCount,30);i++){
-            const d=new Date(joinDate.getTime()+i*24*60*60*1000);
-            const bal=parseFloat(((i+1)*(W.config.login||1)).toFixed(3));
-            _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
-              userId:S.user.id,type:'login',
-              amount:W.config.login||1,
-              balanceAfter:Math.min(bal,earned),
-              description:'Daily login bonus',
-              refId:'',createdAt:d.toISOString(),
-            }).catch(()=>{});
-          }
-          // Write any extra as a grant
-          if(extraEarned>0){
-            _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
-              userId:S.user.id,type:'admin_grant',
-              amount:extraEarned,
-              balanceAfter:earned,
-              description:'Activity bonus (listing, deal, review etc.)',
-              refId:'',createdAt:new Date().toISOString(),
-            }).catch(()=>{});
-          }
-          // Reload after backfill
-          setTimeout(async()=>{
-            const txR2=await DB.list('tmc_transactions',[
-              Query.equal('userId',[S.user.id]),
-              Query.orderDesc('createdAt'),
-              Query.limit(50),
-            ]).catch(()=>({documents:[]}));
-            W.txs=txR2.documents.map(d=>({
-              id:d.$id,type:d.type,amount:d.amount,
-              balanceAfter:d.balanceAfter,description:d.description,
-              refId:d.refId||'',createdAt:d.$createdAt||d.createdAt,
-            }));
-            if(S.page==='wallet') render();
-          },2000);
-        }
+
+      // Load transaction history
+      try{
+        const txR=await _db.listDocuments(AW_DB_ID,'tmc_transactions',[
+          Query.equal('userId',[S.user.id]),
+          Query.orderDesc('$createdAt'),
+          Query.limit(50),
+        ]);
+        W.txs=txR.documents.map(d=>({
+          id          :d.$id,
+          type        :d.type,
+          amount      :d.amount,
+          balanceAfter:d.balanceAfter,
+          description :d.description||'',
+          refId       :d.refId||'',
+          createdAt   :d.$createdAt,
+        }));
+        console.log('TMC: transactions loaded',W.txs.length);
+      }catch(e){
+        console.warn('TMC: tx history failed',e.message);
+        W.txs=[];
       }
-      // After W.txs is set, check daily login
+
+      // Trigger daily login bonus
       await W.dailyLogin();
       renderNav();
-    }catch(e){console.warn('TMC load:',e.message);}
+      console.log('TMC: load complete. Balance:',W.wallet?.balance);
+    }catch(e){
+      console.warn('TMC load error:',e.message,e);
+    }
   },
 
   // ── First time wallet — retroactive balance ──
   async initNewWallet(){
-    if(!S.user) return;
-    // Calculate days since joining
+    if(!S.user){console.warn('TMC initNewWallet: no user');return;}
     const joinDate=new Date(S.user.joinedAt||Date.now());
-    const daysSince=Math.floor((Date.now()-joinDate.getTime())/(24*60*60*1000));
-    const retroBalance=parseFloat((daysSince*W.config.login).toFixed(3));
+    const daysSince=Math.max(0,Math.floor((Date.now()-joinDate.getTime())/(24*60*60*1000)));
+    const loginRate=W.config.login||1.0;
+    const retroBalance=parseFloat((daysSince*loginRate).toFixed(3));
+    const today=new Date().toISOString().split('T')[0];
+    console.log('TMC: creating wallet, retroBalance=',retroBalance,'days=',daysSince);
     try{
       const doc=await _db.createDocument(AW_DB_ID,'tmc_wallet',ID.unique(),{
         userId        :S.user.id,
         balance       :retroBalance,
         lifetimeEarned:retroBalance,
         lifetimeSpent :0,
-        lastLoginBonus:new Date().toISOString().split('T')[0],
+        lastLoginBonus:today,
       });
+      console.log('TMC: wallet created',doc.$id);
       W.wallet={
         id            :doc.$id,
         balance       :retroBalance,
         lifetimeEarned:retroBalance,
         lifetimeSpent :0,
-        lastLoginBonus:new Date().toISOString().split('T')[0],
+        lastLoginBonus:today,
       };
       // Log retroactive grant
       if(retroBalance>0){
-        await W._logTx('admin_grant',retroBalance,retroBalance,
-          `Retroactive grant — ${daysSince} days since joining Datum`,'');
+        await W._logTx(
+          'admin_grant',
+          retroBalance,
+          retroBalance,
+          `Welcome bonus — ${daysSince} day${daysSince!==1?'s':''} since joining Datum`,
+          ''
+        );
       }
-      // Update profile balance cache
       await W._updateProfileBalance(retroBalance);
-    }catch(e){console.warn('initWallet:',e.message);}
+    }catch(e){
+      console.error('TMC initNewWallet FAILED:',e.message,e);
+      // Create a minimal in-memory wallet so the rest of the session works
+      W.wallet={
+        id            :null,
+        balance       :retroBalance,
+        lifetimeEarned:retroBalance,
+        lifetimeSpent :0,
+        lastLoginBonus:today,
+      };
+    }
   },
 
   // ── Daily login bonus ──
   async dailyLogin(){
-    if(!W.wallet) return;
+    if(!W.wallet){console.warn('TMC dailyLogin: no wallet');return;}
     const today=new Date().toISOString().split('T')[0];
-    if(W.wallet.lastLoginBonus===today) return; // already claimed today
+    if(W.wallet.lastLoginBonus===today){
+      console.log('TMC: daily bonus already claimed today');
+      return;
+    }
+    console.log('TMC: claiming daily login bonus');
     await W.earn('login','Daily login bonus','');
     try{
-      await _db.updateDocument(AW_DB_ID,'tmc_wallet',W.wallet.id,{lastLoginBonus:today});
+      if(W.wallet.id){
+        await _db.updateDocument(AW_DB_ID,'tmc_wallet',W.wallet.id,{lastLoginBonus:today});
+      }
       W.wallet.lastLoginBonus=today;
-    }catch(e){console.warn('lastLoginBonus update:',e.message);}
+    }catch(e){console.warn('TMC lastLoginBonus update:',e.message);}
   },
 
   // ── Core earn function ──
   async earn(type,description,refId){
-    if(!S.user||!W.wallet) return;
-    const amount=parseFloat((W.config[type]||0).toFixed(3));
-    if(!amount) return;
+    if(!S.user){console.warn('TMC earn: no user');return;}
+    if(!W.wallet){console.warn('TMC earn: no wallet');return;}
+    const rate=W.config[type];
+    if(!rate){console.warn('TMC earn: no rate for type',type);return;}
+    const amount=parseFloat(rate.toFixed(3));
     const newBalance=parseFloat((W.wallet.balance+amount).toFixed(3));
     const newLifetime=parseFloat((W.wallet.lifetimeEarned+amount).toFixed(3));
+    console.log('TMC earn:',type,amount,'newBalance:',newBalance);
     try{
-      await _db.updateDocument(AW_DB_ID,'tmc_wallet',W.wallet.id,{
-        balance       :newBalance,
-        lifetimeEarned:newLifetime,
-      });
+      if(W.wallet.id){
+        await _db.updateDocument(AW_DB_ID,'tmc_wallet',W.wallet.id,{
+          balance       :newBalance,
+          lifetimeEarned:newLifetime,
+        });
+      }
       W.wallet.balance=newBalance;
       W.wallet.lifetimeEarned=newLifetime;
-      await W._logTx(type,amount,newBalance,description,refId);
+      await W._logTx(type,amount,newBalance,description||type,refId||'');
       await W._updateProfileBalance(newBalance);
       renderNav();
-      // Subtle toast only for non-login earnings
       if(type!=='login'){
         toast(`+${amount} $TMC earned!`,'ok');
       }
-    }catch(e){console.warn('TMC earn:',e.message);}
+    }catch(e){console.error('TMC earn FAILED:',type,e.message,e);}
   },
 
   // ── Core spend function ──
@@ -943,29 +946,54 @@ const W={
 
   // ── Log transaction ──
   async _logTx(type,amount,balanceAfter,description,refId){
+    if(!S.user) return;
     try{
-      console.log('Writing tx:',type,amount,description);
       const doc=await _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
         userId     :S.user.id,
-        type,amount,balanceAfter,description,
-        refId      :refId||'',
+        type       :String(type),
+        amount     :Number(amount),
+        balanceAfter:Number(balanceAfter),
+        description:String(description||type),
+        refId      :String(refId||''),
         createdAt  :new Date().toISOString(),
       });
       W.txs.unshift({
-        id:doc.$id,type,amount,balanceAfter,description,
-        refId:refId||'',createdAt:doc.$createdAt,
+        id:doc.$id,type,amount,balanceAfter,
+        description:description||type,
+        refId:refId||'',
+        createdAt:doc.$createdAt,
       });
-    }catch(e){console.warn('TMC logTx:',e.message);}
+      console.log('TMC: tx logged',type,amount);
+    }catch(e){
+      console.error('TMC _logTx FAILED:',e.message,e);
+      // Still add to local state even if Appwrite fails
+      W.txs.unshift({
+        id:'local_'+Date.now(),type,amount,balanceAfter,
+        description:description||type,
+        refId:refId||'',
+        createdAt:new Date().toISOString(),
+      });
+    }
   },
 
   // ── Keep profile balance in sync for nav display ──
   async _updateProfileBalance(balance){
+    if(!S.user) return;
     try{
-      const r=await DB.list('profiles',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
-      if(r.documents[0]){
-        await DB.update('profiles',r.documents[0].$id,{tmcBalance:balance});
+      // Use cached profile doc ID if available
+      if(S.user.profileDocId){
+        await _db.updateDocument(AW_DB_ID,'profiles',S.user.profileDocId,{tmcBalance:Number(balance)});
+      } else {
+        const r=await _db.listDocuments(AW_DB_ID,'profiles',[
+          Query.equal('userId',[S.user.id]),
+          Query.limit(1),
+        ]);
+        if(r.documents[0]){
+          S.user.profileDocId=r.documents[0].$id;
+          await _db.updateDocument(AW_DB_ID,'profiles',r.documents[0].$id,{tmcBalance:Number(balance)});
+        }
       }
-    }catch(e){}
+    }catch(e){console.warn('TMC _updateProfileBalance:',e.message);}
   },
 
   // ── Pay subscription with TMC ──
@@ -2673,8 +2701,7 @@ function renderNav(){
       </div>
       ${S.notifUnread>0?`<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--white)">${S.notifUnread>9?'9+':S.notifUnread}</div>`:''}
     </div>`;
-    const _tmcBal=W.wallet?.balance!=null?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(212,175,55,.12);color:#D4AF37;border:1px solid rgba(212,175,55,.25);border-radius:100px;padding:3px 9px;font-size:.7rem;font-weight:700;cursor:pointer" onclick="R.go('wallet')" title="$TMC Wallet">⬡ ${W.fmt(W.wallet.balance)}</span>`:'';
-    el.innerHTML=`${_tmcBal}${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
+    el.innerHTML=`${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
           ?`<img src="${fileUrl(S.user.avatarId)}" class="nav-avatar" onerror="this.outerHTML='<div class=navat>${S.user.inits[0]}</div>'">`
           :`<div class="navat">${S.user.inits[0]}</div>`}<span>${S.user.name.split(' ')[0]}</span>${sub}</div>`;
   }else{
@@ -2948,11 +2975,23 @@ const P = {
                   </div>
                   <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px;margin-bottom:6px">
                     <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">Bank Transfer</strong>
-                    <span style="font-size:.8rem">Datum Logistics &nbsp;·&nbsp; <strong>Zenith Bank</strong> &nbsp;·&nbsp; Acct: <strong>5076070889</strong> &nbsp;·&nbsp; Swift Code: 122106507</span>
+                    <span style="font-size:.8rem">Datum Logistics &nbsp;·&nbsp; <strong>Zenith Bank</strong> &nbsp;·&nbsp; Acct: <strong>1312154595</strong></span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px;margin-bottom:6px">
+                    <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">USDT TRC-20</strong>
+                    <span style="font-size:.78rem;word-break:break-all">TQnBoM73ZpQpfTS7gcFMwaYiAToLLSQ1DF</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px;margin-bottom:6px">
+                    <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">USDT BEP-20 / ERC-20</strong>
+                    <span style="font-size:.78rem;word-break:break-all">0x72276F248DdE9556298F5a0B3a73750222CeFDA0</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px;margin-bottom:6px">
+                    <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">USDT SOL</strong>
+                    <span style="font-size:.78rem;word-break:break-all">29HYtTSn1mmibjoxq25uZuVV2BikxkkVwud2ihmVYkRr</span>
                   </div>
                   <div style="background:#fff;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:10px">
-                    <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">USDT TRC-20</strong>
-                    <span style="font-size:.78rem;word-break:break-all">TRoomuchcoin1x2y3z4aBcDeFgHiJkLmNoPqRsTuV</span>
+                    <strong style="display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">Bitcoin (BTC)</strong>
+                    <span style="font-size:.78rem;word-break:break-all">36c8rQfhmvZNpgvDZpNBR25tRPkEk96cmE</span>
                   </div>
                 </div>
                 <button class="btn bc bsm" onclick="A.showCommForm('${c.id}')"><i data-lucide="check-circle" style="width:12px;height:12px"></i>I Have Paid</button>
@@ -3176,7 +3215,7 @@ const P = {
         <div class="irow"><span class="irl">Full Name</span><span class="irv">${u.name}</span></div>
         <div class="irow"><span class="irl">Email</span><span class="irv">${u.email}</span></div>
         <div class="irow"><span class="irl">Account Type</span><span class="irv">${tl}</span></div>
-        <div class="irow"><span class="irl">User ID</span><span class="irv" style="font-family:monospace;font-size:.78rem">${u.id.slice(0,18)}…</span></div>
+        <div class="irow"><span class="irl">User ID</span><span class="irv" style="font-family:monospace;font-size:.78rem">${u.id.slice(0,10)}…</span></div>
         <div class="irow"><span class="irl">Verification</span><span class="irv">${vTag}</span></div>
         <div class="irow"><span class="irl">Plan</span><span class="irv">${subTag}</span></div>
       </div>
@@ -8659,10 +8698,14 @@ Rules:
     S._currentPost=post;
     S.page='blogpost';
     if(post.type==='guide') W.onGuideRead(id).catch(()=>{});
-    // Increment view count
-    const newViews=(post.views||0)+1;
-    post.views=newViews;
-    _db.updateDocument(AW_DB_ID,AW_COL.blog,id,{views:newViews}).catch(()=>{});
+    // Increment view count — once per user per post per session
+    const _viewKey=`viewed_post_${id}_${S.user?.id||'guest'}`;
+    if(!sessionStorage.getItem(_viewKey)){
+      sessionStorage.setItem(_viewKey,'1');
+      const newViews=(post.views||0)+1;
+      post.views=newViews;
+      _db.updateDocument(AW_DB_ID,AW_COL.blog,id,{views:newViews}).catch(()=>{});
+    }
     // Make sure admin profile is loaded before rendering
     if(!S._adminProfile){
       A.loadAdminProfile().then(()=>render());
@@ -8904,34 +8947,36 @@ const PAY = {
         </div>
       </div>
 
-      <!-- USDT SOL (Recommended) -->
-      <div style="border:1.5px solid var(--pur);border-radius:var(--rsm);padding:14px;margin-bottom:10px;background:#F9F6FF;position:relative">
-        <div style="position:absolute;top:-1px;right:10px;background:var(--pur);color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:0 0 6px 6px;text-transform:uppercase">Recommended</div>
-        <div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pur);margin-bottom:10px">USDT — Solana (SOL)</div>
-        <div style="font-size:.72rem;color:var(--t2);margin-bottom:8px;line-height:1.4">Fastest confirmation · Low fees · Send exactly <strong>7.27 USDT</strong></div>
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:.68rem;color:var(--t3);margin-bottom:3px">Wallet Address</div>
-            <div style="font-size:.72rem;font-family:monospace;word-break:break-all;color:var(--t1);line-height:1.5">DatumTMC1xSoLaNaWaLLetAdDrEsS2026xYzAbCdEf</div>
-          </div>
-          <button onclick="A.copyText('DatumTMC1xSoLaNaWaLLetAdDrEsS2026xYzAbCdEf','sol-copy-btn')" id="sol-copy-btn" class="btn bpur bsm" style="flex-shrink:0;margin-top:16px">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <!-- USDT Networks -->
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px">USDT</div>
+
+      ${[
+        {network:'BEP-20 (BSC)',addr:'0x72276F248DdE9556298F5a0B3a73750222CeFDA0',recommended:false,note:'Binance Smart Chain'},
+        {network:'TRC-20 (TRON)',addr:'TQnBoM73ZpQpfTS7gcFMwaYiAToLLSQ1DF',recommended:true,note:'Lowest fees · Fastest'},
+        {network:'ERC-20 (Ethereum)',addr:'0x72276F248DdE9556298F5a0B3a73750222CeFDA0',recommended:false,note:'Higher gas fees'},
+        {network:'SOL (Solana)',addr:'29HYtTSn1mmibjoxq25uZuVV2BikxkkVwud2ihmVYkRr',recommended:false,note:'Fast & cheap'},
+      ].map((w,i)=>`
+      <div style="border:${w.recommended?'1.5px solid #D4AF37':'1px solid var(--bdr)'};border-radius:var(--rsm);padding:12px 14px;margin-bottom:8px;background:${w.recommended?'#FBF8EC':'var(--white)'};position:relative">
+        ${w.recommended?`<div style="position:absolute;top:-1px;right:10px;background:#D4AF37;color:#1a1408;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:0 0 6px 6px;text-transform:uppercase">Recommended</div>`:''}
+        <div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${w.recommended?'#B8922A':'var(--t3)'};margin-bottom:6px">${w.network}</div>
+        <div style="font-size:.7rem;color:var(--t2);margin-bottom:8px">${w.note} · Send exactly <strong>₦10,000 equiv in USDT</strong></div>
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <div style="flex:1;font-size:.72rem;font-family:monospace;word-break:break-all;color:var(--t1);line-height:1.5">${w.addr}</div>
+          <button onclick="A.copyText('${w.addr}','usdt-copy-${i}')" id="usdt-copy-${i}" class="btn bsm" style="flex-shrink:0;margin-top:2px;background:${w.recommended?'#D4AF37':'var(--surf)'};color:${w.recommended?'#1a1408':'var(--t1)'};border:none">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             Copy
           </button>
         </div>
-      </div>
+      </div>`).join('')}
 
-      <!-- USDT TRC-20 -->
-      <div style="border:1px solid var(--bdr);border-radius:var(--rsm);padding:14px;margin-bottom:16px;background:var(--white)">
-        <div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:10px">USDT — TRON (TRC-20)</div>
-        <div style="font-size:.72rem;color:var(--t2);margin-bottom:8px">Send exactly <strong>7.27 USDT</strong></div>
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:.68rem;color:var(--t3);margin-bottom:3px">Wallet Address</div>
-            <div style="font-size:.72rem;font-family:monospace;word-break:break-all;color:var(--t1);line-height:1.5">TRoomuchcoin1x2y3z4aBcDeFgHiJkLmNoPqRsTuV</div>
-          </div>
-          <button onclick="A.copyText('TRoomuchcoin1x2y3z4aBcDeFgHiJkLmNoPqRsTuV','trc-copy-btn')" id="trc-copy-btn" class="btn bg bsm" style="flex-shrink:0;margin-top:16px">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <!-- BTC -->
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin:14px 0 8px">Bitcoin (BTC)</div>
+      <div style="border:1px solid var(--bdr);border-radius:var(--rsm);padding:12px 14px;margin-bottom:16px;background:var(--white)">
+        <div style="font-size:.7rem;color:var(--t2);margin-bottom:8px">Send BTC equivalent of ₦10,000 to this address</div>
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <div style="flex:1;font-size:.72rem;font-family:monospace;word-break:break-all;color:var(--t1);line-height:1.5">36c8rQfhmvZNpgvDZpNBR25tRPkEk96cmE</div>
+          <button onclick="A.copyText('36c8rQfhmvZNpgvDZpNBR25tRPkEk96cmE','btc-copy-btn')" id="btc-copy-btn" class="btn bg bsm" style="flex-shrink:0;margin-top:2px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             Copy
           </button>
         </div>
