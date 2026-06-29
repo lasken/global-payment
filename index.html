@@ -8095,17 +8095,16 @@ Rules:
     const postType=type||post?.type||'blog';
     const cleanSlug=slug&&slug.length<60&&!slug.match(/^[a-f0-9]{20,}$/)
       ?slug
-      :title.toLowerCase().trim()
+      :(title||'').toLowerCase().trim()
         .replace(/[^a-z0-9\s]/g,'')
         .replace(/\s+/g,'-')
         .replace(/-+/g,'-')
         .slice(0,50)
         .replace(/-$/,'');
-    const url=postType==='guide'
+    const cleanUrl=postType==='guide'
       ?`https://www.toomuchcoin.com/howtoguides/${guideCategory||post?.guideCategory||'datum_basics'}/${cleanSlug}`
       :`https://www.toomuchcoin.com/blog/${cleanSlug}`;
-    // OG preview URL for bots — wraps the clean URL
-    const ogUrl=`https://www.toomuchcoin.com/api/blog-preview?type=${postType}&slug=${encodeURIComponent(cleanSlug)}&title=${encodeURIComponent(title)}&excerpt=${encodeURIComponent((post?.excerpt||'').slice(0,200))}&image=${encodeURIComponent(post?.coverImageId?fileUrl(post.coverImageId):'https://www.toomuchcoin.com/toomuchcoin.png')}&canonical=${encodeURIComponent(url)}`;
+    const ogUrl=cleanUrl; // use clean URL directly — OG tags served from index.html meta
     const shareText=title+'\n'+url;
     if(navigator.share){
       try{await navigator.share({title,text:shareText,url});return;}catch(e){if(e.name==='AbortError')return;}
@@ -8161,20 +8160,12 @@ Rules:
     const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music_entertainment:'Music & Entertainment',events:'Event Planner',electronics:'Electronics & Gadgets',catering:'Food Catering'}[catId]||catId;
     const excerpt=v?.tagline||(catLabel+' in '+city+', found on Toomuchcoin');
     // Clean URL for vendor
-    const cleanVendorUrl=`https://www.toomuchcoin.com/marketplace/vendorlist/${encodeURIComponent(slug)}`;
-    const ogVendorUrl='https://www.toomuchcoin.com/api/blog-preview'
-      +'?type=vendor'
-      +'&slug='+encodeURIComponent(slug)
-      +'&title='+encodeURIComponent(bizName)
-      +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
-      +'&image='+encodeURIComponent(imgUrl)
-      +'&canonical='+encodeURIComponent(cleanVendorUrl);
-    const text='Check out '+bizName+' on Toomuchcoin — '+catLabel+' in '+city;
+    const cleanVendorUrl=`https://www.toomuchcoin.com/marketplace/vendorlist/${slug}`;
     if(navigator.share){
-      try{await navigator.share({title:bizName,text,url:ogVendorUrl});return;}catch(e){if(e.name==='AbortError')return;}
+      try{await navigator.share({title:`${bizName} — Toomuchcoin`,url:cleanVendorUrl});return;}catch(e){if(e.name==='AbortError')return;}
     }
-    try{await navigator.clipboard.writeText(ogVendorUrl);toast('Link copied!','ok');}
-    catch(e){prompt('Copy this link:',ogVendorUrl);}
+    try{await navigator.clipboard.writeText(cleanVendorUrl);toast('Link copied!','ok');}
+    catch(e){prompt('Copy link:',cleanVendorUrl);}
   },
 
   async shareOrder(id,title){
@@ -8195,20 +8186,12 @@ Rules:
     const firstImgId=(order?.imageId||'').split(',').filter(Boolean)[0];
     const imgUrl=firstImgId?fileUrl(firstImgId):'https://www.toomuchcoin.com/toomuchcoin.png';
     const excerpt=order?.desc?(order.desc.slice(0,160)):(order?.price?order.price+' — '+title:title);
-    const cleanListingUrl=`https://www.toomuchcoin.com/marketplace/orderboard?listing=${encodeURIComponent(slug)}`;
-    const ogListingUrl='https://www.toomuchcoin.com/api/blog-preview'
-      +'?type=listing'
-      +'&slug='+encodeURIComponent(slug)
-      +'&title='+encodeURIComponent(title)
-      +'&excerpt='+encodeURIComponent(excerpt.slice(0,200))
-      +'&image='+encodeURIComponent(imgUrl)
-      +'&canonical='+encodeURIComponent(cleanListingUrl);
-    const text='Check out this listing on Toomuchcoin: '+title;
+    const cleanListingUrl=`https://www.toomuchcoin.com/marketplace/orderboard?listing=${slug}`;
     if(navigator.share){
-      try{await navigator.share({title,text,url:ogListingUrl});return;}catch(e){if(e.name==='AbortError')return;}
+      try{await navigator.share({title:`${title} — Toomuchcoin`,url:cleanListingUrl});return;}catch(e){if(e.name==='AbortError')return;}
     }
-    try{await navigator.clipboard.writeText(ogListingUrl);toast('Link copied!','ok');}
-    catch(e){prompt('Copy this link:',ogListingUrl);}
+    try{await navigator.clipboard.writeText(cleanListingUrl);toast('Link copied!','ok');}
+    catch(e){prompt('Copy link:',cleanListingUrl);}
   },
 
   toggleWatch(id){
