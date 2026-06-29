@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/toomuchcoin.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/toomuchcoin.png">
   <link rel="shortcut icon" href="/toomuchcoin.png">
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="/manifest.json" onerror="this.remove()">
   
   <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -623,6 +623,9 @@ const AW_COL = {
   blog           : 'blog',
   vendors        : 'vendors',
   price_alerts   : 'price_alerts',
+  tmc_wallet     : 'tmc_wallet',
+  tmc_transactions: 'tmc_transactions_',
+  tmc_config     : 'tmc_config',
 };
 
 const { Client, Account, Databases, Storage, Functions, Query, ID } = Appwrite;
@@ -709,6 +712,475 @@ const KK = {
   animFrame  : null,
   bars       : [],
 };
+
+// ── TMC Wallet ──
+// TMC_COL removed — using AW_COL directly
+
+const TMC_RATES={
+  login      :1.0,
+  listing    :0.5,
+  deal       :1.0,
+  review     :0.3,
+  vote       :0.1,
+  guide_read :0.25,
+  referral   :2.0,
+  usdPerTmc  :0.222,
+  nairaPerTmc:306.08,
+};
+
+const W={
+  // ── State ──
+  wallet    :null,  // {id, balance, lifetimeEarned, lifetimeSpent, lastLoginBonus}
+  txs       :[],
+  config    :TMC_RATES,
+  loading   :false,
+  readGuides:new Set(), // guide IDs already read this session
+
+  // ── Load wallet ──
+  async load(){
+    if(!S.user) return;
+    try{
+      // Load config
+      const cfg=await DB.list('tmc_config',[Query.limit(1)]).catch(()=>({documents:[]}));
+      if(cfg.documents[0]){
+        const c=cfg.documents[0];
+        W.config={
+          login      :c.loginBonus||1.0,
+          listing    :c.listingBonus||0.5,
+          deal       :c.dealBonus||1.0,
+          review     :c.reviewBonus||0.3,
+          vote       :c.voteBonus||0.1,
+          guide_read :c.guideBonus||0.25,
+          referral   :c.referralBonus||2.0,
+          subsRate   :c.subsRate||45,
+          usdPerTmc  :c.usdPerTmc||0.222,
+          nairaPerTmc:c.nairaPerTmc||306.08,
+        };
+      }
+      // Load wallet
+      const r=await DB.list('tmc_wallet',[
+        Query.equal('userId',[S.user.id]),
+        Query.limit(1),
+      ]).catch(()=>({documents:[]}));
+      if(r.documents[0]){
+        const d=r.documents[0];
+        W.wallet={
+          id            :d.$id,
+          balance       :d.balance||0,
+          lifetimeEarned:d.lifetimeEarned||0,
+          lifetimeSpent :d.lifetimeSpent||0,
+          lastLoginBonus:d.lastLoginBonus||'',
+        };
+      } else {
+        // First time — create wallet with retroactive balance
+        await W.initNewWallet();
+      }
+      // Load recent transactions
+      const txR=await DB.list('tmc_transactions',[
+        Query.equal('userId',[S.user.id]),
+        Query.orderDesc('$createdAt'),
+        Query.limit(50),
+      ]);
+      console.log('TMC transactions raw:',txR.documents.length,'docs',txR.documents);
+      console.log('TMC wallet doc:',W.wallet);
+      console.log('Current user ID:',S.user.id);
+      W.txs=txR.documents.map(d=>({
+        id         :d.$id,
+        type       :d.type,
+        amount     :d.amount,
+        balanceAfter:d.balanceAfter,
+        description:d.description,
+        refId      :d.refId||'',
+        createdAt  :d.$createdAt,
+      }));
+      // Backfill missing transactions if wallet has earnings but few tx records
+      if(W.txs.length<5&&W.wallet&&W.wallet.lifetimeEarned>0){
+        const backfillKey='tmc_backfilled_'+S.user.id;
+        if(!localStorage.getItem(backfillKey)){
+          localStorage.setItem(backfillKey,'true');
+          const earned=W.wallet.lifetimeEarned;
+          const loginCount=Math.floor(earned/(W.config.login||1));
+          const extraEarned=parseFloat((earned-(loginCount*(W.config.login||1))).toFixed(3));
+          const joinDate=new Date(S.user.joinedAt||Date.now());
+          // Write one tx per day of login bonus going back
+          for(let i=0;i<Math.min(loginCount,30);i++){
+            const d=new Date(joinDate.getTime()+i*24*60*60*1000);
+            const bal=parseFloat(((i+1)*(W.config.login||1)).toFixed(3));
+            _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+              userId:S.user.id,type:'login',
+              amount:W.config.login||1,
+              balanceAfter:Math.min(bal,earned),
+              description:'Daily login bonus',
+              refId:'',createdAt:d.toISOString(),
+            }).catch(()=>{});
+          }
+          // Write any extra as a grant
+          if(extraEarned>0){
+            _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+              userId:S.user.id,type:'admin_grant',
+              amount:extraEarned,
+              balanceAfter:earned,
+              description:'Activity bonus (listing, deal, review etc.)',
+              refId:'',createdAt:new Date().toISOString(),
+            }).catch(()=>{});
+          }
+          // Reload after backfill
+          setTimeout(async()=>{
+            const txR2=await DB.list('tmc_transactions',[
+              Query.equal('userId',[S.user.id]),
+              Query.orderDesc('createdAt'),
+              Query.limit(50),
+            ]).catch(()=>({documents:[]}));
+            W.txs=txR2.documents.map(d=>({
+              id:d.$id,type:d.type,amount:d.amount,
+              balanceAfter:d.balanceAfter,description:d.description,
+              refId:d.refId||'',createdAt:d.$createdAt||d.createdAt,
+            }));
+            if(S.page==='wallet') render();
+          },2000);
+        }
+      }
+      // After W.txs is set, check daily login
+      await W.dailyLogin();
+      renderNav();
+    }catch(e){console.warn('TMC load:',e.message);}
+  },
+
+  // ── First time wallet — retroactive balance ──
+  async initNewWallet(){
+    if(!S.user) return;
+    // Calculate days since joining
+    const joinDate=new Date(S.user.joinedAt||Date.now());
+    const daysSince=Math.floor((Date.now()-joinDate.getTime())/(24*60*60*1000));
+    const retroBalance=parseFloat((daysSince*W.config.login).toFixed(3));
+    try{
+      const doc=await _db.createDocument(AW_DB_ID,'tmc_wallet',ID.unique(),{
+        userId        :S.user.id,
+        balance       :retroBalance,
+        lifetimeEarned:retroBalance,
+        lifetimeSpent :0,
+        lastLoginBonus:new Date().toISOString().split('T')[0],
+      });
+      W.wallet={
+        id            :doc.$id,
+        balance       :retroBalance,
+        lifetimeEarned:retroBalance,
+        lifetimeSpent :0,
+        lastLoginBonus:new Date().toISOString().split('T')[0],
+      };
+      // Log retroactive grant
+      if(retroBalance>0){
+        await W._logTx('admin_grant',retroBalance,retroBalance,
+          `Retroactive grant — ${daysSince} days since joining Datum`,'');
+      }
+      // Update profile balance cache
+      await W._updateProfileBalance(retroBalance);
+    }catch(e){console.warn('initWallet:',e.message);}
+  },
+
+  // ── Daily login bonus ──
+  async dailyLogin(){
+    if(!W.wallet) return;
+    const today=new Date().toISOString().split('T')[0];
+    if(W.wallet.lastLoginBonus===today) return; // already claimed today
+    await W.earn('login','Daily login bonus','');
+    try{
+      await _db.updateDocument(AW_DB_ID,'tmc_wallet',W.wallet.id,{lastLoginBonus:today});
+      W.wallet.lastLoginBonus=today;
+    }catch(e){console.warn('lastLoginBonus update:',e.message);}
+  },
+
+  // ── Core earn function ──
+  async earn(type,description,refId){
+    if(!S.user||!W.wallet) return;
+    const amount=parseFloat((W.config[type]||0).toFixed(3));
+    if(!amount) return;
+    const newBalance=parseFloat((W.wallet.balance+amount).toFixed(3));
+    const newLifetime=parseFloat((W.wallet.lifetimeEarned+amount).toFixed(3));
+    try{
+      await _db.updateDocument(AW_DB_ID,'tmc_wallet',W.wallet.id,{
+        balance       :newBalance,
+        lifetimeEarned:newLifetime,
+      });
+      W.wallet.balance=newBalance;
+      W.wallet.lifetimeEarned=newLifetime;
+      await W._logTx(type,amount,newBalance,description,refId);
+      await W._updateProfileBalance(newBalance);
+      renderNav();
+      // Subtle toast only for non-login earnings
+      if(type!=='login'){
+        toast(`+${amount} $TMC earned!`,'ok');
+      }
+    }catch(e){console.warn('TMC earn:',e.message);}
+  },
+
+  // ── Core spend function ──
+  async spend(amount,type,description,refId){
+    if(!S.user||!W.wallet) return false;
+    const amt=parseFloat(amount.toFixed(3));
+    if(W.wallet.balance<amt){
+      toast(`Not enough $TMC. You have ${W.wallet.balance.toFixed(3)} — need ${amt}.`,'err');
+      return false;
+    }
+    const newBalance=parseFloat((W.wallet.balance-amt).toFixed(3));
+    const newSpent=parseFloat((W.wallet.lifetimeSpent+amt).toFixed(3));
+    try{
+      await _db.updateDocument(AW_DB_ID,'tmc_wallet',W.wallet.id,{
+        balance      :newBalance,
+        lifetimeSpent:newSpent,
+      });
+      W.wallet.balance=newBalance;
+      W.wallet.lifetimeSpent=newSpent;
+      await W._logTx(type,-amt,newBalance,description,refId);
+      await W._updateProfileBalance(newBalance);
+      renderNav();
+      return true;
+    }catch(e){
+      console.warn('TMC spend:',e.message);
+      return false;
+    }
+  },
+
+  // ── Log transaction ──
+  async _logTx(type,amount,balanceAfter,description,refId){
+    try{
+      console.log('Writing tx:',type,amount,description);
+      const doc=await _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+        userId     :S.user.id,
+        type,amount,balanceAfter,description,
+        refId      :refId||'',
+        createdAt  :new Date().toISOString(),
+      });
+      W.txs.unshift({
+        id:doc.$id,type,amount,balanceAfter,description,
+        refId:refId||'',createdAt:doc.$createdAt,
+      });
+    }catch(e){console.warn('TMC logTx:',e.message);}
+  },
+
+  // ── Keep profile balance in sync for nav display ──
+  async _updateProfileBalance(balance){
+    try{
+      const r=await DB.list('profiles',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
+      if(r.documents[0]){
+        await DB.update('profiles',r.documents[0].$id,{tmcBalance:balance});
+      }
+    }catch(e){}
+  },
+
+  // ── Pay subscription with TMC ──
+  async paySubWithTMC(){
+    if(!W.wallet){
+      toast('Your wallet is still loading — please wait a moment.','err');
+      return;
+    }
+    const cost=W.config.subsRate||45;
+    const bal=W.wallet.balance||0;
+    if(bal<cost){
+      const needed=(cost-bal).toFixed(3);
+      const daysNeeded=Math.ceil(needed/W.config.login);
+      M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+        <div class="modal" style="max-width:420px;text-align:center">
+          <div class="mhdr" style="justify-content:flex-end"><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
+          <div style="width:56px;height:56px;border-radius:50%;background:rgba(212,175,55,.12);border:2px solid rgba(212,175,55,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+            <span style="font-size:1.4rem">⬡</span>
+          </div>
+          <div style="font-family:var(--fd);font-size:1.3rem;margin-bottom:8px">Not Enough $TMC</div>
+          <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:6px">
+            You have <strong style="color:#D4AF37">${bal.toFixed(3)} TMC</strong> but need <strong style="color:#D4AF37">${cost} TMC</strong> for one month.
+          </p>
+          <p style="font-size:.8rem;color:var(--t3);line-height:1.6;margin-bottom:20px">
+            You need <strong>${needed} more TMC</strong> — that's about <strong>${daysNeeded} more daily logins</strong>, or faster if you post listings, complete deals, and vote for vendors.
+          </p>
+          <div style="background:var(--off);border-radius:var(--rmd);padding:14px;margin-bottom:20px;text-align:left">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:8px">Ways to earn faster</div>
+            <div style="font-size:.8rem;color:var(--t2);display:flex;flex-direction:column;gap:5px">
+              <span>⬡ +${W.config.listing} — Post a marketplace listing</span>
+              <span>⬡ +${W.config.deal} — Complete a deal</span>
+              <span>⬡ +${W.config.review} — Leave a seller review</span>
+              <span>⬡ +${W.config.referral} — Refer a friend</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn bo" style="flex:1;justify-content:center" onclick="M.close()">Got it</button>
+            <button class="btn bp" style="flex:1;justify-content:center;background:#D4AF37;border:none;color:#1a1408" onclick="M.close();R.go('market')">
+              <i data-lucide="store" style="width:13px;height:13px"></i>Go earn TMC
+            </button>
+          </div>
+        </div>
+      </div>`);
+      lucide.createIcons();
+      return;
+    }
+    if(!confirm(`Pay ${cost} TMC for 1 month Pro access?`)) return;
+    const ok=await W.spend(cost,'spend_sub',
+      '1 month Pro subscription — paid with $TMC','');
+    if(ok){
+      const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
+      await DB.create('subscription',{
+        userId       :S.user.id,
+        status       :'active',
+        plan         :'monthly',
+        amount       :'0',
+        reference    :'TMC_'+Date.now(),
+        paymentMethod:'tmc',
+        periodEnd,
+      });
+      S.subStatus='active';
+      S.subscribed=true;
+      S._subPeriodEnd=periodEnd;
+      render();
+      toast('Pro access activated with $TMC!','ok');
+    }
+  },
+
+  // ── Guide read bonus (once per guide) ──
+  async onGuideRead(guideId){
+    if(W.readGuides.has(guideId)) return;
+    W.readGuides.add(guideId);
+    await W.earn('guide_read','Read a How-To Guide',guideId);
+  },
+
+  // ── Format balance for display ──
+  fmt(n){
+    if(n==null) return'—';
+    return parseFloat(n).toFixed(3);
+  },
+
+  // ── Wallet page HTML ──
+  page(){
+    const w=W.wallet;
+    const txs=W.txs;
+    if(!w) return `<div style="padding:60px 24px;text-align:center;color:var(--t3)"><div class="spin" style="margin:0 auto 14px"></div><div style="font-size:.875rem">Loading your wallet…</div></div>`;
+    const typeIcon={
+      login      :'sun',
+      listing    :'layout-list',
+      deal       :'flag',
+      review     :'star',
+      vote       :'thumbs-up',
+      guide_read :'book-open',
+      referral   :'users',
+      spend_sub  :'zap',
+      spend_commission:'dollar-sign',
+      admin_grant:'gift',
+    };
+    const typeLabel={
+      login      :'Daily Login',
+      listing    :'Posted Listing',
+      deal       :'Completed Deal',
+      review     :'Left a Review',
+      vote       :'Voted for Vendor',
+      guide_read :'Read a Guide',
+      referral   :'Referral Bonus',
+      spend_sub  :'Subscription',
+      spend_commission:'Commission',
+      admin_grant:'Welcome Bonus',
+    };
+    return`<div style="max-width:680px;margin:0 auto;padding:32px 24px 80px">
+
+      <!-- Balance hero -->
+      <div style="background:linear-gradient(135deg,#1a1408,#2a1f00 40%,#1a1205);border-radius:var(--rlg);padding:32px;margin-bottom:24px;border:1px solid rgba(212,175,55,.25);text-align:center">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(212,175,55,.6);margin-bottom:10px">Your $TMC Balance</div>
+        <div style="font-family:var(--fd);font-size:3rem;color:#D4AF37;letter-spacing:-.02em;margin-bottom:4px">${W.fmt(w?.balance||0)}</div>
+        <div style="font-size:.875rem;color:rgba(212,175,55,.5)">$TMC · Datum Coin</div>
+        <div style="display:flex;justify-content:center;gap:24px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(212,175,55,.15)">
+          <div style="text-align:center">
+            <div style="font-size:.68rem;color:rgba(212,175,55,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Total Earned</div>
+            <div style="font-weight:600;color:rgba(212,175,55,.8);font-size:.9rem">${W.fmt(w?.lifetimeEarned||0)}</div>
+          </div>
+          <div style="width:1px;background:rgba(212,175,55,.15)"></div>
+          <div style="text-align:center">
+            <div style="font-size:.68rem;color:rgba(212,175,55,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Total Spent</div>
+            <div style="font-weight:600;color:rgba(212,175,55,.8);font-size:.9rem">${W.fmt(w?.lifetimeSpent||0)}</div>
+          </div>
+          <div style="width:1px;background:rgba(212,175,55,.15)"></div>
+          <div style="text-align:center">
+            <div style="font-size:.68rem;color:rgba(212,175,55,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">≈ USD Value</div>
+            <div style="font-weight:600;color:rgba(212,175,55,.8);font-size:.9rem">$${((w?.balance||0)*(W.config.usdPerTmc||0.222)).toFixed(2)}</div>
+          </div>
+          <div style="width:1px;background:rgba(212,175,55,.15)"></div>
+          <div style="text-align:center">
+            <div style="font-size:.68rem;color:rgba(212,175,55,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">≈ Naira Value</div>
+            <div style="font-weight:600;color:rgba(212,175,55,.8);font-size:.9rem">₦${Math.round((w?.balance||0)*(W.config.nairaPerTmc||306.08)).toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rate card -->
+      <div style="background:var(--off);border:1px solid rgba(212,175,55,.2);border-radius:var(--rmd);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="font-size:.78rem;color:var(--t2)">Current rate</div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:.8125rem;font-weight:600">
+          <span style="color:#D4AF37">1 $TMC</span>
+          <span style="color:var(--t3)">=</span>
+          <span>$${W.config.usdPerTmc||0.222}</span>
+          <span style="color:var(--t3)">=</span>
+          <span>₦${(W.config.nairaPerTmc||306.08).toLocaleString()}</span>
+        </div>
+      </div>
+      <!-- Actions -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+        <button class="btn bp" style="justify-content:center;padding:13px;background:#D4AF37;border:none;color:#1a1408;font-weight:700" onclick="W.paySubWithTMC()">
+          <i data-lucide="zap" style="width:15px;height:15px"></i>
+          Pay Sub (${W.config.subsRate||45} TMC)
+        </button>
+        <button class="btn bo" style="justify-content:center;padding:13px;border-color:#D4AF37;color:#D4AF37" onclick="S.page='market';S.mTab='board';S.mFilter='finance';S._preFillOrder={title:'WTB $TMC — offering ₦',category:'finance',type:'buy',price:'',desc:'Looking to buy $TMC Datum Coins. Will pay ₦'+(W.config.nairaPerTmc||333)+' per TMC. DM with amount available.'};loadOrders();render()">
+          <i data-lucide="arrow-left-right" style="width:15px;height:15px"></i>
+          Trade $TMC
+        </button>
+      </div>
+
+      <!-- Earn rates -->
+      <div style="background:var(--off);border:1px solid var(--bdr);border-radius:var(--rmd);padding:18px;margin-bottom:24px">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:14px">How to Earn $TMC</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${Object.entries({
+            login      :'Daily login',
+            listing    :'Post a marketplace listing',
+            deal       :'Complete a deal',
+            review     :'Leave a seller review',
+            vote       :'Vote for a vendor',
+            guide_read :'Read a How-To Guide (first time)',
+            referral   :'Refer a new user',
+          }).map(([type,label])=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:.8125rem;padding:6px 0;border-bottom:1px solid var(--bdr)">
+            <div style="display:flex;align-items:center;gap:9px;color:var(--t2)">
+              <i data-lucide="${typeIcon[type]}" style="width:13px;height:13px;color:#D4AF37"></i>
+              ${label}
+            </div>
+            <span style="font-weight:600;color:#D4AF37">+${W.config[type]||0} TMC</span>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Transaction history -->
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Transaction History</div>
+      ${txs.length===0
+        ?`<div style="text-align:center;padding:40px;color:var(--t3);border:1.5px dashed var(--bdr);border-radius:var(--rmd)">
+            <i data-lucide="clock" style="width:24px;height:24px;display:block;margin:0 auto 10px"></i>
+            No transactions yet — earn your first TMC by logging in daily.
+          </div>`
+        :`<div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden">
+          ${txs.map(tx=>{
+            const isEarn=tx.amount>0;
+            return`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bdr)">
+              <div style="width:32px;height:32px;border-radius:50%;background:${isEarn?'rgba(212,175,55,.12)':'rgba(196,48,48,.08)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i data-lucide="${typeIcon[tx.type]||'circle'}" style="width:14px;height:14px;color:${isEarn?'#D4AF37':'var(--red)'}"></i>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:.8125rem;font-weight:500;margin-bottom:2px">${tx.description||typeLabel[tx.type]||tx.type}</div>
+                <div style="font-size:.72rem;color:var(--t3)">${ago(tx.createdAt)}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-weight:700;font-size:.875rem;color:${isEarn?'#D4AF37':'var(--red)'}">${isEarn?'+':''}${tx.amount.toFixed(3)} TMC</div>
+                <div style="font-size:.68rem;color:var(--t3)">Balance: ${tx.balanceAfter.toFixed(3)}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`}
+    </div>`;
+  },
+};
+// ── End TMC Wallet ──
 
 const KK_GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 const KK_GROQ_URL='https://api.groq.com/openai/v1/chat/completions';
@@ -1521,6 +1993,12 @@ function mockBars(id,iv){
 function mockMetrics(id,iv){
   const detail=S._coinDetail?.[id];
   const coin=S.coins.find(c=>c.id===id);
+  // Calculate period high/low from chart data if available
+  const chartData=S._chartData?.[id]?.[iv]||[];
+  const periodPrices=chartData.map(d=>d.p).filter(Boolean);
+  const periodHigh=periodPrices.length?Math.max(...periodPrices):null;
+  const periodLow=periodPrices.length?Math.min(...periodPrices):null;
+  const periodLabel={'ytd':'YTD','5y':'5-Year','10y':'10-Year'}[iv]||iv.toUpperCase();
   const fmt=(n)=>{
     if(n==null||isNaN(n)) return'—';
     if(n<0.0001) return'$'+n.toFixed(8);
@@ -1540,12 +2018,14 @@ function mockMetrics(id,iv){
     return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   };
   return{
-    'All-Time High'  : detail?.ath!=null?fmt(detail.ath):'Loading…',
-    'ATH Date'       : detail?.athDate?fmtDate(detail.athDate):'—',
-    'All-Time Low'   : detail?.atl!=null?fmt(detail.atl):'Loading…',
-    'ATL Date'       : detail?.atlDate?fmtDate(detail.atlDate):'—',
-    'Market Cap'     : coin?.mcap?fmtB(coin.mcap):'—',
-    'Total Volume'   : coin?.vol?fmtB(coin.vol):'—',
+    [`${periodLabel} High`]  : periodHigh!=null?fmt(periodHigh):(detail?.ath!=null?fmt(detail.ath):'Loading…'),
+    [`${periodLabel} Low`]   : periodLow!=null?fmt(periodLow):(detail?.atl!=null?fmt(detail.atl):'Loading…'),
+    'All-Time High'          : detail?.ath!=null?fmt(detail.ath):'Loading…',
+    'ATH Date'               : detail?.athDate?fmtDate(detail.athDate):'—',
+    'All-Time Low'           : detail?.atl!=null?fmt(detail.atl):'Loading…',
+    'ATL Date'               : detail?.atlDate?fmtDate(detail.atlDate):'—',
+    'Market Cap'             : coin?.mcap?fmtB(coin.mcap):'—',
+    '24h Volume'             : coin?.vol?fmtB(coin.vol):'—',
   };
 }
 
@@ -2144,6 +2624,7 @@ function render(){
   else if(S.page==='sub')     root.innerHTML=P.subscribe();
   else if(S.page==='kaykay')  root.innerHTML=P.kaykay();
   else if(S.page==='blog')    root.innerHTML=P.blog();
+  else if(S.page==='wallet')  root.innerHTML=`<div class="page" style="padding-top:80px"><button class="back" style="margin-left:24px" onclick="R.go('profile')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>${W.page()}</div>`;
   else if(S.page==='blogpost') root.innerHTML=P.blogPost();
   else                        root.innerHTML=P.land();
 
@@ -2192,7 +2673,8 @@ function renderNav(){
       </div>
       ${S.notifUnread>0?`<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--white)">${S.notifUnread>9?'9+':S.notifUnread}</div>`:''}
     </div>`;
-    el.innerHTML=`${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
+    const _tmcBal=W.wallet?.balance!=null?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(212,175,55,.12);color:#D4AF37;border:1px solid rgba(212,175,55,.25);border-radius:100px;padding:3px 9px;font-size:.7rem;font-weight:700;cursor:pointer" onclick="R.go('wallet')" title="$TMC Wallet">⬡ ${W.fmt(W.wallet.balance)}</span>`:'';
+    el.innerHTML=`${_tmcBal}${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
           ?`<img src="${fileUrl(S.user.avatarId)}" class="nav-avatar" onerror="this.outerHTML='<div class=navat>${S.user.inits[0]}</div>'">`
           :`<div class="navat">${S.user.inits[0]}</div>`}<span>${S.user.name.split(' ')[0]}</span>${sub}</div>`;
   }else{
@@ -2313,7 +2795,7 @@ const P = {
     const trialDaysLeft=trialDoc?.trialEnd?Math.max(0,Math.ceil((new Date(trialDoc.trialEnd)-new Date())/(1000*60*60*24))):null;
     const subInfo={
       active:{cls:'vstat-verified',icon:'zap',col:'var(--pur)',title:'Pro Membership Active'+(S._subPeriodEnd?` — ${Math.max(0,Math.ceil((new Date(S._subPeriodEnd)-new Date())/(1000*60*60*24)))} day${Math.ceil((new Date(S._subPeriodEnd)-new Date())/(1000*60*60*24))!==1?'s':''} remaining`:''),
-        desc:'Full access to all marketplace, forum, and 500+ crypto features.'},
+        desc:'Full access to all marketplace, forum, kaykay, and 500+ crypto features.'},
       trial:{cls:'vstat-verified',icon:'gift',col:'var(--grn)',title:'Free Trial Active'+(trialDaysLeft!==null?' — '+trialDaysLeft+' day'+(trialDaysLeft===1?'':'s')+' remaining':''),
         desc:'You\'re on a free 30-day Pro trial. Enjoy full access to all features. Upgrade before your trial ends to keep access.'},
       pending:{cls:'vstat-pending',icon:'clock',col:'var(--gld)',title:'Payment Under Review',
@@ -2702,6 +3184,26 @@ const P = {
         <button class="btn bo" onclick="A.logout()"><i data-lucide="log-out" style="width:14px;height:14px"></i>Sign Out</button>
         <button class="btn bg" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Marketplace</button>
         <button class="btn bg" onclick="R.go('crypto')"><i data-lucide="bar-chart-2" style="width:14px;height:14px"></i>Markets</button>
+        <button class="btn" style="background:rgba(212,175,55,.1);color:#D4AF37;border:1px solid rgba(212,175,55,.25)" onclick="R.go('wallet')">⬡ ${W.fmt(W.wallet?.balance||0)} $TMC Wallet</button>
+      </div>
+      <div class="psec">
+        <div class="psect">Your Referral Link
+          <span style="font-size:.72rem;font-weight:400;color:var(--t3)">Earn ${TMC_RATES.referral} $TMC per signup</span>
+        </div>
+        <div style="background:var(--off);border-radius:var(--rsm);padding:11px 14px;font-family:monospace;font-size:.8rem;color:var(--t1);word-break:break-all;margin-bottom:10px">
+          https://www.toomuchcoin.com/?ref=tmc&agent=${S.user.id.slice(0,12)}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn bp bsm" onclick="A.copyReferralLink()">
+            <i data-lucide="copy" style="width:12px;height:12px"></i>Copy Link
+          </button>
+          <button class="btn bg bsm" onclick="A.shareReferralLink()">
+            <i data-lucide="share-2" style="width:12px;height:12px"></i>Share
+          </button>
+        </div>
+        <div style="font-size:.72rem;color:var(--t3);margin-top:8px;line-height:1.5">
+          When someone signs up using your link, you automatically receive <strong style="color:#D4AF37">${TMC_RATES.referral} $TMC</strong> once they complete registration.
+        </div>
       </div>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:6px;font-size:.8125rem;color:var(--t3)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -3710,6 +4212,17 @@ const P = {
         </div>
       </div>`
       :`<div class="blog-post-body">${bodyHtml}</div>`}
+
+      <!-- View count + share footer -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 0;margin-top:24px;border-top:1px solid var(--bdr);flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:.8125rem;color:var(--t3)">
+          <i data-lucide="eye" style="width:14px;height:14px"></i>
+          <span>${(post.views||0).toLocaleString()} view${(post.views||0)!==1?'s':''}</span>
+        </div>
+        <button class="btn bo bsm" onclick="A.shareBlogPost('${post.id}','${post.title.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}','${post.slug||''}','${post.type||'blog'}','${post.guideCategory||''}')">
+          <i data-lucide="share-2" style="width:12px;height:12px"></i>Share this ${post.type==='guide'?'guide':'post'}
+        </button>
+      </div>
     </div>`;
   },
 
@@ -4923,6 +5436,7 @@ const A = {
       const p=res.documents[0];
       S.user={id:u.$id,name:p?.name||u.name,email:u.email,type:p?.type||'B',inits:initials(p?.name||u.name),joinedAt:u.$createdAt,avatarId:p?.avatarId||null};
       await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
+      W.load().then(()=>{ if(S.page==='wallet') render(); }).catch((e)=>{ console.error('W.load failed:',e); });
       initOneSignal(S.user.id);
       M.close();
       R.go('profile');
@@ -4959,9 +5473,49 @@ const A = {
         refAgent:_sa,
         refLandingPage:window.location.href,
       });
-      // Clear session ref after saving
       sessionStorage.removeItem('tmc_ref');
       sessionStorage.removeItem('tmc_agent');
+      // Reward referrer if they came from a referral link
+      if(_sa&&_sa.length===12){
+        // Find the referrer's full userId by matching first 12 chars
+        (async()=>{
+          try{
+            const allProfiles=await DB.list('profiles',[Query.limit(500)]);
+            const referrer=allProfiles.documents.find(p=>p.userId?.startsWith(_sa));
+            if(referrer){
+              // Give referrer TMC — load their wallet and credit them
+              const refWallet=await DB.list('tmc_wallet',[
+                Query.equal('userId',[referrer.userId]),
+                Query.limit(1),
+              ]);
+              if(refWallet.documents[0]){
+                const rw=refWallet.documents[0];
+                const newBal=parseFloat(((rw.balance||0)+(TMC_RATES.referral||2)).toFixed(3));
+                await _db.updateDocument(AW_DB_ID,'tmc_wallet',rw.$id,{
+                  balance:newBal,
+                  lifetimeEarned:parseFloat(((rw.lifetimeEarned||0)+(TMC_RATES.referral||2)).toFixed(3)),
+                });
+                // Log the transaction for referrer
+                await _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+                  userId:referrer.userId,
+                  type:'referral',
+                  amount:TMC_RATES.referral||2,
+                  balanceAfter:newBal,
+                  description:`Referral bonus — ${name} signed up`,
+                  refId:u.$id,
+                  createdAt:new Date().toISOString(),
+                });
+                // Notify referrer
+                await createNotif(referrer.userId,'connection',
+                  `You earned ${TMC_RATES.referral} $TMC! 🎉`,
+                  `${name} just signed up using your referral link.`,
+                  'wallet'
+                );
+              }
+            }
+          }catch(e){console.warn('referral reward:',e.message);}
+        })();
+      }
       S.user={id:u.$id,name,email,type,inits:initials(name),joinedAt:new Date().toISOString(),avatarId:null};
       S.subscribed=false;S.subStatus=null;S.verifyStatus=null;
       S.myConnections=[];S.sentConnections=[];
@@ -5727,6 +6281,7 @@ const A = {
         desc:desc||'',status:'open',createdAt:doc.$createdAt||new Date().toISOString()});
       M.close();render();
       toast('Listing posted!','ok');
+      W.earn('listing','Posted a marketplace listing',doc.$id).catch(()=>{});
       // KayKay announces to the poster
       if(KK.synth&&S.subscribed) kkSpeak('Your listing has been posted successfully. Other users will be notified.');
       (async()=>{
@@ -6142,6 +6697,7 @@ const A = {
       S._reviewRating=0;
       render();
       toast('Review submitted! Thank you.','ok');
+      W.earn('review','Left a seller review',connId).catch(()=>{});
     }catch(e){
       toast('Failed: '+e.message,'err');
       if(btn){btn.disabled=false;btn.textContent='Submit Review';}
@@ -6193,6 +6749,7 @@ const A = {
       }
       render();
       toast('Deal marked complete. Commission due: $'+comm,'ok');
+      W.earn('deal','Completed a deal',id).catch(()=>{});
     }catch(e){
       console.error('submitDealDone error:',e);
       toast('Error: '+e.message,'err');
@@ -7440,6 +7997,7 @@ Rules:
       v.votes=newVotes;
       v.voterIds=newVoterIds;
       toast('Vote cast for '+v.bizName+'!','ok');
+      W.earn('vote','Voted for '+v.bizName,vendorId).catch(()=>{});
 
       // Recalculate Community Pick for this category+city — highest votes wins the pinned slot
       await A.recalcCommunityPick(v.category,v.city);
@@ -7768,6 +8326,7 @@ Rules:
       v.votes=newVotes;
       v.voterIds=newVoterIds;
       toast('Vote cast for '+v.bizName+'!','ok');
+      W.earn('vote','Voted for '+v.bizName,vendorId).catch(()=>{});
       await A.recalcCommunityPick(v.category,v.city);
       await A.loadVendorDirectory(v.category,v.city);
     }catch(e){
@@ -8020,6 +8579,21 @@ Rules:
     }catch(e){toast('Could not delete post.','err');}
   },
 
+  async copyReferralLink(){
+    const link=`https://www.toomuchcoin.com/?ref=tmc&agent=${S.user.id.slice(0,12)}`;
+    try{await navigator.clipboard.writeText(link);toast('Referral link copied!','ok');}
+    catch(e){prompt('Copy your referral link:',link);}
+  },
+  async shareReferralLink(){
+    const link=`https://www.toomuchcoin.com/?ref=tmc&agent=${S.user.id.slice(0,12)}`;
+    const text=`Join me on Toomuchcoin — Africa's P2P marketplace and financial platform. Sign up here:`;
+    if(navigator.share){
+      try{await navigator.share({title:'Join Toomuchcoin',text,url:link});return;}
+      catch(e){if(e.name==='AbortError')return;}
+    }
+    try{await navigator.clipboard.writeText(link);toast('Link copied!','ok');}
+    catch(e){prompt('Copy:',link);}
+  },
   async installPWA(){
     const prompt=window._pwaPromptRef?.();
     if(!prompt) return;
@@ -8070,6 +8644,7 @@ Rules:
         type:d.type||'blog',
         guideCategory:d.guideCategory||'',
         published:d.published!==false,
+        views:d.views||0,
       }));
     }catch(e){
       console.warn('loadBlogPosts:',e.message);
@@ -8083,6 +8658,11 @@ Rules:
     if(!post) return;
     S._currentPost=post;
     S.page='blogpost';
+    if(post.type==='guide') W.onGuideRead(id).catch(()=>{});
+    // Increment view count
+    const newViews=(post.views||0)+1;
+    post.views=newViews;
+    _db.updateDocument(AW_DB_ID,AW_COL.blog,id,{views:newViews}).catch(()=>{});
     // Make sure admin profile is loaded before rendering
     if(!S._adminProfile){
       A.loadAdminProfile().then(()=>render());
@@ -8101,10 +8681,9 @@ Rules:
         .replace(/-+/g,'-')
         .slice(0,50)
         .replace(/-$/,'');
-    const cleanUrl=postType==='guide'
+    const url=postType==='guide'
       ?`https://www.toomuchcoin.com/howtoguides/${guideCategory||post?.guideCategory||'datum_basics'}/${cleanSlug}`
       :`https://www.toomuchcoin.com/blog/${cleanSlug}`;
-    const ogUrl=cleanUrl; // use clean URL directly — OG tags served from index.html meta
     const shareText=title+'\n'+url;
     if(navigator.share){
       try{await navigator.share({title,text:shareText,url});return;}catch(e){if(e.name==='AbortError')return;}
@@ -8406,6 +8985,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
     }
     await Promise.all([loadWatchlist(),loadSubscription(),loadVerifyStatus(),loadMyConnections(),loadSentConnections(),loadNotifications(),loadNotifPrefs()]);
     await A.loadPriceAlerts();
+    W.load().then(()=>{ if(S.page==='wallet') render(); }).catch((e)=>{ console.error('W.load failed:',e); });
     initOneSignal(S.user.id);
     startNotifPoll();
   }
@@ -8486,7 +9066,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
   loadCoins();
   A.loadAdminProfile();
   // Register PWA service worker
-  if('serviceWorker' in navigator){
+  if('serviceWorker' in navigator && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
     navigator.serviceWorker.register('/sw.js')
       .then(()=>console.log('SW registered'))
       .catch(e=>console.warn('SW failed:',e));
