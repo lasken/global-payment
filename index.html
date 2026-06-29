@@ -144,7 +144,7 @@
     .aswitch a{color:var(--t1);font-weight:500;cursor:pointer;text-decoration:underline}
 
     #pg-profile{padding:40px 24px;max-width:780px;margin:0 auto}
-    .phero{display:flex;align-items:center;gap:24px;padding:28px 32px;background:var(--off);border:1px solid var(--bdr);border-radius:var(--rlg);margin-bottom:24px}
+    .phero{display:flex;align-items:center;gap:24px;padding:28px 32px;background:linear-gradient(135deg,#FBF8EC,#fff8e6 60%,#FBF8EC);border:1.5px solid rgba(212,175,55,.3);border-radius:var(--rlg);margin-bottom:24px;box-shadow:0 4px 20px rgba(212,175,55,.08)}
     .pavat{width:68px;height:68px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:1.6rem;flex-shrink:0}
     .pname{font-family:var(--fd);font-size:1.4rem;margin-bottom:4px}
     .pmeta{font-size:.875rem;color:var(--t2)}
@@ -282,11 +282,11 @@
     .al-wrap{border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:4px}
     .al-table{min-width:660px}
     .al-table{width:100%;border-collapse:collapse;font-size:.8125rem}
-    .al-table thead th{background:var(--off);padding:10px 14px;text-align:left;font-size:.67rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bdr);white-space:nowrap}
+    .al-table thead th{background:linear-gradient(135deg,#FBF8EC,#fff8e6);padding:10px 14px;text-align:left;font-size:.67rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#B8922A;border-bottom:1px solid rgba(212,175,55,.2);white-space:nowrap}
     .al-table thead th.r,.al-table td.r{text-align:right}
     .al-table tbody tr{border-bottom:1px solid var(--bdr);transition:background .14s}
     .al-table tbody tr:last-child{border-bottom:none}
-    .al-table tbody tr:hover{background:var(--off)}
+    .al-table tbody tr:hover{background:#FBF8EC;cursor:pointer}
     .al-table td{padding:12px 14px;vertical-align:middle}
     .al-num{width:26px;height:26px;border-radius:50%;background:var(--surf);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:var(--t3)}
     .al-cell{display:flex;align-items:center;gap:11px}
@@ -1062,9 +1062,12 @@ const W={
     }
   },
 
-  // ── Guide read bonus (once per guide) ──
+  // ── Guide read bonus — once per guide, ever (stored in localStorage) ──
   async onGuideRead(guideId){
-    if(W.readGuides.has(guideId)) return;
+    if(!S.user||!guideId) return;
+    const key=`tmc_guide_read_${S.user.id}_${guideId}`;
+    if(localStorage.getItem(key)) return; // already earned for this guide
+    localStorage.setItem(key,'1');
     W.readGuides.add(guideId);
     await W.earn('guide_read','Read a How-To Guide',guideId);
   },
@@ -2021,12 +2024,23 @@ function mockBars(id,iv){
 function mockMetrics(id,iv){
   const detail=S._coinDetail?.[id];
   const coin=S.coins.find(c=>c.id===id);
-  // Calculate period high/low from chart data if available
   const chartData=S._chartData?.[id]?.[iv]||[];
   const periodPrices=chartData.map(d=>d.p).filter(Boolean);
   const periodHigh=periodPrices.length?Math.max(...periodPrices):null;
   const periodLow=periodPrices.length?Math.min(...periodPrices):null;
   const periodLabel={'ytd':'YTD','5y':'5-Year','10y':'10-Year'}[iv]||iv.toUpperCase();
+  // Calculate Max Drawdown from chart data
+  let maxDrawdown=null;
+  if(periodPrices.length>1){
+    let peak=periodPrices[0];let maxDD=0;
+    periodPrices.forEach(p=>{if(p>peak)peak=p;const dd=(peak-p)/peak*100;if(dd>maxDD)maxDD=dd;});
+    maxDrawdown=-maxDD;
+  }
+  // Calculate Avg Return (start to end of period)
+  let avgReturn=null;
+  if(periodPrices.length>1){
+    avgReturn=((periodPrices[periodPrices.length-1]-periodPrices[0])/periodPrices[0])*100;
+  }
   const fmt=(n)=>{
     if(n==null||isNaN(n)) return'—';
     if(n<0.0001) return'$'+n.toFixed(8);
@@ -2046,14 +2060,15 @@ function mockMetrics(id,iv){
     return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   };
   return{
-    [`${periodLabel} High`]  : periodHigh!=null?fmt(periodHigh):(detail?.ath!=null?fmt(detail.ath):'Loading…'),
-    [`${periodLabel} Low`]   : periodLow!=null?fmt(periodLow):(detail?.atl!=null?fmt(detail.atl):'Loading…'),
-    'All-Time High'          : detail?.ath!=null?fmt(detail.ath):'Loading…',
-    'ATH Date'               : detail?.athDate?fmtDate(detail.athDate):'—',
-    'All-Time Low'           : detail?.atl!=null?fmt(detail.atl):'Loading…',
-    'ATL Date'               : detail?.atlDate?fmtDate(detail.atlDate):'—',
-    'Market Cap'             : coin?.mcap?fmtB(coin.mcap):'—',
-    '24h Volume'             : coin?.vol?fmtB(coin.vol):'—',
+    [`${periodLabel} High`]  :{v:periodHigh!=null?fmt(periodHigh):(detail?.ath!=null?fmt(detail.ath):'Loading…'),tip:`The highest price this asset reached during the ${periodLabel} period. A high peak followed by a large drop can signal volatility risk.`},
+    [`${periodLabel} Low`]   :{v:periodLow!=null?fmt(periodLow):(detail?.atl!=null?fmt(detail.atl):'Loading…'),tip:`The lowest price during the ${periodLabel} period. Knowing the low helps you understand downside risk and potential entry points.`},
+    'All-Time High'          :{v:detail?.ath!=null?fmt(detail.ath):'Loading…',tip:'The highest price this asset has ever traded at. How far below ATH the current price is tells you how much recovery is priced in.'},
+    'ATH Date'               :{v:detail?.athDate?fmtDate(detail.athDate):'—',tip:'When the all-time high was reached. Recency matters — a 2021 ATH is very different from a 2024 ATH.'},
+    'All-Time Low'           :{v:detail?.atl!=null?fmt(detail.atl):'Loading…',tip:'The lowest price ever recorded. Context is key — many assets hit their ATL in their first days of trading.'},
+    'Max Drawdown'           :{v:maxDrawdown!=null?maxDrawdown.toFixed(2)+'%':'Loading…',tip:'The largest peak-to-trough decline during this period. A -80% drawdown means it fell 80% from its high. Critical for understanding real downside risk.'},
+    'Avg. Return'            :{v:avgReturn!=null?(avgReturn>=0?'+':'')+avgReturn.toFixed(2)+'%':'Loading…',tip:`The total percentage return from the start to the end of the ${periodLabel} period. This is the raw return, not annualised.`},
+    'Market Cap'             :{v:coin?.mcap?fmtB(coin.mcap):'—',tip:'Total market value = current price × circulating supply. Larger market cap generally means more stability and liquidity.'},
+    '24h Volume'             :{v:coin?.vol?fmtB(coin.vol):'—',tip:'Total value traded in the last 24 hours. High volume confirms price moves are real. Low volume moves are often unreliable.'},
   };
 }
 
@@ -3220,6 +3235,9 @@ const P = {
         <div class="irow"><span class="irl">Plan</span><span class="irv">${subTag}</span></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+        <a href="mailto:mercy@toomuchcoin.com" title="Contact Support — mercy@toomuchcoin.com" style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--off);border:1.5px solid var(--bdr);transition:var(--ease);flex-shrink:0" onmouseover="this.style.borderColor='#D4AF37';this.style.background='#FBF8EC'" onmouseout="this.style.borderColor='var(--bdr)';this.style.background='var(--off)'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </a>
         <button class="btn bo" onclick="A.logout()"><i data-lucide="log-out" style="width:14px;height:14px"></i>Sign Out</button>
         <button class="btn bg" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Marketplace</button>
         <button class="btn bg" onclick="R.go('crypto')"><i data-lucide="bar-chart-2" style="width:14px;height:14px"></i>Markets</button>
@@ -3514,7 +3532,16 @@ const P = {
         <div id="dd-price-display" style="font-family:var(--fd);font-size:2rem;font-weight:600">${fmtp(coin.price)}</div>
         <div id="dd-date-display" style="font-size:.78rem;color:var(--t3)"></div>
       </div>
-      <div class="mgrid">${Object.entries(mets).map(([k,v])=>`<div class="mc"><div class="mcl">${k}</div><div class="mcv">${v}</div><div class="mcs">${iv.toUpperCase()} period</div></div>`).join('')}</div>`;
+      <div class="mgrid">${Object.entries(mets).map(([k,m])=>{
+        const val=typeof m==='object'?m.v:m;
+        const tip=typeof m==='object'?m.tip:'';
+        const tipId='tip_'+k.replace(/[^a-z0-9]/gi,'_');
+        return`<div class="mc" style="cursor:${tip?'pointer':'default'};position:relative" onclick="(function(){const el=document.getElementById('${tipId}');if(el)el.style.display=el.style.display==='none'?'block':'none';})()">
+          <div class="mcl" style="display:flex;align-items:center;gap:5px">${k}${tip?`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`:''}</div>
+          <div class="mcv" style="color:${val&&val.startsWith('-')&&!k.includes('Low')&&!k.includes('Date')?'var(--red)':val&&(val.startsWith('+')||(!val.startsWith('-')&&!val.startsWith('$')&&!val.startsWith('—')&&val.includes('%')))?'var(--grn)':'var(--t1)'}">${val}</div>
+          ${tip?`<div id="${tipId}" style="display:none;position:absolute;bottom:100%;left:0;right:0;background:var(--t1);color:#fff;font-size:.72rem;line-height:1.6;padding:10px 12px;border-radius:var(--rsm);z-index:20;margin-bottom:6px;box-shadow:var(--s3)">${tip}</div>`:''}
+        </div>`;
+      }).join('')}</div>`;
   },
 
   _watchlist(){
@@ -3736,7 +3763,7 @@ const P = {
       <th class="r">Price</th><th class="r">YTD</th>
       <th class="r">1 Year</th><th class="r">5 Year</th>
       <th class="r">10 Year</th>
-      <th class="r" style="color:var(--pur)">Since Joined</th>
+      <th class="r" style="color:#D4AF37">Since Joined ⬡</th>
     </tr></thead>`;
 
     return`
@@ -4037,30 +4064,95 @@ const P = {
       ${!S.user
         ?`<div style="text-align:center;padding:14px;background:var(--surf);border-radius:var(--rsm);font-size:.875rem;color:var(--t2)"><button type="button" onclick="M.auth()" style="color:var(--t1);font-weight:500;cursor:pointer;background:none;border:none;font-family:var(--fb);font-size:.875rem;text-decoration:underline">Sign in first</button> to continue to payment.</div>`
         :`<div style="display:flex;flex-direction:column;gap:10px">
-          <button class="btn bp" style="width:100%;justify-content:center;padding:13px;font-size:.9rem" onclick="PAY.withFlutterwave()">
-            <i data-lucide="credit-card" style="width:15px;height:15px"></i>Pay ₦10,000 by Card or Bank
-          </button>
-          <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:13px;font-size:.9rem" onclick="PAY.showCryptoDetails()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a3 3 0 0 1 5 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            Pay with Crypto
-          </button>
-          <div id="crypto-details-panel" style="display:none"></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin:16px 0">
-          <div style="flex:1;height:1px;background:var(--bdr)"></div>
-          <span style="font-size:.72rem;color:var(--t3)">or pay manually</span>
-          <div style="flex:1;height:1px;background:var(--bdr)"></div>
-        </div>
-        <details style="cursor:pointer">
-          <summary style="font-size:.8rem;font-weight:500;color:var(--t2);list-style:none;display:flex;align-items:center;gap:6px"><i data-lucide="chevron-down" style="width:13px;height:13px"></i>Manual bank/crypto transfer</summary>
-          <div style="margin-top:14px">
-            <div class="fg"><label>Payment Reference / TX Hash</label><input type="text" id="subref" placeholder="e.g. FLW-TXN-123 or 0x4c5d6e…"/></div>
-            <div class="fg"><label>Method Used</label><select id="submethod"><option value="">Select…</option><option value="bank">Bank Transfer</option><option value="usdt">USDT (TRC-20)</option><option value="btc">Bitcoin (BTC)</option></select></div>
-            <div class="ferr" id="suberr"></div>
-            <button class="btn bo" style="width:100%;justify-content:center;padding:11px" id="subbtn" onclick="A.submitSub()"><i data-lucide="send" style="width:14px;height:14px"></i>Submit Reference</button>
+
+          <!-- Option 1: Bank Transfer -->
+          <div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden">
+            <div style="background:var(--off);padding:10px 14px;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bdr)">Option 1 — Bank Transfer</div>
+            <div style="padding:14px">
+              <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Account Name</span><strong>Datum Logistics</strong></div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Bank</span><strong>Zenith Bank</strong></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem">
+                  <span style="color:var(--t2)">Account Number</span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <strong style="font-family:monospace;font-size:1rem">1312154595</strong>
+                    <button onclick="A.copyText('1312154595','bank-acct-copy')" id="bank-acct-copy" class="btn bg bsm" style="padding:4px 10px">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Amount</span><strong style="color:#D4AF37">₦10,000</strong></div>
+              </div>
+            </div>
           </div>
-        </details>
-        <p style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:14px;line-height:1.6">₦10,000/month — card/bank activates instantly. Crypto activates after 1 confirmation. Non-refundable after access is granted.</p>`}
+
+          <!-- Option 2: Crypto -->
+          <div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden">
+            <div style="background:var(--off);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bdr)">
+              <span style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)">Option 2 — Pay with Crypto</span>
+              <button onclick="document.getElementById('crypto-expand').style.display=document.getElementById('crypto-expand').style.display==='none'?'block':'none'" style="background:none;border:none;cursor:pointer;font-size:.75rem;color:var(--t2);font-family:var(--fb)">Show / Hide ▾</button>
+            </div>
+            <div id="crypto-expand" style="display:none;padding:14px">
+              <p style="font-size:.78rem;color:var(--t2);margin-bottom:14px;line-height:1.5">Send the equivalent of <strong>₦10,000</strong> in your chosen crypto to one of the addresses below, then submit your TX hash.</p>
+
+              <!-- USDT -->
+              <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:8px">USDT</div>
+              ${[
+                {net:'TRC-20 (TRON)',addr:'TQnBoM73ZpQpfTS7gcFMwaYiAToLLSQ1DF',note:'Lowest fees · Fastest',rec:true},
+                {net:'BEP-20 (BSC)',addr:'0x72276F248DdE9556298F5a0B3a73750222CeFDA0',note:'Binance Smart Chain',rec:false},
+                {net:'ERC-20 (Ethereum)',addr:'0x72276F248DdE9556298F5a0B3a73750222CeFDA0',note:'Higher gas fees',rec:false},
+                {net:'SOL (Solana)',addr:'29HYtTSn1mmibjoxq25uZuVV2BikxkkVwud2ihmVYkRr',note:'Fast & cheap',rec:false},
+              ].map((w,i)=>`
+              <div style="border:${w.rec?'1.5px solid #D4AF37':'1px solid var(--bdr)'};border-radius:var(--rsm);padding:10px 12px;margin-bottom:7px;background:${w.rec?'#FBF8EC':'var(--white)'}">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+                  <span style="font-size:.7rem;font-weight:700;color:${w.rec?'#B8922A':'var(--t3)'}">${w.net}</span>
+                  ${w.rec?`<span style="background:#D4AF37;color:#1a1408;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:100px">REC</span>`:''}
+                </div>
+                <div style="font-size:.68rem;color:var(--t2);margin-bottom:6px">${w.note}</div>
+                <div style="display:flex;align-items:flex-start;gap:7px">
+                  <div style="flex:1;font-family:monospace;font-size:.72rem;word-break:break-all;color:var(--t1)">${w.addr}</div>
+                  <button onclick="A.copyText('${w.addr}','sub-usdt-${i}')" id="sub-usdt-${i}" class="btn bsm" style="flex-shrink:0;background:${w.rec?'#D4AF37':'var(--surf)'};color:${w.rec?'#1a1408':'var(--t1)'};border:none;padding:5px 10px">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>`).join('')}
+
+              <!-- BTC -->
+              <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin:12px 0 8px">Bitcoin (BTC)</div>
+              <div style="border:1px solid var(--bdr);border-radius:var(--rsm);padding:10px 12px;background:var(--white)">
+                <div style="display:flex;align-items:flex-start;gap:7px">
+                  <div style="flex:1;font-family:monospace;font-size:.72rem;word-break:break-all;color:var(--t1)">36c8rQfhmvZNpgvDZpNBR25tRPkEk96cmE</div>
+                  <button onclick="A.copyText('36c8rQfhmvZNpgvDZpNBR25tRPkEk96cmE','sub-btc-copy')" id="sub-btc-copy" class="btn bg bsm" style="flex-shrink:0;padding:5px 10px;border:none">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit reference -->
+          <div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:16px;margin-top:4px">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:12px">After paying — submit your reference</div>
+            <div class="fg"><label>Payment Reference or TX Hash</label><input type="text" id="subref" placeholder="e.g. TXN-123456 or 0x4c5d…"/></div>
+            <div class="fg"><label>Method Used</label>
+              <select id="submethod">
+                <option value="">Select…</option>
+                <option value="bank">Bank Transfer (Zenith)</option>
+                <option value="usdt_trc20">USDT — TRC-20</option>
+                <option value="usdt_bep20">USDT — BEP-20</option>
+                <option value="usdt_erc20">USDT — ERC-20</option>
+                <option value="usdt_sol">USDT — Solana</option>
+                <option value="btc">Bitcoin (BTC)</option>
+              </select>
+            </div>
+            <div class="ferr" id="suberr"></div>
+            <button class="btn bp" style="width:100%;justify-content:center;padding:12px;background:#D4AF37;border:none;color:#1a1408;font-weight:700" id="subbtn" onclick="A.submitSub()">
+              <i data-lucide="send" style="width:14px;height:14px"></i>I Have Paid — Submit Reference
+            </button>
+          </div>
+          <p style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:4px;line-height:1.6">Access granted within 24 hours after payment verification. Non-refundable.</p>
+        </div>`}
     </div>`;
   },
 
@@ -4186,7 +4278,10 @@ const P = {
     const post=S._currentPost;
     if(!post) return`<div style="padding:80px 24px;text-align:center;color:var(--t3)" class="page"><div class="spin"></div></div>`;
     const isGuide=post.type==='guide';
-    const isLocked=!isGuide&&!S.subscribed&&S.subStatus!=='trial';
+    // Blog posts free until 2026-07-07 (1 week from launch of this feature)
+    const freeUntil=new Date('2026-07-07T23:59:59Z');
+    const blogFreeNow=new Date()<freeUntil;
+    const isLocked=!isGuide&&!blogFreeNow&&!S.subscribed&&S.subStatus!=='trial';
     const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
     // Always show back button — fixed at top
     // Body is now stored as rich HTML directly from the Quill editor — no conversion needed
@@ -4250,7 +4345,18 @@ const P = {
           <div style="font-size:.72rem;color:var(--t3);margin-top:12px">Have a coupon? <span onclick="R.go('sub')" style="color:var(--pur);cursor:pointer;text-decoration:underline">Redeem it here</span></div>
         </div>
       </div>`
-      :`<div class="blog-post-body">${bodyHtml}</div>`}
+      :`<div>
+        ${blogFreeNow&&!isGuide?`
+        <div style="background:linear-gradient(135deg,#FBF8EC,#fff8e0);border:1px solid rgba(212,175,55,.3);border-radius:var(--rmd);padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:1rem">🎁</span>
+          <div style="flex:1;min-width:180px">
+            <div style="font-weight:600;font-size:.8125rem;color:#B8922A;margin-bottom:2px">Free this week only</div>
+            <div style="font-size:.75rem;color:var(--t2)">Blog posts are free to read until 7 July 2026. After that, Pro access is required.</div>
+          </div>
+          <button class="btn bsm" style="background:#D4AF37;color:#1a1408;border:none;font-weight:600" onclick="R.go('sub')">Upgrade — ₦10k/mo</button>
+        </div>`:''}
+        <div class="blog-post-body">${bodyHtml}</div>
+      </div>`}
 
       <!-- View count + share footer -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 0;margin-top:24px;border-top:1px solid var(--bdr);flex-wrap:wrap;gap:12px">
@@ -4422,7 +4528,7 @@ const P = {
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="sub-feat-t">Vendor Directory</div><div class="sub-feat-d">City-by-city vendor discovery with community voting and showcase.</div></div>
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg></div><div class="sub-feat-t">Blog Access</div><div class="sub-feat-d">Full access to all blog posts — in-depth market insight and platform updates from Deji.</div></div>
         <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="sub-feat-t">Price Alerts</div><div class="sub-feat-d">Set custom alerts for any asset — get notified the moment your target price is hit.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="sub-feat-t">AI News Summaries</div><div class="sub-feat-d">Tap any headline on the Datum List for an instant AI-generated briefing on what it means for your portfolio.</div></div>
+        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><div class="sub-feat-t">$TMC Wallet</div><div class="sub-feat-d">Earn Datum Coins daily, complete tasks, and use $TMC to pay for subscriptions and commission fees.</div></div>
       </div>
 
       ${S.subStatus==='trial'?`
@@ -4703,8 +4809,9 @@ const M = {
         </div>
         ${S.user
           ?`<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
-              <button class="btn bp" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withFlutterwave()"><i data-lucide="credit-card" style="width:14px;height:14px"></i>Pay by Card or Bank — ₦10,000/month</button>
-              <button class="btn bpur" id="cryptoPayBtn" style="width:100%;justify-content:center;padding:12px" onclick="M.close();PAY.withCrypto()"><i data-lucide="bitcoin" style="width:14px;height:14px"></i>Pay with Crypto — ₦10,000/month</button>
+              <button class="btn bp" style="width:100%;justify-content:center;padding:12px;background:#D4AF37;border:none;color:#1a1408;font-weight:700" onclick="M.close();R.go('sub')">
+                <i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade Now — ₦10,000/month
+              </button>
             </div>`
           :`<button class="btn bpur" style="width:100%;justify-content:center;padding:12px;margin-bottom:10px" onclick="M.close();R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — ₦10,000/month</button>`}
         <button class="btn bo" style="width:100%;justify-content:center" onclick="M.close()">Maybe Later</button>
@@ -6521,13 +6628,23 @@ const A = {
     if(!method){err.textContent='Please select your payment method.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
-      await DB.create('subscription',{userId:S.user.id,status:'pending',plan:'monthly',amount:'5',reference:ref,paymentMethod:method});
+      const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
+      await DB.create('subscription',{
+        userId:S.user.id,status:'pending',plan:'monthly',
+        amount:'10000',reference:ref,paymentMethod:method,periodEnd,
+      });
       S.subStatus='pending';
+      // Notify admin
+      await createNotif(ADMIN_ID,'commission',
+        '💰 New payment submitted — verify now',
+        `${S.user.name} (${S.user.email}) submitted a payment reference.\nMethod: ${method}\nRef: ${ref}\nGrant Pro access once confirmed.`,
+        'profile','',''
+      );
       toast('Reference submitted! Access granted within 24 hours.','ok');
       render();
     }catch(e){
       err.textContent='Failed: '+e.message;
-      btn.disabled=false;btn.textContent='Submit Payment Reference';
+      btn.disabled=false;btn.textContent='I Have Paid — Submit Reference';
     }
   },
 
