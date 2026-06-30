@@ -550,6 +550,8 @@
     @media(max-width:768px){
       .nav-blog-link{display:none!important}
       .nav-sub-badge{display:none!important}
+      .nav-name-text{display:none!important}
+      .nubadge{gap:0!important;padding:6px!important}
       #gnav{padding:0 16px}
       .nav-tmc-mobile{display:flex!important}
       .nav-tmc-desktop{display:none!important}
@@ -2717,9 +2719,10 @@ function renderNav(){
       </div>
       ${S.notifUnread>0?`<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--white)">${S.notifUnread>9?'9+':S.notifUnread}</div>`:''}
     </div>`;
-    el.innerHTML=`${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
+    const tmcNav=`<button onclick="R.go('wallet')" title="$TMC Wallet" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:transparent;border:none;cursor:pointer;transition:background .2s;padding:0;flex-shrink:0" onmouseenter="this.style.background='rgba(212,175,55,.12)'" onmouseleave="this.style.background='transparent'"><img src="https://cdn-icons-png.flaticon.com/512/2953/2953423.png" style="width:20px;height:20px;object-fit:contain;filter:sepia(1) saturate(3) hue-rotate(5deg) brightness(.85)"></button>`;
+    el.innerHTML=`${tmcNav}${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
           ?`<img src="${fileUrl(S.user.avatarId)}" class="nav-avatar" onerror="this.outerHTML='<div class=navat>${S.user.inits[0]}</div>'">`
-          :`<div class="navat">${S.user.inits[0]}</div>`}<span>${S.user.name.split(' ')[0]}</span>${sub}</div>`;
+          :`<div class="navat">${S.user.inits[0]}</div>`}<span class="nav-name-text">${S.user.name.split(' ')[0]}</span>${sub}</div>`;
   }else{
     el.innerHTML=`<button class="btn bg bsm" onclick="M.auth()">Sign In</button><button class="btn bp bsm" onclick="M.auth()">Get Started</button>`;
   }
