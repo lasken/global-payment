@@ -272,10 +272,10 @@
 
     @media(max-width:768px){.pricing-grid{grid-template-columns:1fr}.plan-card.featured{transform:none}}
 
-    .al-hero{background:linear-gradient(135deg,#1a1408,#2a1f00 40%,#1a1205 70%,#0f0d00);border-radius:var(--rmd);padding:26px 28px;margin-bottom:20px;border:1px solid rgba(212,175,55,.25);box-shadow:0 0 0 1px rgba(212,175,55,.08),inset 0 1px 0 rgba(212,175,55,.12)}
-    .al-title{font-family:var(--fd);font-size:1.45rem;color:#F5E9C0;margin-bottom:5px}
-    .al-subtitle{font-size:.8rem;color:rgba(245,233,192,.55);line-height:1.55;max-width:560px}
-    .al-updated{font-size:.7rem;color:rgba(212,175,55,.4);margin-top:10px;display:flex;align-items:center;gap:5px}
+    .al-hero{background:linear-gradient(135deg,#FBF8EC,#fff8e6 60%,#FBF8EC);border-radius:var(--rmd);padding:26px 28px;margin-bottom:20px;border:1.5px solid rgba(212,175,55,.3);box-shadow:0 4px 20px rgba(212,175,55,.08)}
+      .al-title{font-family:var(--fd);font-size:1.45rem;color:#1a1408;margin-bottom:5px}
+      .al-subtitle{font-size:.8rem;color:rgba(26,20,8,.55);line-height:1.55;max-width:560px}
+      .al-updated{font-size:.7rem;color:rgba(184,146,42,.7);margin-top:10px;display:flex;align-items:center;gap:5px}
     .al-section-hdr{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
     .al-section-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);white-space:nowrap}
     .al-section-line{flex:1;height:1px;background:var(--bdr)}
@@ -435,8 +435,8 @@
     /* ── KayKay AI Assistant ── */
     .kk-fab{position:fixed;bottom:90px;right:32px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(212,175,55,.45);z-index:200;transition:all .3s cubic-bezier(.4,0,.2,1);animation:kkBreath 3s ease-in-out infinite}
     .kk-fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(212,175,55,.6)}
-    .kk-fab.listening{animation:kkPulse 1.2s ease-in-out infinite;background:linear-gradient(135deg,#DC2626,#7C3AED)}
-    .kk-fab.speaking{animation:kkSpeak .6s ease-in-out infinite alternate;background:linear-gradient(135deg,#059669,#7C3AED)}
+    .kk-fab.listening{animation:kkPulse 1.2s ease-in-out infinite;background:linear-gradient(135deg,#D4AF37,#B8922A)}
+    .kk-fab.speaking{animation:kkSpeak .6s ease-in-out infinite alternate;background:linear-gradient(135deg,#D4AF37,#B8922A)}
     @keyframes kkBreath{0%,100%{box-shadow:0 4px 20px rgba(212,175,55,.45),0 0 0 0 rgba(212,175,55,.3)}50%{box-shadow:0 4px 20px rgba(212,175,55,.45),0 0 0 10px rgba(212,175,55,0)}}
     @keyframes kkPulse{0%,100%{box-shadow:0 4px 20px rgba(220,38,38,.5),0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 4px 20px rgba(220,38,38,.5),0 0 0 14px rgba(220,38,38,0)}}
     @keyframes kkSpeak{from{box-shadow:0 4px 20px rgba(5,150,105,.5),0 0 0 4px rgba(5,150,105,.2)}to{box-shadow:0 4px 20px rgba(5,150,105,.5),0 0 0 12px rgba(5,150,105,0)}}
@@ -456,8 +456,8 @@
     .kk-wave{display:flex;align-items:center;gap:3px;height:60px}
     .kk-bar{width:3px;border-radius:100px;background:linear-gradient(180deg,#7C3AED,#4F46E5);transition:height .15s ease;min-height:4px}
     .kk-wave.idle .kk-bar{height:4px;opacity:.3}
-    .kk-wave.speaking .kk-bar{background:linear-gradient(180deg,#059669,#34D399)}
-    .kk-wave.listening .kk-bar{background:linear-gradient(180deg,#DC2626,#F87171)}
+    .kk-wave.speaking .kk-bar{background:linear-gradient(180deg,#D4AF37,#B8922A)}
+    .kk-wave.listening .kk-bar{background:linear-gradient(180deg,#D4AF37,#B8922A)}
     .kk-transcript{padding:0 20px 8px;flex-shrink:0;min-height:44px}
     .kk-transcript-text{font-size:.78rem;color:rgba(255,255,255,.5);font-style:italic;text-align:center;line-height:1.5}
     .kk-feed{flex:1;overflow-y:auto;padding:0 16px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none}
@@ -467,7 +467,7 @@
     .kk-msg.user{align-self:flex-end}
     .kk-msg.kk{align-self:flex-start}
     .kk-bubble{padding:10px 14px;border-radius:14px;font-size:.8375rem;line-height:1.6}
-    .kk-msg.user .kk-bubble{background:linear-gradient(135deg,#D4AF37,#B8922A);color:#fff;border-radius:14px 14px 4px 14px}
+    .kk-msg.user .kk-bubble{background:linear-gradient(135deg,#D4AF37,#B8922A);color:#1a1408;border-radius:14px 14px 4px 14px}
     .kk-msg.kk .kk-bubble{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.08);border-radius:14px 14px 14px 4px}
     .kk-msg.kk .kk-bubble a{color:#A78BFA;text-decoration:underline;cursor:pointer}
     .kk-prompts{padding:12px 16px;flex-shrink:0}
@@ -481,7 +481,7 @@
     .kk-input:focus{border-color:rgba(212,175,55,.6);background:rgba(255,255,255,.1)}
     .kk-mic{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
     .kk-mic:hover{transform:scale(1.08)}
-    .kk-mic.active{background:linear-gradient(135deg,#DC2626,#EF4444);animation:kkPulse 1.2s infinite}
+    .kk-mic.active{background:linear-gradient(135deg,#D4AF37,#B8922A);animation:kkPulse 1.2s infinite}
     .kk-settings-bar{display:flex;gap:6px;padding:8px 16px 0;flex-shrink:0;flex-wrap:wrap}
     .kk-sel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:5px 12px;color:rgba(255,255,255,.7);font-size:.7rem;font-family:var(--fb);outline:none;cursor:pointer;transition:all .2s;appearance:none;-webkit-appearance:none}
     .kk-sel:focus{border-color:rgba(212,175,55,.5);color:#fff}
@@ -695,6 +695,37 @@ const S = {
 
 let _rt = null;
 let _ntfrt = null;
+
+// ── Currency by location ──
+const CUR={code:'NGN',symbol:'₦',amount:10000,label:'₦10,000',usdEquiv:20};
+async function detectCurrency(){
+  try{
+    const r=await fetch('https://ipapi.co/json/',{signal:AbortSignal.timeout(4000)});
+    const d=await r.json();
+    const map={
+      NG:{code:'NGN',symbol:'₦',amount:10000,label:'₦10,000',usdEquiv:20},
+      US:{code:'USD',symbol:'$',amount:20,label:'$20.00',usdEquiv:20},
+      GB:{code:'GBP',symbol:'£',amount:16,label:'£16.00',usdEquiv:20},
+      EU:{code:'EUR',symbol:'€',amount:18,label:'€18.00',usdEquiv:20},
+      CA:{code:'CAD',symbol:'C$',amount:27,label:'C$27.00',usdEquiv:20},
+      AU:{code:'AUD',symbol:'A$',amount:30,label:'A$30.00',usdEquiv:20},
+      GH:{code:'GHS',symbol:'GH₵',amount:290,label:'GH₵290',usdEquiv:20},
+      KE:{code:'KES',symbol:'KSh',amount:2600,label:'KSh 2,600',usdEquiv:20},
+      ZA:{code:'ZAR',symbol:'R',amount:360,label:'R360',usdEquiv:20},
+      IN:{code:'INR',symbol:'₹',amount:1680,label:'₹1,680',usdEquiv:20},
+      AE:{code:'AED',symbol:'AED',amount:73,label:'AED 73',usdEquiv:20},
+    };
+    const EU_CODES=['DE','FR','IT','ES','NL','BE','AT','PT','IE','FI','GR','PL','SE','DK','NO','CH'];
+    const country=d.country_code||'';
+    const found=map[country]||(EU_CODES.includes(country)?map.EU:null)||{code:'USD',symbol:'$',amount:20,label:'$20.00',usdEquiv:20};
+    Object.assign(CUR,found);
+    // Nigeriams always get discounted rate
+    if(country==='NG') CUR._isNigeria=true;
+  }catch(e){
+    // default stays USD if detection fails
+    Object.assign(CUR,{code:'USD',symbol:'$',amount:20,label:'$20.00',usdEquiv:20});
+  }
+}
 
 // ── KayKay State ──
 const KK = {
@@ -1114,29 +1145,29 @@ const W={
     return`<div style="max-width:680px;margin:0 auto;padding:32px 24px 80px">
 
       <!-- Balance hero -->
-      <div style="background:linear-gradient(135deg,#1a1408,#2a1f00 40%,#1a1205);border-radius:var(--rlg);padding:32px;margin-bottom:24px;border:1px solid rgba(212,175,55,.25);text-align:center">
-        <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(212,175,55,.6);margin-bottom:10px">Your $TMC Balance</div>
-        <div style="font-family:var(--fd);font-size:3rem;color:#D4AF37;letter-spacing:-.02em;margin-bottom:4px">${W.fmt(w?.balance||0)}</div>
-        <div style="font-size:.875rem;color:rgba(212,175,55,.5)">$TMC · Datum Coin</div>
-        <div style="display:flex;justify-content:center;gap:24px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(212,175,55,.15)">
+      <div style="background:linear-gradient(135deg,#FBF8EC,#fff8e6 60%,#FBF8EC);border-radius:var(--rlg);padding:32px;margin-bottom:24px;border:1.5px solid rgba(212,175,55,.3);box-shadow:0 4px 20px rgba(212,175,55,.08);text-align:center">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(184,146,42,.7);margin-bottom:10px">Your $TMC Balance</div>
+        <div style="font-family:var(--fd);font-size:3rem;color:#B8922A;letter-spacing:-.02em;margin-bottom:4px">${W.fmt(w?.balance||0)}</div>
+        <div style="font-size:.875rem;color:rgba(184,146,42,.6)">$TMC · Datum Coin</div>
+        <div style="display:flex;justify-content:center;gap:24px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(212,175,55,.2);flex-wrap:wrap">
           <div style="text-align:center">
-            <div style="font-size:.68rem;color:rgba(212,175,55,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Total Earned</div>
-            <div style="font-weight:600;color:rgba(212,175,55,.8);font-size:.9rem">${W.fmt(w?.lifetimeEarned||0)}</div>
+            <div style="font-size:.68rem;color:rgba(26,20,8,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Total Earned</div>
+            <div style="font-weight:600;color:#B8922A;font-size:.9rem">${W.fmt(w?.lifetimeEarned||0)}</div>
           </div>
-          <div style="width:1px;background:rgba(212,175,55,.15)"></div>
+          <div style="width:1px;background:rgba(212,175,55,.2)"></div>
           <div style="text-align:center">
-            <div style="font-size:.68rem;color:rgba(212,175,55,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Total Spent</div>
-            <div style="font-weight:600;color:rgba(212,175,55,.8);font-size:.9rem">${W.fmt(w?.lifetimeSpent||0)}</div>
+            <div style="font-size:.68rem;color:rgba(26,20,8,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Total Spent</div>
+            <div style="font-weight:600;color:#B8922A;font-size:.9rem">${W.fmt(w?.lifetimeSpent||0)}</div>
           </div>
-          <div style="width:1px;background:rgba(212,175,55,.15)"></div>
+          <div style="width:1px;background:rgba(212,175,55,.2)"></div>
           <div style="text-align:center">
-            <div style="font-size:.68rem;color:rgba(212,175,55,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">≈ USD Value</div>
-            <div style="font-weight:600;color:rgba(212,175,55,.8);font-size:.9rem">$${((w?.balance||0)*(W.config.usdPerTmc||0.222)).toFixed(2)}</div>
+            <div style="font-size:.68rem;color:rgba(26,20,8,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">≈ USD Value</div>
+            <div style="font-weight:600;color:#B8922A;font-size:.9rem">$${((w?.balance||0)*(W.config.usdPerTmc||0.222)).toFixed(2)}</div>
           </div>
-          <div style="width:1px;background:rgba(212,175,55,.15)"></div>
+          <div style="width:1px;background:rgba(212,175,55,.2)"></div>
           <div style="text-align:center">
-            <div style="font-size:.68rem;color:rgba(212,175,55,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">≈ Naira Value</div>
-            <div style="font-weight:600;color:rgba(212,175,55,.8);font-size:.9rem">₦${Math.round((w?.balance||0)*(W.config.nairaPerTmc||306.08)).toLocaleString()}</div>
+            <div style="font-size:.68rem;color:rgba(26,20,8,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">≈ Naira Value</div>
+            <div style="font-weight:600;color:#B8922A;font-size:.9rem">₦${Math.round((w?.balance||0)*(W.config.nairaPerTmc||306.08)).toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -2511,7 +2542,7 @@ function kkUpdatePageInPlace(){
     const msgs=KK.history.map(m=>`
       <div style="display:flex;${m.role==='user'?'justify-content:flex-end':'justify-content:flex-start'}">
         ${m.role==='kk'?`<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;margin-top:2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>`:''}
-        <div style="max-width:78%;padding:10px 14px;border-radius:${m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px'};font-size:.8375rem;line-height:1.65;background:${m.role==='user'?'linear-gradient(135deg,#7C3AED,#4F46E5)':'rgba(255,255,255,.08)'};color:${m.role==='user'?'#fff':'rgba(255,255,255,.92)'};border:${m.role==='kk'?'1px solid rgba(255,255,255,.08)':'none'}">${m.text}</div>
+        <div style="max-width:78%;padding:10px 14px;border-radius:${m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px'};font-size:.8375rem;line-height:1.65;background:${m.role==='user'?'linear-gradient(135deg,#D4AF37,#B8922A)':'rgba(255,255,255,.08)'};color:${m.role==='user'?'#1a1408':'rgba(255,255,255,.92)'};border:${m.role==='kk'?'1px solid rgba(255,255,255,.08)':'none'}">${m.text}</div>
       </div>`).join('');
     const loading=KK.loading?`
       <div style="display:flex;justify-content:flex-start">
@@ -2575,7 +2606,7 @@ function kkRenderPanel(){
       </div>
       <div style="font-family:var(--fd);font-size:1.3rem;color:#fff;margin-bottom:8px">Meet KayKay</div>
       <div style="font-size:.875rem;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:24px;max-width:280px">Your AI assistant. Navigate the app, get answers, and hear live updates — all by voice or text. Pro feature.</div>
-      <button class="btn bpur" onclick="kkClose();R.go('sub')" style="padding:12px 28px;font-size:.9rem">
+      <button class="btn" onclick="kkClose();R.go('sub')" style="padding:12px 28px;font-size:.9rem;background:#D4AF37;color:#1a1408;border:none;font-weight:700">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         Upgrade to Pro
       </button>
@@ -2719,7 +2750,11 @@ function renderNav(){
       </div>
       ${S.notifUnread>0?`<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--white)">${S.notifUnread>9?'9+':S.notifUnread}</div>`:''}
     </div>`;
-    const tmcNav=`<button onclick="R.go('wallet')" title="$TMC Wallet" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:transparent;border:none;cursor:pointer;transition:background .2s;padding:0;flex-shrink:0" onmouseenter="this.style.background='rgba(212,175,55,.12)'" onmouseleave="this.style.background='transparent'"><img src="https://cdn-icons-png.flaticon.com/512/2953/2953423.png" style="width:20px;height:20px;object-fit:contain;filter:sepia(1) saturate(3) hue-rotate(5deg) brightness(.85)"></button>`;
+    const tmcNav=`<div style="position:relative;cursor:pointer" onclick="R.go('wallet')" title="$TMC Wallet">
+      <div style="width:34px;height:34px;border-radius:50%;background:rgba(212,175,55,.12);display:flex;align-items:center;justify-content:center;transition:var(--ease)" onmouseover="this.style.background='rgba(212,175,55,.25)'" onmouseout="this.style.background='rgba(212,175,55,.12)'">
+        <img src="https://cdn-icons-png.flaticon.com/512/2953/2953423.png" style="width:18px;height:18px;object-fit:contain;filter:sepia(1) saturate(3) hue-rotate(5deg) brightness(.85)">
+      </div>
+    </div>`;
     el.innerHTML=`${tmcNav}${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
           ?`<img src="${fileUrl(S.user.avatarId)}" class="nav-avatar" onerror="this.outerHTML='<div class=navat>${S.user.inits[0]}</div>'">`
           :`<div class="navat">${S.user.inits[0]}</div>`}<span class="nav-name-text">${S.user.name.split(' ')[0]}</span>${sub}</div>`;
@@ -3238,16 +3273,37 @@ const P = {
         <div class="irow"><span class="irl">Verification</span><span class="irv">${vTag}</span></div>
         <div class="irow"><span class="irl">Plan</span><span class="irv">${subTag}</span></div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
-        <a href="mailto:mercy@toomuchcoin.com" title="Contact Support — mercy@toomuchcoin.com" style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--off);border:1.5px solid var(--bdr);transition:var(--ease);flex-shrink:0" onmouseover="this.style.borderColor='#D4AF37';this.style.background='#FBF8EC'" onmouseout="this.style.borderColor='var(--bdr)';this.style.background='var(--off)'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <!-- Customer Care -->
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;margin-bottom:14px;padding:14px;background:var(--off);border:1px solid var(--bdr);border-radius:var(--rmd)">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);width:100%;margin-bottom:6px">Customer Support</div>
+        <!-- Mercy -->
+        <a href="mailto:mercy@toomuchcoin.com" title="Chat with Mercy" style="display:flex;align-items:center;gap:10px;text-decoration:none;flex:1;min-width:160px;padding:10px;background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);transition:var(--ease)" onmouseover="this.style.borderColor='#D4AF37'" onmouseout="this.style.borderColor='var(--bdr)'">
+          <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(212,175,55,.3)">
+            <img src="${fileUrl('6a42a06900232b69d9d7')}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.outerHTML='<div style=width:36px;height:36px;border-radius:50%;background:#D4AF37;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.75rem>M</div>'">
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:.8125rem;color:var(--t1)">Mercy</div>
+            <div style="font-size:.72rem;color:var(--t3)">mercy@toomuchcoin.com</div>
+          </div>
         </a>
+        <!-- Maryam -->
+        <a href="mailto:maryam@toomuchcoin.com" title="Chat with Maryam" style="display:flex;align-items:center;gap:10px;text-decoration:none;flex:1;min-width:160px;padding:10px;background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);transition:var(--ease)" onmouseover="this.style.borderColor='#D4AF37'" onmouseout="this.style.borderColor='var(--bdr)'">
+          <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(212,175,55,.3)">
+            <img src="${fileUrl('6a42a06900232b69d9d7')}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.outerHTML='<div style=width:36px;height:36px;border-radius:50%;background:#1a1916;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.75rem>M</div>'">
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:.8125rem;color:var(--t1)">Maryam</div>
+            <div style="font-size:.72rem;color:var(--t3)">maryam@toomuchcoin.com</div>
+          </div>
+        </a>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
         <button class="btn bo" onclick="A.logout()"><i data-lucide="log-out" style="width:14px;height:14px"></i>Sign Out</button>
         <button class="btn bg" onclick="R.go('market')"><i data-lucide="store" style="width:14px;height:14px"></i>Marketplace</button>
         <button class="btn bg" onclick="R.go('crypto')"><i data-lucide="bar-chart-2" style="width:14px;height:14px"></i>Markets</button>
         <button class="btn" style="background:rgba(212,175,55,.1);color:#D4AF37;border:1px solid rgba(212,175,55,.25)" onclick="R.go('wallet')">⬡ ${W.fmt(W.wallet?.balance||0)} $TMC Wallet</button>
       </div>
-      <div class="psec">
+      <div class="psec" style="margin-top:16px">
         <div class="psect">Your Referral Link
           <span style="font-size:.72rem;font-weight:400;color:var(--t3)">Earn ${TMC_RATES.referral} $TMC per signup</span>
         </div>
@@ -3342,6 +3398,7 @@ const P = {
                   ${o.status!=='filled'&&o.status!=='closed'?`<button class="btn bc bsm" onclick="A.connectOrder('${o.id}')"><i data-lucide="${S.subscribed?'plug':'lock'}" style="width:12px;height:12px"></i>Connect</button>`:''}
                   <button class="btn bo bsm" onclick="A.viewOrder('${o.id}')"><i data-lucide="${(o.status==='filled'||o.status==='closed')?'award':'eye'}" style="width:12px;height:12px"></i>${(o.status==='filled'||o.status==='closed')?'View Resolution':'View'}</button>
                   <button class="btn bg bsm" onclick="A.shareOrder('${o.id}','${o.title.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}')"><i data-lucide="share-2" style="width:12px;height:12px"></i></button>
+                  ${S.user?.id===o.userId&&o.status!=='filled'&&o.status!=='closed'?`<button class="btn bg bsm" onclick="A.editOrder('${o.id}')"><i data-lucide="pencil" style="width:12px;height:12px"></i></button>`:''}
                 </div>
               </div>
             </div>
@@ -3778,8 +3835,8 @@ const P = {
             <div class="al-subtitle">Handpicked assets tracking long-term wealth creation across traditional and digital markets — updated live.</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-            <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(212,175,55,.15);color:#D4AF37;border:1px solid rgba(212,175,55,.3);border-radius:100px;padding:3px 10px;font-size:.72rem;font-weight:600"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro</span>
-            <button class="btn bg bsm" onclick="loadAlData()" ${loading?'disabled':''} style="color:rgba(212,175,55,.8);background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2)">
+            <span style="display:inline-flex;align-items:center;gap:5px;background:#D4AF37;color:#1a1408;border:none;border-radius:100px;padding:3px 10px;font-size:.72rem;font-weight:700"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro</span>
+            <button class="btn bg bsm" onclick="loadAlData()" ${loading?'disabled':''} style="color:#B8922A;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.3)">
               <i data-lucide="refresh-cw" style="width:12px;height:12px"></i>${loading?'Updating…':'Refresh'}
             </button>
           </div>
@@ -4086,7 +4143,7 @@ const P = {
                     </button>
                   </div>
                 </div>
-                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Amount</span><strong style="color:#D4AF37">₦10,000</strong></div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Amount</span><strong style="color:#D4AF37">${CUR.label}</strong></div>
               </div>
             </div>
           </div>
@@ -4479,7 +4536,7 @@ const P = {
         ${KK.history.map(m=>`
         <div style="display:flex;${m.role==='user'?'justify-content:flex-end':'justify-content:flex-start'}">
           ${m.role==='kk'?`<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8922A);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;margin-top:2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>`:''}
-          <div style="max-width:78%;padding:10px 14px;border-radius:${m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px'};font-size:.8375rem;line-height:1.65;background:${m.role==='user'?'linear-gradient(135deg,#7C3AED,#4F46E5)':'rgba(255,255,255,.08)'};color:${m.role==='user'?'#fff':'rgba(255,255,255,.92)'};border:${m.role==='kk'?'1px solid rgba(255,255,255,.08)':'none'}">${m.text}</div>
+          <div style="max-width:78%;padding:10px 14px;border-radius:${m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px'};font-size:.8375rem;line-height:1.65;background:${m.role==='user'?'linear-gradient(135deg,#D4AF37,#B8922A)':'rgba(255,255,255,.08)'};color:${m.role==='user'?'#1a1408':'rgba(255,255,255,.92)'};border:${m.role==='kk'?'1px solid rgba(255,255,255,.08)':'none'}">${m.text}</div>
         </div>`).join('')}
         ${KK.loading?`
         <div style="display:flex;justify-content:flex-start">
@@ -4527,10 +4584,10 @@ const P = {
         <div class="sub-badge"><i data-lucide="zap" style="width:11px;height:11px"></i>Pro Membership</div>
         <h1 class="l-h" style="font-size:clamp(1.8rem,4vw,2.8rem);margin-bottom:10px">Unlock <em>everything</em> on Datum.</h1>
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:4px">
-          <div class="sub-price" style="margin-bottom:0">₦10,000 <span>/ month</span></div>
+          <div class="sub-price" style="margin-bottom:0">${CUR.label} <span>/ month</span></div>
           <div style="display:flex;flex-direction:column;align-items:flex-start">
-            <span style="font-size:.78rem;background:#FDEAEA;color:var(--red);border-radius:100px;padding:2px 10px;font-weight:700;text-decoration:line-through;margin-bottom:3px">$20 / month</span>
-            <span style="font-size:.72rem;color:var(--grn);font-weight:600">Special rate for Nigeria 🇳🇬</span>
+            ${CUR._isNigeria?`<span style="font-size:.78rem;background:#FDEAEA;color:var(--red);border-radius:100px;padding:2px 10px;font-weight:700;text-decoration:line-through;margin-bottom:3px">$20 / month</span><span style="font-size:.72rem;color:var(--grn);font-weight:600">Special rate for Nigeria 🇳🇬</span>`
+            :`<span style="font-size:.72rem;color:var(--t3)">Billed monthly · Cancel anytime</span>`}
           </div>
         </div>
         <p style="font-size:.95rem;color:var(--t2);max-width:420px;margin:10px auto 0;line-height:1.6">One flat rate. Full access to marketplace, open forum, and 500+ live coins and assets.</p>
@@ -8923,6 +8980,59 @@ Rules:
     catch(e){prompt('Copy link:',cleanVendorUrl);}
   },
 
+  editOrder(id){
+    const o=(S.orders||[]).find(x=>x.id===id);
+    if(!o||o.userId!==S.user?.id) return;
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal">
+        <div class="mhdr"><div><div class="mey">Edit Listing</div><h2 class="mtitle">Update Your Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
+        <div class="fg"><label>Title</label><input type="text" id="eo-title" value="${o.title.replace(/"/g,'&quot;')}"/></div>
+        <div class="fg"><label>Category</label><select id="eo-cat"><option value="">Select…</option><option value="unique" ${o.category==='unique'?'selected':''}>Unique Requests</option><option value="logistics" ${o.category==='logistics'?'selected':''}>Logistics</option><option value="goods" ${o.category==='goods'?'selected':''}>Goods</option><option value="services" ${o.category==='services'?'selected':''}>Services</option><option value="b2b" ${o.category==='b2b'?'selected':''}>B2B</option><option value="finance" ${o.category==='finance'?'selected':''}>Finance & Trading</option><option value="knowledge" ${o.category==='knowledge'?'selected':''}>Knowledge-based</option><option value="music" ${o.category==='music'?'selected':''}>Music Services</option><option value="entertainment" ${o.category==='entertainment'?'selected':''}>Entertainment</option></select></div>
+        <div class="fg"><label>Order Type</label><select id="eo-type"><option value="sell" ${o.type==='sell'?'selected':''}>Sell</option><option value="buy" ${o.type==='buy'?'selected':''}>Buy</option><option value="request" ${o.type==='request'?'selected':''}>Service Request</option></select></div>
+        <div class="fg"><label>Price / Budget</label><div class="pfx"><span class="pfx-sym">$</span><input type="text" id="eo-price" value="${(o.price||'').replace('$','')}"/></div></div>
+        <div class="fg"><label>Description</label><textarea id="eo-desc" rows="3">${o.desc||''}</textarea></div>
+        <div class="fg"><label>Status</label><select id="eo-status"><option value="open" ${o.status==='open'?'selected':''}>Open</option><option value="negotiating" ${o.status==='negotiating'?'selected':''}>Negotiating</option><option value="filled" ${o.status==='filled'?'selected':''}>Filled / Resolved</option><option value="closed" ${o.status==='closed'?'selected':''}>Closed</option></select></div>
+        <div class="ferr" id="eo-err"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn bp" id="eo-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.saveOrderEdit('${id}')"><i data-lucide="save" style="width:14px;height:14px"></i>Save Changes</button>
+          <button class="btn bo" style="padding:12px 16px;color:var(--red);border-color:var(--red)" onclick="A.deleteOrder('${id}')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+        </div>
+      </div>
+    </div>`);
+  },
+  async saveOrderEdit(id){
+    const title=document.getElementById('eo-title')?.value?.trim();
+    const cat=document.getElementById('eo-cat')?.value;
+    const type=document.getElementById('eo-type')?.value;
+    const rawP=document.getElementById('eo-price')?.value?.trim();
+    const desc=document.getElementById('eo-desc')?.value?.trim();
+    const status=document.getElementById('eo-status')?.value;
+    const err=document.getElementById('eo-err');
+    const btn=document.getElementById('eo-btn');
+    if(!title){err.textContent='Title is required.';return;}
+    if(!rawP){err.textContent='Price is required.';return;}
+    const price=rawP.toLowerCase()==='negotiable'?'Negotiable':(rawP.startsWith('$')?rawP:'$'+rawP);
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      await DB.update('orders',id,{title,category:cat,type,price,desc:desc||'',status});
+      const o=(S.orders||[]).find(x=>x.id===id);
+      if(o){o.title=title;o.category=cat;o.type=type;o.price=price;o.desc=desc||'';o.status=status;}
+      M.close();render();
+      toast('Listing updated!','ok');
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Save Changes';
+    }
+  },
+  async deleteOrder(id){
+    if(!confirm('Delete this listing permanently?')) return;
+    try{
+      await _db.deleteDocument(AW_DB_ID,AW_COL.orders,id);
+      S.orders=(S.orders||[]).filter(o=>o.id!==id);
+      M.close();render();
+      toast('Listing deleted.','ok');
+    }catch(e){toast('Could not delete: '+e.message,'err');}
+  },
   async shareOrder(id,title){
     const slug=(title||'listing')
       .toLowerCase()
@@ -9240,7 +9350,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
     localStorage.removeItem('datum_baselines_version');
     localStorage.setItem('datum_baselines_version','3');
   }
-  render();
+  detectCurrency().then(()=>render());
   loadCoins();
   A.loadAdminProfile();
   // Register PWA service worker
