@@ -4173,10 +4173,6 @@ const P = {
     // Guide categories
     const GUIDE_CATS=[
       {id:'datum_basics',        label:'Datum Basics',               icon:'book-open'},
-      {id:'datum_marketplace',   label:'Datum Marketplace',          icon:'store'},
-      {id:'coin_markets',        label:'Coin Markets & Datum List',  icon:'bar-chart-2'},
-      {id:'kaykay_ai',           label:'KayKay AI',                  icon:'cpu'},
-      {id:'pro_billing',         label:'Pro & Billing',              icon:'zap'},
     ];
 
     const _adminAvatarUrl=S._adminProfile?.avatarId?fileUrl(S._adminProfile.avatarId):null;
@@ -5424,10 +5420,6 @@ const M = {
           <label>Guide Category</label>
           <select id="bp-guide-cat">
             <option value="datum_basics" ${S._newGuideCategory==='datum_basics'?'selected':''}>Datum Basics</option>
-            <option value="datum_marketplace" ${S._newGuideCategory==='datum_marketplace'?'selected':''}>Datum Marketplace</option>
-            <option value="coin_markets" ${S._newGuideCategory==='coin_markets'?'selected':''}>Coin Markets & Datum List</option>
-            <option value="kaykay_ai" ${S._newGuideCategory==='kaykay_ai'?'selected':''}>KayKay AI</option>
-            <option value="pro_billing" ${S._newGuideCategory==='pro_billing'?'selected':''}>Pro & Billing</option>
           </select>
         </div>
         <div class="fg"><label>Excerpt (short preview)</label><input type="text" id="bp-excerpt" placeholder="One or two sentences that appear on the blog card…"/></div>
@@ -5496,10 +5488,6 @@ const M = {
           <label>Guide Category</label>
           <select id="bp-guide-cat">
             <option value="datum_basics" ${post.guideCategory==='datum_basics'?'selected':''}>Datum Basics</option>
-            <option value="datum_marketplace" ${post.guideCategory==='datum_marketplace'?'selected':''}>Datum Marketplace</option>
-            <option value="coin_markets" ${post.guideCategory==='coin_markets'?'selected':''}>Coin Markets & Datum List</option>
-            <option value="kaykay_ai" ${post.guideCategory==='kaykay_ai'?'selected':''}>KayKay AI</option>
-            <option value="pro_billing" ${post.guideCategory==='pro_billing'?'selected':''}>Pro & Billing</option>
           </select>
         </div>
         <div class="fg"><label>Excerpt</label><input type="text" id="bp-excerpt" value="${post.excerpt?.replace(/"/g,'&quot;')||''}"/></div>
