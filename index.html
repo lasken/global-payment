@@ -1219,14 +1219,17 @@ const W={
       </div>
 
       <!-- Transaction history -->
-      <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Transaction History</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)">Transaction History</div>
+        ${txs.length>2?`<span style="font-size:.75rem;color:#D4AF37;cursor:pointer;font-weight:500" onclick="document.getElementById('tmc-all-txs').style.display=document.getElementById('tmc-all-txs').style.display==='none'?'block':'none';this.textContent=this.textContent==='See all (${txs.length})'?'Show less':'See all (${txs.length})'">See all (${txs.length})</span>`:''}
+      </div>
       ${txs.length===0
         ?`<div style="text-align:center;padding:40px;color:var(--t3);border:1.5px dashed var(--bdr);border-radius:var(--rmd)">
             <i data-lucide="clock" style="width:24px;height:24px;display:block;margin:0 auto 10px"></i>
             No transactions yet — earn your first TMC by logging in daily.
           </div>`
-        :`<div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden">
-          ${txs.map(tx=>{
+        :(()=>{
+          const txRow=(tx)=>{
             const isEarn=tx.amount>0;
             return`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bdr)">
               <div style="width:32px;height:32px;border-radius:50%;background:${isEarn?'rgba(212,175,55,.12)':'rgba(196,48,48,.08)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -1241,8 +1244,14 @@ const W={
                 <div style="font-size:.68rem;color:var(--t3)">Balance: ${tx.balanceAfter.toFixed(3)}</div>
               </div>
             </div>`;
-          }).join('')}
-        </div>`}
+          };
+          const recent=txs.slice(0,2);
+          const rest=txs.slice(2);
+          return`<div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden">
+            ${recent.map(txRow).join('')}
+            ${rest.length?`<div id="tmc-all-txs" style="display:none">${rest.map(txRow).join('')}</div>`:''}
+          </div>`;
+        })()}
     </div>`;
   },
 };
@@ -1485,7 +1494,7 @@ PLATFORM KNOWLEDGE (answer these accurately):
 - Platform commission: 1% of final deal value. 10% of that goes to 3 charities: Feed the Future Africa, Code for Kids Foundation, Clean Water Initiative NG
 - Verification: Submit NIN, BVN, Passport, Driver's licence, or Voter's card → reviewed in 24-48hrs
 - Vendor showcase: Community-voted quarterly. Businesses join waitlist → community votes → winner showcased
-- Blog: Published by Deji Lasisi — thoughts on commerce, coin, Africa, culture
+- Blog:  Thoughts on commerce, coin, Africa, culture
 - Payment options: Card (Flutterwave), Bank transfer (Zenith Bank acc: 1312154595), USDT Solana, USDT TRC-20
 - KayKay (that's you): AI assistant, Pro feature, accessible via the brain icon
 
@@ -2687,6 +2696,9 @@ function KK_send(){
 }
 
 function render(){
+  // Update page title
+  const _titles={land:'Toomuchcoin — P2P Marketplace & Coin Markets',market:'Datum Marketplace — Toomuchcoin',crypto:'Coin Markets — Toomuchcoin',profile:'My Profile — Toomuchcoin',sub:'Pro Membership — Toomuchcoin',blog:'Resources & Blog — Toomuchcoin',kaykay:'KayKay AI — Toomuchcoin',wallet:'$TMC Wallet — Toomuchcoin'};
+  document.title=_titles[S.page]||(S._currentPost?S._currentPost.title+' — Toomuchcoin':'Toomuchcoin');
   // Preserve in-progress chat input across re-renders (e.g. background polling)
   const _prevCinput=document.getElementById('cinput');
   const _savedChatText=_prevCinput?_prevCinput.value:null;
@@ -2847,9 +2859,16 @@ const P = {
         </div>
       </div>
       <!-- Whitepaper below the grid -->
-      <div style="margin-top:36px;display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--t3);justify-content:center">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <a href="/Toomuchcoin x Datum Whitepaper.pdf" download="Toomuchcoin-Whitepaper" type="application/pdf" style="color:var(--t3);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">Download Whitepaper</a>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;font-size:.78rem;color:var(--t3)">
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <a href="/Toomuchcoin x Datum Whitepaper.pdf" download="Toomuchcoin-Whitepaper" type="application/pdf" style="color:var(--t3);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">Download Whitepaper</a>
+        </div>
+        <div style="width:1px;height:14px;background:var(--bdr)"></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <a href="mailto:help@toomuchcoin.com" style="color:var(--t3);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">help@toomuchcoin.com</a>
+        </div>
       </div>
     </div>`;
   },
@@ -3322,9 +3341,16 @@ const P = {
           When someone signs up using your link, you automatically receive <strong style="color:#D4AF37">${TMC_RATES.referral} $TMC</strong> once they complete registration.
         </div>
       </div>
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:6px;font-size:.8125rem;color:var(--t3)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <a href="/Toomuchcoin x Datum Whitepaper.pdf" download="Toomuchcoin-Whitepaper" type="application/pdf" style="color:var(--t2);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">Download Whitepaper</a>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;font-size:.78rem;color:var(--t3)">
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <a href="/Toomuchcoin x Datum Whitepaper.pdf" download="Toomuchcoin-Whitepaper" type="application/pdf" style="color:var(--t3);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">Download Whitepaper</a>
+        </div>
+        <div style="width:1px;height:14px;background:var(--bdr)"></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <a href="mailto:help@toomuchcoin.com" style="color:var(--t3);text-decoration:underline;text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">help@toomuchcoin.com</a>
+        </div>
       </div>
     </div>`;
   },
@@ -4249,12 +4275,9 @@ const P = {
           <div class="blog-card-title">${post.title}</div>
           <div class="blog-card-excerpt">${post.excerpt||post.body.replace(/<[^>]+>/g,'').slice(0,140)+'…'}</div>
           <div class="blog-card-meta" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-            ${adminAvatar}
-            <span>Deji Lasisi</span>
-            <span style="color:var(--bdr2)">·</span>
-            <span>${(post.originalCreatedAt||post.publishedAt)?new Date(post.originalCreatedAt||post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Recently'}</span>
+            ${post.type!=='guide'?`${adminAvatar}<span>Deji Lasisi</span><span style="color:var(--bdr2)">·</span><span>${(post.originalCreatedAt||post.publishedAt)?new Date(post.originalCreatedAt||post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Recently'}</span>`:''}
             ${post.type!=='guide'&&isLocked?`<span class="tag tpur" style="font-size:.65rem;margin-left:auto"><i data-lucide="lock" style="width:9px;height:9px"></i>Pro</span>`:''}
-            ${post.type==='guide'?`<span class="tag tg" style="font-size:.65rem;margin-left:auto">Free</span>`:''}
+            ${post.type==='guide'?`<span class="tag tg" style="font-size:.65rem">Free</span>`:''}
           </div>
         </div>
       </div>`;
@@ -4306,7 +4329,6 @@ const P = {
         <div style="flex:1;height:1px;background:var(--bdr)"></div>
       </div>
       <p style="font-size:.875rem;color:var(--t2);margin-bottom:28px;line-height:1.6">Everything you need to get the most out of Toomuchcoin — free for everyone, no account required.</p>
-
       ${loading?`<div style="text-align:center;padding:40px;color:var(--t3)"><div class="spin"></div></div>`
       :GUIDE_CATS.map(cat=>{
         const catPosts=guidePosts.filter(p=>p.guideCategory===cat.id);
@@ -4328,6 +4350,28 @@ const P = {
           }
         </div>`;
       }).join('')}
+    <!-- FAQ Section — after all guides -->
+      <div style="margin-top:56px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <span style="font-family:var(--fd);font-size:1.35rem">Frequently Asked Questions</span>
+          <div style="flex:1;height:1px;background:var(--bdr)"></div>
+        </div>
+        ${[
+          {q:'Why the name Toomuchcoin?',a:`The name Toomuchcoin came about as an improv answer to the proliferation of too much coin in the financial markets. Average users need guidance on the right ones to pick in building long-term returns and wealth.<br><br>However, an alternate — albeit more convenient — explanation is that many normal names have been taken in the domain arbitrage market, where probable website names are bought by speculators hoping to resell them for higher prices later. We had to improvise from the earlier Datum parent name, which you can probably guess was on the market for an eye-gouging price.`},
+          {q:'Why should I join Toomuchcoin?',a:`<strong>1. First User-Centric Decentralised Global Platform</strong><br>You make listings yourself, connect with who you like, and vote for trusted Vendors without any external pressure.<br><br><strong>2. Discover & Navigate Commercial Opportunities Faster</strong><br>Everything you need to navigate the world commercially, in your pocket, available at your beck and call.<br><br><strong>3. Access To Essential World Financial Knowledge</strong><br>If you love a soft life and detest stress, you would like the Datum List — curated financial assets that grow over time without constant worry. If you are tired of being glued to the news cycle with zero financial knowledge gained, Toomuchcoin is for you.`},
+          {q:'Who is Toomuchcoin for?',a:`Toomuchcoin is for the Young-At-Heart and Free — global citizens who share the freedom sentiment.<br><br>● Globetrotters and Freedom Enthusiasts<br>● Cyberpunks<br>● Hustlers, Creatives, Freelancers, and Traders<br><br>Toomuchcoin is built for the next generation of agentic commerce.`},
+          {q:'What differentiates Toomuchcoin from others?',a:`What differentiates us from others is that we are truly empathetic to customer needs and demands. The difference is empathy.`},
+          {q:'What do I gain from using Toomuchcoin?',a:`You gain timeless financial knowledge that ensures your purse grows fatter with time — as well as the promise of commerce without boundaries.`},
+        ].map((f,i)=>`
+        <div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);margin-bottom:10px;overflow:hidden">
+          <button onclick="(function(){const b=document.getElementById('faq-${i}');const a=document.getElementById('faq-a-${i}');const open=b.style.display!=='none';b.style.display=open?'none':'block';a.style.transform=open?'rotate(0deg)':'rotate(180deg)'})()" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:var(--white);border:none;cursor:pointer;font-family:var(--fb);font-size:.9rem;font-weight:600;color:var(--t1);text-align:left" onmouseover="this.style.background='var(--off)'" onmouseout="this.style.background='var(--white)'">
+            <span>${f.q}</span>
+            <svg id="faq-a-${i}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .25s"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="faq-${i}" style="display:none;padding:16px 20px;font-size:.875rem;color:var(--t2);line-height:1.8;border-top:1px solid var(--bdr)">${f.a}</div>
+        </div>`).join('')}
+      </div>
+
     </div>`;
   },
 
@@ -4365,18 +4409,18 @@ const P = {
 
       <h1 style="font-family:var(--fd);font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.15;margin-bottom:12px">${post.title}</h1>
 
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--bdr)">
-        ${(()=>{
-      const _aUrl=S._adminProfile?.avatarId?fileUrl(S._adminProfile.avatarId):null;
-      return _aUrl
-        ?`<img src="${_aUrl}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block;object-position:${S._adminProfile?.avatarFocus||'center center'}">`
-        :`<div style="width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0">${S._adminProfile?.inits||'DL'}</div>`;
-    })()}
-        <div>
-          <div style="font-weight:600;font-size:.875rem">${post.authorName||'Deji Lasisi'}</div>
-          <div style="font-size:.75rem;color:var(--t3)">${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'Recently'}</div>
-        </div>
-        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;padding-bottom:20px;border-top:1px solid var(--bdr)">
+        ${!isGuide?(()=>{
+          const _aUrl=S._adminProfile?.avatarId?fileUrl(S._adminProfile.avatarId):null;
+          return`<div style="display:flex;align-items:center;gap:10px;flex:1">
+            ${_aUrl?`<img src="${_aUrl}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block">`:`<div style="width:38px;height:38px;border-radius:50%;background:var(--t1);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.9rem;font-weight:700;flex-shrink:0">${S._adminProfile?.inits||'DL'}</div>`}
+            <div>
+              <div style="font-weight:600;font-size:.875rem">${post.authorName||'Deji Lasisi'}</div>
+              <div style="font-size:.75rem;color:var(--t3)">${post.publishedAt?new Date(post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'Recently'}</div>
+            </div>
+          </div>`;
+        })():`<div style="flex:1;display:flex;align-items:center;gap:7px"><span class="tag tg" style="font-size:.72rem">Free Guide</span></div>`}
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           ${!post.published&&S.user?.id===ADMIN_ID?`
           <button class="btn bc bsm" onclick="A.publishDraft('${post.id}')">
             <i data-lucide="send" style="width:12px;height:12px"></i>Publish Now
