@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.toomuchcoin.com/sitemap.xml
+
+# Block Appwrite API calls from being crawled
+Disallow: /v1/
+Disallow: /api/blog-preview
