@@ -654,22 +654,17 @@
   <div class="nact" id="nact"></div>
 </nav>
 <main id="root">
-  <!-- Static loading shell — shown before JS renders, hidden immediately after -->
-  <div id="app-shell" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:var(--white)">
+  <div id="app-shell" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:#fff">
     <div style="position:relative">
-      <img src="/toomuchcoin.png" alt="Toomuchcoin" style="width:56px;height:56px;object-fit:contain;display:block;animation:shellPulse 1.8s ease-in-out infinite">
-      <div style="position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(212,175,55,.3);border-top-color:#D4AF37;animation:shellSpin .9s linear infinite"></div>
+      <img src="/toomuchcoin.png" alt="Toomuchcoin" style="width:88px;height:88px;object-fit:contain;display:block;animation:shellPulse 1.8s ease-in-out infinite">
+      <div style="position:absolute;inset:-10px;border-radius:50%;border:2px solid rgba(212,175,55,.25);border-top-color:#D4AF37;animation:shellSpin .9s linear infinite"></div>
     </div>
-    <div style="font-family:'DM Serif Display',Georgia,serif;font-size:1.4rem;color:#1A1916;letter-spacing:-.01em">Toomuchcoin<span style="color:#D4AF37">.</span></div>
-    <div style="width:160px;height:3px;background:#F8F7F4;border-radius:100px;overflow:hidden">
-      <div style="height:100%;width:40%;background:linear-gradient(90deg,transparent,#D4AF37,transparent);animation:shellBar 1.4s ease-in-out infinite"></div>
-    </div>
+    <div style="font-family:'DM Serif Display',Georgia,serif;font-size:1.8rem;color:#1A1916;letter-spacing:-.02em">Toomuchcoin<span style="color:#D4AF37">.</span></div>
   </div>
 </main>
 <style>
-  @keyframes shellPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(.93)}}
+  @keyframes shellPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.75;transform:scale(.92)}}
   @keyframes shellSpin{to{transform:rotate(360deg)}}
-  @keyframes shellBar{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
 </style>
 <div id="mroot"></div>
 <div class="toast" id="toast"></div>
@@ -4548,7 +4543,7 @@ const P = {
           {q:'Who is Toomuchcoin for?',a:` Toomuchcoin.com is for the Young-At-Heart and Free, meaning global citizens who share the freedom sentiment.<br><br>● Globetrotters and Freedom Enthusiasts<br>● Cyberpunks<br>● Hustlers, Creatives, Freelancers, and Traders<br><br>Toomuchcoin is built for the next generation of agentic commerce.`},
           {q:'What differentiates Toomuchcoin from others?',a:`What differentiates us from others is that we are truly empathetic to users needs and demands. The difference is empathy.`},
           {q:'What do I gain from using Toomuchcoin?',a:`You gain timeless financial knowledge that ensures your purse grows fatter with time — as well as the promise of commerce without boundaries.`},
-          {q:'What is Toomuchcoin x Datum?',a:'It is the amalgamation of the businesses under Datum - an extension of parent company, Datum Logistics. You will notice that’s where we receive all affiliated payments'}
+          {q:'What is Toomuchcoin x Datum?',a:'It is the amalgamation of the businesses under Datum - an extension of parent company, Datum Logistics.'}
         ].map((f,i)=>`
         <div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);margin-bottom:10px;overflow:hidden">
           <button onclick="(function(){const b=document.getElementById('faq-${i}');const a=document.getElementById('faq-a-${i}');const open=b.style.display!=='none';b.style.display=open?'none':'block';a.style.transform=open?'rotate(0deg)':'rotate(180deg)'})()" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:var(--white);border:none;cursor:pointer;font-family:var(--fb);font-size:.9rem;font-weight:600;color:var(--t1);text-align:left" onmouseover="this.style.background='var(--off)'" onmouseout="this.style.background='var(--white)'">
