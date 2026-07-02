@@ -3034,7 +3034,9 @@ const P = {
           <div class="gca"><span>Enter Global Market</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
         <div class="gcard" onclick="R.go('crypto')">
-          <div class="gci ib" style="background:#FBF6E3"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg></div>
+          <div class="gci ib" style="background:#FBF6E3;padding:0;overflow:hidden;border-radius:var(--rmd)">
+            <img src="${fileUrl('6a46ea2f0002ac4abe2f')}" style="width:48px;height:48px;object-fit:cover;border-radius:var(--rmd);display:block" onerror="this.outerHTML='<i data-lucide=store style=width:22px;height:22px;color:#D4AF37;margin:13px></i>'">
+          </div>
           <span class="gcl">Finance</span>
           <h2 class="gct">Coin Rates</h2>
           <p class="gcd">Live prices for 500+ coins, deep-dive analytics, interval charts, and your personal financial watchlist.</p>
