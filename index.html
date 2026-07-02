@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Toomuchcoin</title>
+  <title>Toomuchcoin — P2P Marketplace & Live Coin Markets</title>
+  <link rel="preconnect" href="https://cloud.appwrite.io"/>
+  <link rel="preconnect" href="https://api.coingecko.com"/>
+  <link rel="dns-prefetch" href="https://cdn-icons-png.flaticon.com"/>
+  <link rel="dns-prefetch" href="https://financialmodelingprep.com"/>
   <link rel="icon" type="image/png" sizes="32x32" href="/toomuchcoin.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/toomuchcoin.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/toomuchcoin.png">
@@ -11,29 +15,82 @@
   <link rel="manifest" href="/manifest.json" onerror="this.remove()">
   
   <meta name="description" content="Toomuchcoin — Africa's P2P marketplace, live prices for 500+ crypto coins, curated Datum List wealth assets, and a global vendor directory. Trade, discover, and grow your wealth without boundaries."/>
-  <meta name="keywords" content="P2P marketplace Nigeria, crypto prices live, Bitcoin price, Ethereum tracker, African marketplace, Datum List, financial assets Africa, buy sell Nigeria, toomuchcoin"/>
+  <meta name="keywords" content="P2P marketplace Nigeria, crypto prices live, Bitcoin price today, Ethereum tracker, African marketplace, Datum List, financial assets Africa, buy sell Nigeria, toomuchcoin, coin markets, global commerce"/>
   <meta name="author" content="Toomuchcoin"/>
-  <meta name="robots" content="index, follow"/>
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"/>
+  <meta name="googlebot" content="index, follow"/>
   <link rel="canonical" href="https://www.toomuchcoin.com"/>
   <meta property="og:title" content="Toomuchcoin — P2P Marketplace & Live Coin Markets"/>
   <meta property="og:description" content="Africa's first user-centric decentralised commerce platform. Live crypto prices, curated wealth assets, and a global P2P marketplace — all in one place."/>
+  <meta property="og:site_name" content="Toomuchcoin"/>
+  <meta property="og:locale" content="en_US"/>
+  <meta name="twitter:site" content="@toomuchcoin"/>
+  <meta name="twitter:creator" content="@toomuchcoin"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="Toomuchcoin"/>
   <meta name="mobile-web-app-capable" content="yes"/>
-  <meta name="theme-color" content="#1A1916"/>
+  <meta name="theme-color" content="#D4AF37"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/toomuchcoin.png"/>
   <meta property="og:title" content="Toomuchcoin x Datum"/>
   <meta property="og:description" content="Agentic Commerce: Your passport to trade and access the globe 🌎"/>
-  <meta property="og:image" content="https://toomuchcoin.com/toomuchcoin.png"/>
+  <meta property="og:image" content="https://www.toomuchcoin.com/og-image.png"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Toomuchcoin — P2P Marketplace & Live Coin Markets"/>
   <meta property="og:type" content="website"/>
   <meta name="twitter:card" content="summary_large_image"/>
 
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Toomuchcoin",
+    "alternateName": "Toomuchcoin x Datum",
+    "url": "https://www.toomuchcoin.com",
+    "description": "Africa's P2P marketplace, live crypto prices for 500+ coins, curated Datum List wealth assets, and a global vendor directory.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.toomuchcoin.com/financial/coinmarkets?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Toomuchcoin",
+      "url": "https://www.toomuchcoin.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.toomuchcoin.com/toomuchcoin.png",
+        "width": 512,
+        "height": 512
+      },
+      "sameAs": [],
+      "contactPoint": [{
+        "@type": "ContactPoint",
+        "email": "help@toomuchcoin.com",
+        "contactType": "customer support",
+        "availableLanguage": ["English", "Yoruba", "Igbo", "Hausa"]
+      }]
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Toomuchcoin",
+    "url": "https://www.toomuchcoin.com",
+    "logo": "https://www.toomuchcoin.com/toomuchcoin.png",
+    "description": "User-centric decentralised global platform for P2P commerce, live financial markets, and curated wealth assets.",
+    "email": "help@toomuchcoin.com",
+    "foundingDate": "2026",
+    "areaServed": "Worldwide",
+    "serviceType": ["P2P Marketplace", "Cryptocurrency Tracker", "Financial Education", "Vendor Directory"]
+  }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/iife/sdk.js"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
@@ -59,7 +116,7 @@
     html{font-size:16px;scroll-behavior:smooth}
     body{font-family:var(--fb);background:var(--white);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
     .hidden{display:none!important}
-    img{display:block}
+    img{display:block;content-visibility:auto}
 
     .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--rsm);font-family:var(--fb);font-size:.875rem;font-weight:500;cursor:pointer;border:none;transition:var(--ease);text-decoration:none;white-space:nowrap}
     .btn:disabled{opacity:.5;cursor:not-allowed!important;transform:none!important}
@@ -596,7 +653,24 @@
   </div>
   <div class="nact" id="nact"></div>
 </nav>
-<main id="root"></main>
+<main id="root">
+  <!-- Static loading shell — shown before JS renders, hidden immediately after -->
+  <div id="app-shell" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:var(--white)">
+    <div style="position:relative">
+      <img src="/toomuchcoin.png" alt="Toomuchcoin" style="width:56px;height:56px;object-fit:contain;display:block;animation:shellPulse 1.8s ease-in-out infinite">
+      <div style="position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(212,175,55,.3);border-top-color:#D4AF37;animation:shellSpin .9s linear infinite"></div>
+    </div>
+    <div style="font-family:'DM Serif Display',Georgia,serif;font-size:1.4rem;color:#1A1916;letter-spacing:-.01em">Toomuchcoin<span style="color:#D4AF37">.</span></div>
+    <div style="width:160px;height:3px;background:#F8F7F4;border-radius:100px;overflow:hidden">
+      <div style="height:100%;width:40%;background:linear-gradient(90deg,transparent,#D4AF37,transparent);animation:shellBar 1.4s ease-in-out infinite"></div>
+    </div>
+  </div>
+</main>
+<style>
+  @keyframes shellPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(.93)}}
+  @keyframes shellSpin{to{transform:rotate(360deg)}}
+  @keyframes shellBar{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+</style>
 <div id="mroot"></div>
 <div class="toast" id="toast"></div>
 <button class="fab hidden" id="fab" onclick="M.createOrder()">
@@ -825,7 +899,10 @@ const W={
           lifetimeEarned:walletDoc.lifetimeEarned||0,
           lifetimeSpent :walletDoc.lifetimeSpent||0,
           lastLoginBonus:walletDoc.lastLoginBonus||'',
+          readGuideIds  :walletDoc.readGuideIds||[],
         };
+        // Pre-populate in-memory set so checks are instant
+        (walletDoc.readGuideIds||[]).forEach(id=>W.readGuides.add(id));
         console.log('TMC: wallet loaded',W.wallet);
       } else {
         console.log('TMC: creating new wallet');
@@ -879,6 +956,7 @@ const W={
         lifetimeEarned:retroBalance,
         lifetimeSpent :0,
         lastLoginBonus:today,
+        readGuideIds  :[],
       });
       console.log('TMC: wallet created',doc.$id);
       W.wallet={
@@ -887,6 +965,7 @@ const W={
         lifetimeEarned:retroBalance,
         lifetimeSpent :0,
         lastLoginBonus:today,
+        readGuideIds  :[],
       };
       // Log retroactive grant
       if(retroBalance>0){
@@ -1103,14 +1182,35 @@ const W={
     }
   },
 
-  // ── Guide read bonus — once per guide, ever (stored in localStorage) ──
+  // ── Guide read bonus — once per guide, ever (stored in Appwrite wallet doc) ──
   async onGuideRead(guideId){
-    if(!S.user||!guideId) return;
-    const key=`tmc_guide_read_${S.user.id}_${guideId}`;
-    if(localStorage.getItem(key)) return; // already earned for this guide
-    localStorage.setItem(key,'1');
+    if(!S.user||!guideId||!W.wallet) return;
+    // Check in-memory set first (fastest)
+    if(W.readGuides.has(guideId)) return;
+    // Check localStorage as secondary cache (survives page refresh, same device)
+    const localKey=`tmc_guide_read_${S.user.id}_${guideId}`;
+    if(localStorage.getItem(localKey)) {
+      W.readGuides.add(guideId); // sync in-memory
+      return;
+    }
+    // Check Appwrite wallet doc (authoritative — works across all devices)
+    if(W.wallet.readGuideIds&&W.wallet.readGuideIds.includes(guideId)){
+      W.readGuides.add(guideId);
+      localStorage.setItem(localKey,'1'); // cache locally so next check is instant
+      return;
+    }
+    // Not read before on any device — mark it now
     W.readGuides.add(guideId);
-    await W.earn('guide_read','Read a How-To Guide',guideId);
+    localStorage.setItem(localKey,'1');
+    // Save to Appwrite immediately so other devices know
+    const updatedIds=[...(W.wallet.readGuideIds||[]),guideId];
+    W.wallet.readGuideIds=updatedIds;
+    if(W.wallet.id){
+      _db.updateDocument(AW_DB_ID,'tmc_wallet',W.wallet.id,{readGuideIds:updatedIds})
+        .catch(e=>console.warn('readGuideIds update:',e.message));
+    }
+    // Now earn the TMC
+    await W.earn('guide_read','Read a How-To Guide — '+guideId,guideId);
   },
 
   // ── Format balance for display ──
@@ -2702,7 +2802,31 @@ function KK_send(){
 }
 
 function render(){
-  // Update page title
+  // Remove loading shell on first render
+  const _shell=document.getElementById('app-shell');
+  if(_shell) _shell.remove();
+  // Dynamic page title for SEO + browser tab
+  const _pageTitles={
+    land    :'Toomuchcoin — P2P Marketplace & Live Coin Markets',
+    market  :'Datum Marketplace — Buy, Sell & Trade Globally | Toomuchcoin',
+    crypto  :'Coin Markets — Live Crypto Prices 500+ Assets | Toomuchcoin',
+    profile :'My Profile — Toomuchcoin',
+    sub     :'Pro Membership — Unlock Full Access | Toomuchcoin',
+    blog    :'Resources & Blog — Commerce, Coin & Culture | Toomuchcoin',
+    kaykay  :'KayKay AI Assistant — Toomuchcoin',
+    wallet  :'$TMC Wallet — Datum Coin | Toomuchcoin',
+  };
+  if(S.page==='blogpost'&&S._currentPost){
+    document.title=S._currentPost.title+' — Toomuchcoin';
+  } else {
+    document.title=_pageTitles[S.page]||'Toomuchcoin';
+  }
+  // Also update canonical URL dynamically
+  let _canon=document.querySelector('link[rel="canonical"]');
+  if(!_canon){_canon=document.createElement('link');_canon.rel='canonical';document.head.appendChild(_canon);}
+  const _canonMap={land:'https://www.toomuchcoin.com',market:'https://www.toomuchcoin.com/marketplace/orderboard',crypto:'https://www.toomuchcoin.com/financial/coinmarkets',blog:'https://www.toomuchcoin.com/blog',sub:'https://www.toomuchcoin.com/subscribe'};
+  _canon.href=_canonMap[S.page]||'https://www.toomuchcoin.com';
+  // Preserve in-progress chat input across re-renders (e.g. background polling)  // Update page title
   const _titles={land:'Toomuchcoin — P2P Marketplace & Coin Markets',market:'Datum Marketplace — Toomuchcoin',crypto:'Coin Markets — Toomuchcoin',profile:'My Profile — Toomuchcoin',sub:'Pro Membership — Toomuchcoin',blog:'Resources & Blog — Toomuchcoin',kaykay:'KayKay AI — Toomuchcoin',wallet:'$TMC Wallet — Toomuchcoin'};
   document.title=_titles[S.page]||(S._currentPost?S._currentPost.title+' — Toomuchcoin':'Toomuchcoin');
   // Preserve in-progress chat input across re-renders (e.g. background polling)
@@ -2721,6 +2845,7 @@ function render(){
   else if(S.page==='blog')    root.innerHTML=P.blog();
   else if(S.page==='wallet')  root.innerHTML=`<div class="page" style="padding-top:80px"><button class="back" style="margin-left:24px" onclick="R.go('profile')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>${W.page()}</div>`;
   else if(S.page==='blogpost') root.innerHTML=P.blogPost();
+  else if(S.page==='404')     root.innerHTML=P.notFound();
   else                        root.innerHTML=P.land();
 
   const fab=document.getElementById('fab');
@@ -2774,7 +2899,7 @@ function renderNav(){
       </div>
     </div>`;
     el.innerHTML=`${tmcNav}${bell}<div class="nubadge" onclick="R.go('profile')">${S.user.avatarId
-          ?`<img src="${fileUrl(S.user.avatarId)}" class="nav-avatar" onerror="this.outerHTML='<div class=navat>${S.user.inits[0]}</div>'">`
+          ?`<img src="${fileUrl(S.user.avatarId)}" class="nav-avatar" alt="${S.user.name}" onerror="this.outerHTML='<div class=navat>${S.user.inits[0]}</div>'">`
           :`<div class="navat">${S.user.inits[0]}</div>`}<span class="nav-name-text">${S.user.name.split(' ')[0]}</span>${sub}</div>`;
   }else{
     el.innerHTML=`<button class="btn bg bsm" onclick="M.auth()">Sign In</button><button class="btn bp bsm" onclick="M.auth()">Get Started</button>`;
@@ -2825,6 +2950,61 @@ function renderNotifPanel(){
 }
 
 const P = {
+  notFound(){
+    return`<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;background:var(--white);text-align:center;overflow:hidden;position:relative" class="page">
+      <!-- Animated background orbs -->
+      <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
+        <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,.12),transparent 70%);top:-100px;right:-100px;animation:orbFloat 8s ease-in-out infinite"></div>
+        <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,.08),transparent 70%);bottom:-80px;left:-80px;animation:orbFloat 10s ease-in-out infinite reverse"></div>
+        <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,.06),transparent 70%);top:40%;left:10%;animation:orbFloat 7s ease-in-out infinite 2s"></div>
+      </div>
+      <style>
+        @keyframes orbFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+        @keyframes coinSpin{0%{transform:rotateY(0deg)}100%{transform:rotateY(360deg)}}
+        @keyframes fadeSlideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse404{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(.97)}}
+        .nf-coin{animation:coinSpin 4s linear infinite;display:inline-block;perspective:600px}
+        .nf-404{animation:pulse404 3s ease-in-out infinite;font-family:var(--fd)}
+        .nf-content{animation:fadeSlideUp .6s ease both}
+        .nf-content-2{animation:fadeSlideUp .6s ease .15s both;opacity:0}
+        .nf-content-3{animation:fadeSlideUp .6s ease .3s both;opacity:0}
+        .nf-content-4{animation:fadeSlideUp .6s ease .45s both;opacity:0}
+      </style>
+
+      <!-- Coin icon spinning -->
+      <div class="nf-coin" style="margin-bottom:24px">
+        <img src="/toomuchcoin.png" style="width:72px;height:72px;object-fit:contain;display:block;filter:drop-shadow(0 8px 24px rgba(212,175,55,.4))">
+      </div>
+
+      <!-- 404 number -->
+      <div class="nf-404" style="font-size:clamp(5rem,18vw,10rem);line-height:1;color:#D4AF37;letter-spacing:-.04em;margin-bottom:8px">404</div>
+
+      <!-- Message -->
+      <div class="nf-content" style="font-family:var(--fd);font-size:clamp(1.4rem,3vw,2rem);color:var(--t1);margin-bottom:10px">This page doesn't exist — yet.</div>
+      <div class="nf-content-2" style="font-size:.9375rem;color:var(--t2);max-width:420px;line-height:1.7;margin-bottom:36px">You might have followed a broken link, or this page has moved. Either way, there's plenty of good stuff waiting for you back home.</div>
+
+      <!-- Actions -->
+      <div class="nf-content-3" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:48px">
+        <button onclick="R.go('land')" style="display:inline-flex;align-items:center;gap:8px;background:#D4AF37;color:#1a1408;border:none;border-radius:var(--rsm);padding:13px 28px;font-size:.9375rem;font-weight:700;cursor:pointer;font-family:var(--fb);transition:all .2s;box-shadow:0 4px 20px rgba(212,175,55,.35)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(212,175,55,.5)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(212,175,55,.35)'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Go Home
+        </button>
+        <button onclick="R.go('market')" style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--t1);border:1.5px solid var(--bdr2);border-radius:var(--rsm);padding:13px 28px;font-size:.9375rem;font-weight:500;cursor:pointer;font-family:var(--fb);transition:all .2s" onmouseover="this.style.borderColor='#D4AF37';this.style.color='#D4AF37'" onmouseout="this.style.borderColor='var(--bdr2)';this.style.color='var(--t1)'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><rect x="9" y="12" width="6" height="10"/></svg>
+          Browse Marketplace
+        </button>
+      </div>
+
+      <!-- Suggestion strip -->
+      <div class="nf-content-4" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        ${[{l:'Coin Markets',p:'crypto',i:'trending-up'},{l:'Resources & Blog',p:'blog',i:'book-open'},{l:'Pro Membership',p:'sub',i:'zap'},{l:'My Profile',p:'profile',i:'user'}].map(s=>`
+        <button onclick="R.go('${s.p}')" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:7px 16px;font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;font-family:var(--fb);transition:all .2s" onmouseover="this.style.borderColor='#D4AF37';this.style.color='#D4AF37';this.style.background='#FBF8EC'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)';this.style.background='var(--off)'">
+          <i data-lucide="${s.i}" style="width:12px;height:12px"></i>${s.l}
+        </button>`).join('')}
+      </div>
+    </div>`;
+  },
+
   land(){
     return `<div id="pg-land" class="page">
       <p class="l-ey">The unified commerce layer</p>
@@ -3414,7 +3594,7 @@ const P = {
           ${list.map(o=>`
           <div class="ocard ${(o.status==='filled'||o.status==='closed')?'oresolved':''}">
             ${userAvatar(o.userId,o.userInitials,40)}
-            ${(()=>{const fid=(o.imageId||'').split(',').filter(Boolean)[0];return fid?`<div style="width:64px;height:64px;border-radius:var(--rsm);overflow:hidden;flex-shrink:0;background:var(--surf);border:1px solid var(--bdr)"><img src="${fileUrl(fid)}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.parentNode.style.display='none'"></div>`:'';})()}
+            ${(()=>{const fid=(o.imageId||'').split(',').filter(Boolean)[0];return fid?`<div style="width:64px;height:64px;border-radius:var(--rsm);overflow:hidden;flex-shrink:0;background:var(--surf);border:1px solid var(--bdr)"><img src="${fileUrl(fid)}" alt="${o.title}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.parentNode.style.display='none'"></div>`:'';})()}
             <div class="obody">
               <div class="otop">
                 <span class="ottl">${o.title}</span>
@@ -8019,7 +8199,7 @@ Rules:
 
         ${heroPoster?`
         <div style="position:relative">
-          <img src="${heroPoster.url}" style="width:100%;height:${window.innerWidth>768?'300px':'220px'};object-fit:cover;display:block;cursor:zoom-in;object-position:${v.coverFocus||'center center'}" onclick="event.stopPropagation();openLightbox(S._lbVendorPosters,0)">
+          <img src="${heroPoster.url}" loading="lazy" style="width:100%;height:${window.innerWidth>768?'300px':'220px'};object-fit:cover;display:block;cursor:zoom-in;object-position:${v.coverFocus||'center center'}" onclick="event.stopPropagation();openLightbox(S._lbVendorPosters,0)">
           <button class="mclose" onclick="M.close()" style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,.5);color:#fff">
             <i data-lucide="x" style="width:15px;height:15px"></i>
           </button>
@@ -9538,6 +9718,12 @@ document.addEventListener('DOMContentLoaded', async()=>{
     })();
   }
 
+  // 404 fallback for completely unknown paths
+  const _knownPaths=['/','/marketplace/orderboard','/marketplace/vendorlist','/marketplace/openforum','/financial/coinmarkets','/financial/datumlist','/financial/watchlist','/financial/portfolio','/blog','/subscribe','/profile','/kaykay'];
+  const _isKnown=_knownPaths.includes(_path)||_path.startsWith('/blog/')||_path.startsWith('/howtoguides/')||_path.startsWith('/marketplace/vendorlist/')||_path.startsWith('/api/');
+  if(!_isKnown&&_path!=='/'&&_path!==''){
+    S.page='404';render();
+  }
   const _qs=new URLSearchParams(window.location.search);
   const _vCat=_qs.get('vendors');
   const _vCity=_qs.get('city');
@@ -9618,6 +9804,22 @@ document.addEventListener('DOMContentLoaded', async()=>{
     });
     if(_linked){ R.go('market'); setTimeout(()=>A.viewOrder(_linked.id),300); }
   }
+});
+// Global error boundary
+window.addEventListener('error', e=>{
+  console.error('App error:',e.message,e.filename,e.lineno);
+  const root=document.getElementById('root');
+  if(root&&root.innerHTML.trim()===''){
+    root.innerHTML=`<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center">
+      <img src="/toomuchcoin.png" style="width:48px;height:48px;margin:0 auto 16px;opacity:.5">
+      <div style="font-family:Georgia,serif;font-size:1.2rem;color:#1A1916;margin-bottom:8px">Something went wrong</div>
+      <div style="font-size:.875rem;color:#6B6860;margin-bottom:24px;max-width:340px;line-height:1.6">The app hit an unexpected error. Please refresh the page — if it keeps happening, contact help@toomuchcoin.com</div>
+      <button onclick="location.reload()" style="background:#D4AF37;color:#1a1408;border:none;border-radius:6px;padding:11px 24px;font-weight:700;cursor:pointer;font-family:system-ui">Refresh Page</button>
+    </div>`;
+  }
+});
+window.addEventListener('unhandledrejection', e=>{
+  console.warn('Unhandled promise rejection:',e.reason);
 });
 </script>
 </body>
