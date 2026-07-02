@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Toomuchcoin — P2P Marketplace & Live Coin Markets</title>
+  <title>Toomuchcoin — P2P Marketplace & Live Coin Rates</title>
   <link rel="preconnect" href="https://cloud.appwrite.io"/>
   <link rel="preconnect" href="https://api.coingecko.com"/>
   <link rel="dns-prefetch" href="https://cdn-icons-png.flaticon.com"/>
@@ -15,12 +15,12 @@
   <link rel="manifest" href="/manifest.json" onerror="this.remove()">
   
   <meta name="description" content="Toomuchcoin — Africa's P2P marketplace, live prices for 500+ crypto coins, curated Datum List wealth assets, and a global vendor directory. Trade, discover, and grow your wealth without boundaries."/>
-  <meta name="keywords" content="P2P marketplace Nigeria, crypto prices live, Bitcoin price today, Ethereum tracker, African marketplace, Datum List, financial assets Africa, buy sell Nigeria, toomuchcoin, coin markets, global commerce"/>
+  <meta name="keywords" content="P2P marketplace Nigeria, crypto prices live, Bitcoin price today, Ethereum tracker, African marketplace, Datum List, financial assets Africa, buy sell Nigeria, toomuchcoin, Coin Rates, global commerce"/>
   <meta name="author" content="Toomuchcoin"/>
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"/>
   <meta name="googlebot" content="index, follow"/>
   <link rel="canonical" href="https://www.toomuchcoin.com"/>
-  <meta property="og:title" content="Toomuchcoin — P2P Marketplace & Live Coin Markets"/>
+  <meta property="og:title" content="Toomuchcoin — P2P Marketplace & Live Coin Rates"/>
   <meta property="og:description" content="Africa's first user-centric decentralised commerce platform. Live crypto prices, curated wealth assets, and a global P2P marketplace — all in one place."/>
   <meta property="og:site_name" content="Toomuchcoin"/>
   <meta property="og:locale" content="en_US"/>
@@ -37,7 +37,7 @@
   <meta property="og:image" content="https://www.toomuchcoin.com/og-image.png"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
-  <meta property="og:image:alt" content="Toomuchcoin — P2P Marketplace & Live Coin Markets"/>
+  <meta property="og:image:alt" content="Toomuchcoin — P2P Marketplace & Live Coin Rates"/>
   <meta property="og:type" content="website"/>
   <meta name="twitter:card" content="summary_large_image"/>
 
@@ -1391,7 +1391,7 @@ const KK_PROMPTS=[
 const KK_LOCAL={
   nav:{
     market    :{kw:['marketplace','market','listing','order','board'],fn:()=>{R.go('market');return'Opening the marketplace for you now.';}},
-    crypto    :{kw:['crypto','bitcoin','price','financial','coin','datum list','watchlist','markets'],fn:()=>{R.go('crypto');return'Here are the Coin Markets.';}},
+    crypto    :{kw:['crypto','bitcoin','price','financial','coin','datum list','watchlist','markets'],fn:()=>{R.go('crypto');return'Here are the Coin Rates.';}},
     profile   :{kw:['profile','account','my page','settings'],fn:()=>{R.go('profile');return'Opening your profile.';}},
     sub       :{kw:['subscription','upgrade','pro','plan','trial','pay'],fn:()=>{R.go('sub');return'Here is the subscription page.';}},
     vendors   :{kw:['vendor','restaurant','logistics','hotel','cafe','spa','find a'],fn:()=>{S.page='market';S.mTab='vendors';render();return'Opening the vendor directory.';}},
@@ -1428,7 +1428,7 @@ function kkParseAndNavigate(reply){
   setTimeout(()=>{
     if(r.includes('marketplace')||r.includes('order board')||r.includes('taking you to the market')||r.includes('opening the marketplace')){
       if(S.page!=='market'){R.go('market');}
-    } else if(r.includes('Coin Market')||r.includes('crypto page')||r.includes('market page')||r.includes('taking you to the crypto')||(r.includes('bitcoin')&&r.includes('taking'))){
+    } else if(r.includes('Coin Rates')||r.includes('crypto page')||r.includes('market page')||r.includes('taking you to the crypto')||(r.includes('bitcoin')&&r.includes('taking'))){
       if(S.page!=='crypto'){R.go('crypto');}
     } else if(r.includes('opening your profile')||r.includes('taking you to your profile')||r.includes('opening the profile')){
       if(S.page!=='profile'){R.go('profile');}
@@ -1589,7 +1589,7 @@ Stock prices from prices.json: Gold ~$${S._manualPrices?.gold||'—'}, NVDA ~$${
 Active listings on marketplace: ${listings}
 
 PLATFORM KNOWLEDGE (answer these accurately):
-- Toomuchcoin is a P2P marketplace + Coin Markets tracker + vendor directory
+- Toomuchcoin is a P2P marketplace + Coin Rates tracker + vendor directory
 - Pro membership: ₦10,000/month for Nigerians (discounted from $20). Unlocks marketplace, forum, 500+ crypto, Datum List, Vendor directory, KayKay
 - Free trial: 30 days via exclusive coupon code (max 8 users per code)
 - Platform commission: 1% of final deal value. 10% of that goes to 3 charities: Feed the Future Africa, Code for Kids Foundation, Clean Water Initiative NG
@@ -2802,9 +2802,9 @@ function render(){
   if(_shell) _shell.remove();
   // Dynamic page title for SEO + browser tab
   const _pageTitles={
-    land    :'Toomuchcoin — P2P Marketplace & Live Coin Markets',
+    land    :'Toomuchcoin — P2P Marketplace & Live Coin Rates',
     market  :'Datum Marketplace — Buy, Sell & Trade Globally | Toomuchcoin',
-    crypto  :'Coin Markets — Live Crypto Prices 500+ Assets | Toomuchcoin',
+    crypto  :'Coin Rates — Live Crypto Prices 500+ Assets | Toomuchcoin',
     profile :'My Profile — Toomuchcoin',
     sub     :'Pro Membership — Unlock Full Access | Toomuchcoin',
     blog    :'Resources & Blog — Commerce, Coin & Culture | Toomuchcoin',
@@ -2822,7 +2822,7 @@ function render(){
   const _canonMap={land:'https://www.toomuchcoin.com',market:'https://www.toomuchcoin.com/marketplace/orderboard',crypto:'https://www.toomuchcoin.com/financial/coinmarkets',blog:'https://www.toomuchcoin.com/blog',sub:'https://www.toomuchcoin.com/subscribe'};
   _canon.href=_canonMap[S.page]||'https://www.toomuchcoin.com';
   // Preserve in-progress chat input across re-renders (e.g. background polling)  // Update page title
-  const _titles={land:'Toomuchcoin — P2P Marketplace & Coin Markets',market:'Datum Marketplace — Toomuchcoin',crypto:'Coin Markets — Toomuchcoin',profile:'My Profile — Toomuchcoin',sub:'Pro Membership — Toomuchcoin',blog:'Resources & Blog — Toomuchcoin',kaykay:'KayKay AI — Toomuchcoin',wallet:'$TMC Wallet — Toomuchcoin'};
+  const _titles={land:'Toomuchcoin — P2P Marketplace & Coin Rates',market:'Datum Marketplace — Toomuchcoin',crypto:'Coin Rates — Toomuchcoin',profile:'My Profile — Toomuchcoin',sub:'Pro Membership — Toomuchcoin',blog:'Resources & Blog — Toomuchcoin',kaykay:'KayKay AI — Toomuchcoin',wallet:'$TMC Wallet — Toomuchcoin'};
   document.title=_titles[S.page]||(S._currentPost?S._currentPost.title+' — Toomuchcoin':'Toomuchcoin');
   // Preserve in-progress chat input across re-renders (e.g. background polling)
   const _prevCinput=document.getElementById('cinput');
@@ -2992,7 +2992,7 @@ const P = {
 
       <!-- Suggestion strip -->
       <div class="nf-content-4" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
-        ${[{l:'Coin Markets',p:'crypto',i:'trending-up'},{l:'Resources & Blog',p:'blog',i:'book-open'},{l:'Pro Membership',p:'sub',i:'zap'},{l:'My Profile',p:'profile',i:'user'}].map(s=>`
+        ${[{l:'Coin Rates',p:'crypto',i:'trending-up'},{l:'Resources & Blog',p:'blog',i:'book-open'},{l:'Pro Membership',p:'sub',i:'zap'},{l:'My Profile',p:'profile',i:'user'}].map(s=>`
         <button onclick="R.go('${s.p}')" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:7px 16px;font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;font-family:var(--fb);transition:all .2s" onmouseover="this.style.borderColor='#D4AF37';this.style.color='#D4AF37';this.style.background='#FBF8EC'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)';this.style.background='var(--off)'">
           <i data-lucide="${s.i}" style="width:12px;height:12px"></i>${s.l}
         </button>`).join('')}
@@ -3004,7 +3004,7 @@ const P = {
     return `<div id="pg-land" class="page">
       <p class="l-ey">The unified commerce layer</p>
       <h1 class="l-h">Your passport to <em>trade & access</em> the globe. 🌎</h1>
-      <p class="l-sub">Your Profile, Global Marketplace, and real-time Coin Markets — all in one place.</p>
+      <p class="l-sub">Your Profile, Global Marketplace, and real-time Coin Rates — all in one place.</p>
       <!-- Blog link where whitepaper was -->
       <div style="margin-top:-40px;margin-bottom:48px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
         <button onclick="R.go('blog')" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:7px 18px;font-family:var(--fb);font-size:.8125rem;font-weight:500;color:var(--t2);cursor:pointer;transition:var(--ease)" onmouseover="this.style.borderColor='#D4AF37';this.style.color='#D4AF37'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)'">
@@ -3025,7 +3025,9 @@ const P = {
           <div class="gca"><span>${S.user?'Check Your Profile':'Sign In / Register'}</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
         <div class="gcard" onclick="R.go('market')">
-          <div class="gci iw"><i data-lucide="store" style="width:22px;height:22px;color:#D4AF37"></i></div>
+          <div class="gci" style="background:#FBF6E3;padding:0;overflow:hidden;border-radius:var(--rmd)">
+            <img src="${fileUrl('6a3d97860007b87f7565')}" style="width:48px;height:48px;object-fit:cover;border-radius:var(--rmd);display:block" onerror="this.outerHTML='<i data-lucide=store style=width:22px;height:22px;color:#D4AF37;margin:13px></i>'">
+          </div>
           <span class="gcl">Commerce</span>
           <h2 class="gct">Datum Marketplace</h2>
           <p class="gcd">Logistics, P2P, goods, and service requests — live order board, global vendors list with a community forum.</p>
@@ -3036,7 +3038,7 @@ const P = {
           <span class="gcl">Finance</span>
           <h2 class="gct">Coin Rates</h2>
           <p class="gcd">Live prices for 500+ coins, deep-dive analytics, interval charts, and your personal financial watchlist.</p>
-          <div class="gca"><span>View Coin Markets</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+          <div class="gca"><span>View Coin Rates</span><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
         </div>
       </div>
       <!-- Whitepaper below the grid -->
@@ -3671,7 +3673,7 @@ const P = {
       <div class="pghdr">
         <div>
           <button class="back" onclick="R.go('land')"><i data-lucide="arrow-left" style="width:15px;height:15px"></i>Back</button>
-          <h1 class="pgttl">Coin Markets</h1>
+          <h1 class="pgttl">Coin Rates</h1>
           <p class="pgsub">${subtitle}</p>
         </div>
         ${S.coinsState==='err'?`<button class="btn bo bsm" onclick="loadCoins()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i>Retry</button>`:''}
@@ -5825,7 +5827,7 @@ const R = {
     if(page==='kaykay'&&S.page!=='kaykay') S._kkPrevPage=S.page||'land';
     S.page=page;
     // Push pretty URL to browser history
-    const _prettyMap={market:'/marketplace/orderboard',crypto:'/financial/coinmarkets',blog:'/blog',land:'/',profile:'/profile',sub:'/subscribe',kaykay:'/kaykay'};
+    const _prettyMap={market:'/marketplace/orderboard',crypto:'/financial/coinmarkets',blog:'/blog',land:'/',profile:'/profile',sub:'/subscribe',kaykay:'/kaykay',wallet:'/wallet'};
     const _prettyUrl=_prettyMap[page]||'/';
     if(window.location.pathname!==_prettyUrl) history.pushState({},'',_prettyUrl);
     if(page==='market'){S.mTab='board';S.mFilter='all';loadOrders();startAR();}
@@ -7291,7 +7293,7 @@ const A = {
           <select id="ann-link">
             <option value="">No link</option>
             <option value="market">Marketplace</option>
-            <option value="crypto">Coin Markets</option>
+            <option value="crypto">Coin Rates</option>
             <option value="sub">Subscription</option>
             <option value="profile">Profile</option>
           </select>
@@ -9576,6 +9578,32 @@ document.addEventListener('DOMContentLoaded', async()=>{
     localStorage.removeItem('datum_baselines_version');
     localStorage.setItem('datum_baselines_version','3');
   }
+  // Handle browser back/forward buttons
+  window.addEventListener('popstate', (e)=>{
+    const path=window.location.pathname;
+    const qs=new URLSearchParams(window.location.search);
+    // Map path back to SPA state
+    if(path==='/'||path==='') { S.page='land'; }
+    else if(path.startsWith('/marketplace/orderboard')) { S.page='market';S.mTab='board'; }
+    else if(path.startsWith('/marketplace/vendorlist/')){ S.page='market';S.mTab='vendors'; }
+    else if(path.startsWith('/marketplace/vendorlist')) { S.page='market';S.mTab='vendors'; }
+    else if(path.startsWith('/marketplace/openforum'))  { S.page='market';S.mTab='forum'; }
+    else if(path.startsWith('/financial/datumlist'))    { S.page='crypto';S.cryptoSub='assetlist'; }
+    else if(path.startsWith('/financial/coinmarkets'))  { S.page='crypto';S.cryptoSub='market'; }
+    else if(path.startsWith('/financial/watchlist'))    { S.page='crypto';S.cryptoSub='watchlist'; }
+    else if(path.startsWith('/financial'))              { S.page='crypto'; }
+    else if(path.startsWith('/blog/'))                  { S.page='blogpost'; }
+    else if(path.startsWith('/blog'))                   { S.page='blog'; }
+    else if(path.startsWith('/howtoguides/'))           { S.page='blogpost'; }
+    else if(path==='/subscribe')                        { S.page='sub'; }
+    else if(path==='/profile')                          { S.page='profile'; }
+    else if(path==='/kaykay')                           { S.page='kaykay'; }
+    else if(path==='/wallet')                           { S.page='wallet'; }
+    else { S.page='land'; }
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
   detectCurrency().then(()=>render());
   loadCoins();
   A.loadAdminProfile();
