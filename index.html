@@ -2112,7 +2112,7 @@ function userAvatar(userId,initials,size=34,style=''){
 function vendorWaLink(whatsapp,bizName,category){
   if(!whatsapp) return null;
   const cleanNum=whatsapp.replace(/[^0-9]/g,'');
-  const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music_entertainment:'Music & Entertainment',events:'Event Planner',electronics:'Electronics & Gadgets',catering:'Food Catering',music:'Music & Entertainment',entertainment:'Music & Entertainment'}[category]||category||'your business';
+  const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music_entertainment:'Music & Entertainment',events:'Event Planner',electronics:'Electronics & Gadgets',catering:'Food Catering',music:'Music & Entertainment',entertainment:'Music & Entertainment',energy:'Energy & Power',finance_pos:'Finance / Cash / POS'}[category]||category||'your business';
   const msg=`Hi ${bizName}, I found you on Toomuchcoin and I'm interested in ${catLabel}. Can you tell me more?`;
   return `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
 }
@@ -4120,6 +4120,8 @@ const P = {
       {id:'events',svg:VSVG.entertainment,label:'Event Planner',color:'#b45309'},
       {id:'electronics',svg:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,label:'Electronics & Gadgets',color:'#0284c7'},
       {id:'catering',svg:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>`,label:'Food Catering',color:'#16a34a'},
+      {id:'energy',svg:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,label:'Energy & Power',color:'#f59e0b'},
+      {id:'finance_pos',svg:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,label:'Finance / Cash / POS',color:'#10b981'},
     ];
     const NIGERIA=[
       'Abuja','Lagos','Ibadan','Kano','Port Harcourt','Benin City','Kaduna','Enugu',
@@ -4547,7 +4549,9 @@ const P = {
           {q:'Who is Toomuchcoin for?',a:` Toomuchcoin.com is for the Young-At-Heart and Free, meaning global citizens who share the freedom sentiment.<br><br>● Globetrotters and Freedom Enthusiasts<br>● Cyberpunks<br>● Hustlers, Creatives, Freelancers, and Traders<br><br>Toomuchcoin is built for the next generation of agentic commerce.`},
           {q:'What differentiates Toomuchcoin from others?',a:`What differentiates us from others is that we are truly empathetic to users needs and demands. The difference is empathy.`},
           {q:'What do I gain from using Toomuchcoin?',a:`You gain timeless financial knowledge that ensures your purse grows fatter with time — as well as the promise of commerce without boundaries.`},
-          {q:'What is Toomuchcoin x Datum?',a:'It is the amalgamation of the businesses under Datum - an extension of parent company, Datum Logistics.'}
+          {q:'What is Toomuchcoin x Datum?',a:'It is the amalgamation of the businesses under Datum - an extension of parent company, Datum Logistics.'},
+          {q:'What is the Open Forum?',a:'The Open Forum is a community space where users can discuss and share ideas, ask questions, and provide feedback on various topics related to Toomuchcoin and the broader financial landscape.'},
+          {q:'Do you have to pay to post a listing on marketplace?',a:'No'},
         ].map((f,i)=>`
         <div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);margin-bottom:10px;overflow:hidden">
           <button onclick="(function(){const b=document.getElementById('faq-${i}');const a=document.getElementById('faq-a-${i}');const open=b.style.display!=='none';b.style.display=open?'none':'block';a.style.transform=open?'rotate(0deg)':'rotate(180deg)'})()" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:var(--white);border:none;cursor:pointer;font-family:var(--fb);font-size:.9rem;font-weight:600;color:var(--t1);text-align:left" onmouseover="this.style.background='var(--off)'" onmouseout="this.style.background='var(--white)'">
@@ -5190,6 +5194,8 @@ const M = {
               <option value="events" ${catId==='events'?'selected':''}>Event Planner</option>
               <option value="electronics" ${catId==='electronics'?'selected':''}>Electronics & Gadgets</option>
               <option value="catering" ${catId==='catering'?'selected':''}>Food Catering</option>
+              <option value="energy" ${catId==='energy'?'selected':''}>Energy & Power</option>
+              <option value="finance_pos" ${catId==='finance_pos'?'selected':''}>Finance / Cash / POS</option>
             </select>
           </div>
           <div class="fg"><label>Price Range <span style="font-weight:400;color:var(--t3)">(optional)</span></label>
@@ -8192,7 +8198,7 @@ Rules:
     const waLink=vendorWaLink(v.whatsapp,v.bizName,v.category);
     const userVoted=(v.voterIds||[]).includes(S.user?.id);
     const isAdmin=S.user?.id===ADMIN_ID;
-    const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music:'Music Services',entertainment:'Entertainment'}[v.category]||v.category;
+    const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music:'Music Services',entertainment:'Entertainment',energy:'Energy & Power',finance_pos:'Finance / Cash / POS'}[v.category]||v.category;
 
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal modal-lg" style="max-width:680px;padding:0;overflow-y:auto;overflow-x:hidden;max-height:92vh">
@@ -9172,7 +9178,7 @@ Rules:
     toast('Vote cast! Results update at the end of the quarter.','ok');
   },
   async shareVendor(catId,city,bizName){
-    const label={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music:'Music Services',entertainment:'Entertainment'}[catId]||catId;
+    const label={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music:'Music Services',entertainment:'Entertainment',energy:'Energy & Power',finance_pos:'Finance / Cash / POS'}[catId]||catId;
     const slug=city.toLowerCase().replace(/\s+/g,'-');
     const url=window.location.origin+window.location.pathname+'?vendors='+catId+'&city='+slug;
     const text=bizName
@@ -9199,7 +9205,7 @@ Rules:
     const imgUrl=v?.posterIds?.[0]?fileUrl(v.posterIds[0])
       :v?.logoId?fileUrl(v.logoId)
       :'https://www.toomuchcoin.com/toomuchcoin.png';
-    const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music_entertainment:'Music & Entertainment',events:'Event Planner',electronics:'Electronics & Gadgets',catering:'Food Catering'}[catId]||catId;
+    const catLabel={logistics:'Logistics',restaurant:'Restaurant',airline:'Airline',cafe:'Café',spa:'Spa & Wellness',hotel:'Hotel',mechanic:'Auto Mechanic',plumbing:'Plumbing & HVAC',convenience:'Convenience Store',spotlight:'Secret Insider Spotlight',music_entertainment:'Music & Entertainment',events:'Event Planner',electronics:'Electronics & Gadgets',catering:'Food Catering',energy:'Energy & Power',finance_pos:'Finance / Cash / POS'}[catId]||catId;
     const excerpt=v?.tagline||(catLabel+' in '+city+', found on Toomuchcoin');
     // Clean URL for vendor
     const cleanVendorUrl=`https://www.toomuchcoin.com/marketplace/vendorlist/${slug}`;
