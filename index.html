@@ -876,15 +876,22 @@ const W={
 
       // Load or create wallet
       let walletDoc=null;
-      try{
-        const r=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
-          Query.equal('userId',[S.user.id]),
-          Query.limit(1),
-        ]);
-        walletDoc=r.documents[0]||null;
-        console.log('TMC: wallet doc found?',!!walletDoc);
-      }catch(e){
-        console.warn('TMC: wallet fetch failed',e.message);
+      const walletCached=_cacheGet('tmc_wallet_'+S.user.id,60000); // 1 min cache
+      if(walletCached){
+        walletDoc=walletCached;
+        console.log('TMC: wallet from cache');
+      } else {
+        try{
+          const r=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
+            Query.equal('userId',[S.user.id]),
+            Query.limit(1),
+          ]);
+          walletDoc=r.documents[0]||null;
+          if(walletDoc) _cacheSet('tmc_wallet_'+S.user.id,walletDoc);
+          console.log('TMC: wallet doc found?',!!walletDoc);
+        }catch(e){
+          console.warn('TMC: wallet fetch failed',e.message);
+        }
       }
 
       if(walletDoc){
@@ -1007,6 +1014,7 @@ const W={
   // ── Core earn function ──
   async earn(type,description,refId){
     if(!S.user){console.warn('TMC earn: no user');return;}
+    _cacheClear('tmc_wallet_'+S.user.id);
     if(!W.wallet){console.warn('TMC earn: no wallet');return;}
     const rate=W.config[type];
     if(!rate){console.warn('TMC earn: no rate for type',type);return;}
@@ -1965,12 +1973,25 @@ function kkAnimateBars(){
 
 function startNotifPoll(){
   if(_ntfrt) clearInterval(_ntfrt);
+  // 3 minutes for Pro, 10 minutes for free users
+  const interval=S.subscribed?180000:600000;
   _ntfrt=setInterval(async()=>{
     if(!S.user) return;
-    await loadNotifications();
-    // Only re-render the nav badge — not the whole page
-    renderNav();
-  },30000);
+    // Only fetch unread count first to avoid unnecessary full fetches
+    try{
+      const r=await DB.list('notifications',[
+        Query.equal('userId',[S.user.id]),
+        Query.equal('read',[false]),
+        Query.limit(1), // just need to know if any exist
+      ]);
+      const newUnread=r.total||0;
+      if(newUnread!==S.notifUnread){
+        // Only do the full fetch if count changed
+        await loadNotifications();
+        renderNav();
+      }
+    }catch(e){}
+  },interval);
 }
 
 function mapOrder(d){
@@ -2252,11 +2273,14 @@ async function loadNotifications(){
 
 async function loadNotifPrefs(){
   if(!S.user) return;
+  const cached=_cacheGet('notifprefs_'+S.user.id,1800000);
+  if(cached){S.notifPrefs=cached.prefs;S.notifPrefsDocId=cached.id;return;}
   const r=await DB.list('notif_prefs',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
   const doc=r.documents[0];
   if(doc){
     S.notifPrefs={categories:doc.categories||[],pushEnabled:doc.pushEnabled||false};
     S.notifPrefsDocId=doc.$id;
+    _cacheSet('notifprefs_'+S.user.id,{prefs:S.notifPrefs,id:doc.$id});
   }
 }
 
@@ -2379,20 +2403,119 @@ async function loadChat(){
 }
 async function loadWatchlist(){
   if(!S.user)return;
+  const cached=_cacheGet('watchlist_'+S.user.id,1800000); // 30 min cache
+  if(cached){S.watchlist=new Set(cached.ids);S.wlDocId=cached.id;return;}
   const r=await DB.list('watchlist',[Query.equal('userId',[S.user.id]),Query.limit(1)]);
   const doc=r.documents[0];
-  if(doc){S.watchlist=new Set(doc.coinIds||[]);S.wlDocId=doc.$id;}
+  if(doc){S.watchlist=new Set(doc.coinIds||[]);S.wlDocId=doc.$id;_cacheSet('watchlist_'+S.user.id,{ids:doc.coinIds||[],id:doc.$id});}
 }
 async function saveWatchlist(){
   if(!S.user)return;
+  _cacheClear('watchlist_'+S.user.id);
   const coinIds=[...S.watchlist];
   try{
     if(S.wlDocId)await DB.update('watchlist',S.wlDocId,{coinIds});
     else{const d=await DB.create('watchlist',{userId:S.user.id,coinIds});S.wlDocId=d.$id;}
   }catch(e){console.warn('wl:',e.message);}
 }
+// ── Global read cache ──
+const _cache={};
+function _cacheGet(key,maxAgeMs=300000){
+  const e=_cache[key];
+  if(e&&(Date.now()-e.t)<maxAgeMs) return e.v;
+  return null;
+}
+function _cacheSet(key,val){_cache[key]={v:val,t:Date.now()};}
+function _cacheClear(key){delete _cache[key];}
+
+// ── Offline / network error handling ──
+let _isOffline=false;
+let _offlineBanner=null;
+
+function _showOfflineBanner(){
+  if(_offlineBanner) return;
+  _offlineBanner=document.createElement('div');
+  _offlineBanner.id='offline-banner';
+  _offlineBanner.innerHTML=`
+    <div style="position:fixed;top:60px;left:0;right:0;z-index:9999;display:flex;justify-content:center;padding:8px 16px;pointer-events:none">
+      <div style="display:inline-flex;align-items:center;gap:10px;background:#1a1916;color:#fff;border-radius:100px;padding:10px 20px;font-size:.8125rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.3);pointer-events:all;animation:slideDown .3s ease">
+        <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;animation:blink 1.4s infinite"></div>
+        <span id="offline-msg">You're offline — some features may not work</span>
+        <button onclick="_retryConnection()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:100px;padding:4px 12px;font-size:.75rem;cursor:pointer;font-family:var(--fb);white-space:nowrap" id="offline-retry-btn">Retry</button>
+      </div>
+    </div>`;
+  const style=document.createElement('style');
+  style.textContent='@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}';
+  document.head.appendChild(style);
+  document.body.appendChild(_offlineBanner);
+}
+
+function _hideOfflineBanner(){
+  if(_offlineBanner){_offlineBanner.remove();_offlineBanner=null;}
+}
+
+async function _retryConnection(){
+  const btn=document.getElementById('offline-retry-btn');
+  const msg=document.getElementById('offline-msg');
+  if(btn){btn.textContent='Checking…';btn.disabled=true;}
+  try{
+    await fetch('https://www.toomuchcoin.com/toomuchcoin.png?_='+Date.now(),{method:'HEAD',cache:'no-store',signal:AbortSignal.timeout(5000)});
+    _isOffline=false;
+    _hideOfflineBanner();
+    // Reload critical data
+    if(S.user){
+      await Promise.all([loadNotifications(),loadSubscription()]);
+      renderNav();
+    }
+    toast('Back online!','ok');
+  }catch(e){
+    if(msg) msg.textContent='Still offline — check your connection';
+    if(btn){btn.textContent='Retry';btn.disabled=false;}
+  }
+}
+
+// Detect online/offline
+window.addEventListener('offline',()=>{
+  _isOffline=true;
+  _showOfflineBanner();
+});
+window.addEventListener('online',async()=>{
+  // Browser says online but verify with a real request
+  try{
+    await fetch('https://www.toomuchcoin.com/toomuchcoin.png?_='+Date.now(),{method:'HEAD',cache:'no-store',signal:AbortSignal.timeout(5000)});
+    _isOffline=false;
+    _hideOfflineBanner();
+    toast('Back online!','ok');
+    if(S.user) await Promise.all([loadNotifications(),renderNav()]);
+  }catch(e){} // still actually offline
+});
+
+// Intercept Appwrite failures globally and show banner
+const _origFetch=window.fetch;
+window.fetch=async function(...args){
+  try{
+    const res=await _origFetch(...args);
+    // If Appwrite returns 429 (rate limit hit), show a special message
+    if(res.status===429&&String(args[0]).includes('appwrite')){
+      _showOfflineBanner();
+      const msg=document.getElementById('offline-msg');
+      if(msg) msg.textContent='Appwrite limit reached — please try again shortly';
+    }
+    return res;
+  }catch(e){
+    // Network failure
+    if(!_isOffline&&String(args[0]).includes('appwrite')){
+      _isOffline=true;
+      _showOfflineBanner();
+    }
+    throw e;
+  }
+};
+
 async function loadSubscription(){
   if(!S.user){S.subscribed=false;S.subStatus=null;return;}
+  const cached=_cacheGet('subscription_'+S.user.id,120000);
+  if(cached){S.subStatus=cached.status;S.subscribed=cached.subscribed;S._subPeriodEnd=cached.periodEnd;S._trialDoc=cached.trialDoc;return;}
   const r=await DB.list('subscription',[
     Query.equal('userId',[S.user.id]),
     Query.orderDesc('$createdAt'),
@@ -2459,11 +2582,15 @@ async function loadSubscription(){
 
   S.subStatus=status;
   S.subscribed=status==='active';
+  _cacheSet('subscription_'+S.user.id,{status:S.subStatus,subscribed:S.subscribed,periodEnd:S._subPeriodEnd,trialDoc:S._trialDoc});
 }
 async function loadVerifyStatus(){
   if(!S.user){S.verifyStatus=null;return;}
+  const cached=_cacheGet('verify_'+S.user.id,600000); // 10 min cache
+  if(cached!==null){S.verifyStatus=cached;return;}
   const r=await DB.list('verifications',[Query.equal('userId',[S.user.id]),Query.orderDesc('$createdAt'),Query.limit(1)]);
   S.verifyStatus=r.documents[0]?.status||null;
+  _cacheSet('verify_'+S.user.id,S.verifyStatus);
 }
 async function loadSentConnections(){
   if(!S.user) return;
@@ -6798,6 +6925,8 @@ const A = {
 
   // Cache of all platform users for @mention lookup — loaded once, reused
   async _loadAllUsersForMention(forceReload=false){
+    const cached=_cacheGet('mention_users',1800000); // 30 min cache
+    if(cached&&!forceReload){S._allUsersCache=cached;return cached;}
     if(S._allUsersCache&&!forceReload) return S._allUsersCache;
     try{
       let all=[];
@@ -6817,6 +6946,7 @@ const A = {
         name:d.name,
         inits:initials(d.name),
       })).filter(u=>u.userId&&u.name);
+      _cacheSet('mention_users',S._allUsersCache);
       console.log('[mention] usable users after filter:',S._allUsersCache.length);
       return S._allUsersCache;
     }catch(e){
