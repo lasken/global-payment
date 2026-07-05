@@ -1216,6 +1216,41 @@ const W={
     await W.earn('guide_read','Read a How-To Guide — '+guideId,guideId);
   },
 
+  // ── Cash exchange request ──
+  async submitCashExchange(){
+    const amtRaw=parseFloat(document.getElementById('tmc-exchange-amount')?.value);
+    const bank=document.getElementById('tmc-exchange-bank')?.value?.trim();
+    const acct=document.getElementById('tmc-exchange-acct')?.value?.trim();
+    const name=document.getElementById('tmc-exchange-name')?.value?.trim();
+    const err=document.getElementById('tmc-exchange-err');
+    const min=W.config.cashExchangeMin||10;
+    if(!amtRaw||isNaN(amtRaw)||amtRaw<min){err.textContent=`Minimum exchange is ${min} TMC.`;return;}
+    if(amtRaw>(W.wallet?.balance||0)){err.textContent='Insufficient TMC balance.';return;}
+    if(!bank){err.textContent='Please enter your bank name.';return;}
+    if(!acct||acct.length!==10||isNaN(Number(acct))){err.textContent='Please enter a valid 10-digit account number.';return;}
+    if(!name){err.textContent='Please enter your account name.';return;}
+    if(!confirm(`Exchange ${amtRaw.toFixed(3)} TMC for ₦${Math.round(amtRaw*(W.config.nairaPerTmc||306.08)).toLocaleString()}?\n\nBank: ${bank}\nAccount: ${acct}\nName: ${name}\n\nThis is non-reversible.`)) return;
+    const nairaAmount=Math.round(amtRaw*(W.config.nairaPerTmc||306.08));
+    // Deduct TMC first
+    const ok=await W.spend(amtRaw,'spend_commission',`Cash exchange — ₦${nairaAmount.toLocaleString()} to ${bank} ${acct}`,'');
+    if(!ok) return;
+    // Notify admin to process
+    await createNotif(ADMIN_ID,'commission',
+      `💸 Cash exchange request — ${S.user.name}`,
+      `User: ${S.user.name} (${S.user.email})\nAmount: ${amtRaw.toFixed(3)} TMC = ₦${nairaAmount.toLocaleString()}\nBank: ${bank}\nAccount: ${acct}\nName: ${name}\nProcess within 24 hours.`,
+      'profile','',''
+    );
+    // Notify user
+    await createNotif(S.user.id,'subscription',
+      'Cash exchange request received ✓',
+      `Your request to exchange ${amtRaw.toFixed(3)} TMC (≈ ₦${nairaAmount.toLocaleString()}) to ${bank} ${acct} has been received. We'll process it within 24 hours.`,
+      'wallet','',''
+    );
+    err.textContent='';
+    toast(`Exchange submitted! ₦${nairaAmount.toLocaleString()} will be sent to ${bank} ${acct} within 24 hours.`,'ok');
+    render(); // refresh wallet page with new balance
+  },
+
   // ── Format balance for display ──
   fmt(n){
     if(n==null) return'—';
@@ -1326,6 +1361,46 @@ const W={
           </div>`).join('')}
         </div>
       </div>
+
+      ${S.subscribed?`
+      <!-- Cash Exchange — Pro only -->
+      <div style="background:var(--off);border:1.5px solid rgba(212,175,55,.25);border-radius:var(--rmd);padding:18px;margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span style="font-weight:700;font-size:.875rem">Exchange $TMC for Cash</span>
+          <span class="tag tpur" style="font-size:.65rem">Pro</span>
+        </div>
+        <div style="font-size:.78rem;color:var(--t2);margin-bottom:14px;line-height:1.5">
+          Exchange your $TMC balance for real money. Minimum <strong>${W.config.cashExchangeMin||10} TMC</strong>. 
+          Rate: <strong>1 TMC = ₦${(W.config.nairaPerTmc||306.08).toFixed(2)}</strong> · processed within 24 hours.
+        </div>
+        <div class="fg" style="margin-bottom:10px">
+          <label>Amount to exchange (TMC)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="tmc-exchange-amount" placeholder="Min ${W.config.cashExchangeMin||10} TMC" min="${W.config.cashExchangeMin||10}" max="${(w?.balance||0).toFixed(3)}" step="0.001" style="flex:1" oninput="(function(){const v=parseFloat(document.getElementById('tmc-exchange-amount').value)||0;const rate=${W.config.nairaPerTmc||306.08};document.getElementById('tmc-exchange-preview').textContent=v>0?'≈ ₦'+Math.round(v*rate).toLocaleString():'';})()"/>
+            <button class="btn bg bsm" onclick="document.getElementById('tmc-exchange-amount').value='${Math.floor((w?.balance||0)*1000)/1000}';document.getElementById('tmc-exchange-preview').textContent='≈ ₦'+Math.round((${w?.balance||0})*${W.config.nairaPerTmc||306.08}).toLocaleString()">Max</button>
+          </div>
+          <div id="tmc-exchange-preview" style="font-size:.8rem;color:#D4AF37;font-weight:600;margin-top:5px;min-height:18px"></div>
+        </div>
+        <div class="fg" style="margin-bottom:10px">
+          <label>Your bank account</label>
+          <input type="text" id="tmc-exchange-bank" placeholder="Bank name e.g. Zenith Bank"/>
+        </div>
+        <div class="fg" style="margin-bottom:14px">
+          <label>Account number</label>
+          <input type="text" id="tmc-exchange-acct" placeholder="10-digit account number" maxlength="10" pattern="[0-9]*" inputmode="numeric"/>
+        </div>
+        <div class="fg" style="margin-bottom:14px">
+          <label>Account name</label>
+          <input type="text" id="tmc-exchange-name" placeholder="As on your bank account"/>
+        </div>
+        <div class="ferr" id="tmc-exchange-err"></div>
+        <button class="btn" style="width:100%;justify-content:center;padding:12px;background:#D4AF37;color:#1a1408;border:none;font-weight:700" onclick="W.submitCashExchange()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Request Cash Exchange
+        </button>
+        <div style="font-size:.72rem;color:var(--t3);margin-top:8px;text-align:center">TMC will be deducted immediately · Cash transferred within 24 hours · Non-reversible</div>
+      </div>`:''}
 
       <!-- Transaction history -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
