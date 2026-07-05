@@ -733,7 +733,11 @@ const DB = {
   me()            { return _acc.get().catch(()=>null) },
   login(e,p)      { return _acc.createEmailPasswordSession(e,p) },
   register(e,p,n) { return _acc.create(ID.unique(),e,p,n) },
-  logout()        { return _acc.deleteSession('current').catch(()=>{}) },
+  logout(){
+    stopRealtimeNotifs();
+    Object.keys(_cache).forEach(k=>_cacheClear(k));
+    return _acc.deleteSession('current').catch(()=>{});
+  },
   list(col,q=[])  { return _db.listDocuments(AW_DB_ID,AW_COL[col],q).catch(()=>({documents:[]})); },
   create(col,data){ return _db.createDocument(AW_DB_ID,AW_COL[col],ID.unique(),data); },
   update(col,id,d){ return _db.updateDocument(AW_DB_ID,AW_COL[col],id,d); },
@@ -2046,28 +2050,184 @@ function kkAnimateBars(){
   }
 }
 
+// ── Realtime subscription handle ──
+let _realtimeSub=null;
+
 function startNotifPoll(){
-  if(_ntfrt) clearInterval(_ntfrt);
-  // 3 minutes for Pro, 10 minutes for free users
-  const interval=S.subscribed?180000:600000;
-  _ntfrt=setInterval(async()=>{
-    if(!S.user) return;
-    // Only fetch unread count first to avoid unnecessary full fetches
-    try{
-      const r=await DB.list('notifications',[
-        Query.equal('userId',[S.user.id]),
-        Query.equal('read',[false]),
-        Query.limit(1), // just need to know if any exist
-      ]);
-      const newUnread=r.total||0;
-      if(newUnread!==S.notifUnread){
-        // Only do the full fetch if count changed
-        await loadNotifications();
-        renderNav();
-      }
-    }catch(e){}
-  },interval);
+  // Kill any old interval-based polling
+  if(_ntfrt){clearInterval(_ntfrt);_ntfrt=null;}
+  // Start Realtime instead
+  startRealtimeNotifs();
 }
+
+function startRealtimeNotifs(){
+  if(!S.user) return;
+  // Unsubscribe from any previous realtime connection first
+  if(_realtimeSub){
+    try{_realtimeSub();}catch(e){}
+    _realtimeSub=null;
+  }
+  try{
+    // Subscribe to the notifications collection for this user's documents
+    _realtimeSub=_cl.subscribe(
+      [
+        `databases.${AW_DB_ID}.collections.${AW_COL.notifications}.documents`,
+      ],
+      (response)=>{
+        // Only process events for THIS user's notifications
+        const doc=response.payload;
+        if(!doc||doc.userId!==S.user.id) return;
+
+        const eventType=response.events[0]||'';
+
+        if(eventType.includes('.create')){
+          // A new notification was created for this user
+          // Add it to the top of the list without a full DB fetch
+          const newNotif={
+            id        :doc.$id,
+            type      :doc.type||'info',
+            title     :doc.title||'',
+            message   :doc.message||'',
+            read      :doc.read||false,
+            link      :doc.link||'',
+            refId     :doc.refId||'',
+            createdAt :doc.$createdAt,
+          };
+          S.notifications=S.notifications||[];
+          // Avoid duplicates
+          if(!S.notifications.find(n=>n.id===newNotif.id)){
+            S.notifications.unshift(newNotif);
+          }
+          if(!newNotif.read){
+            S.notifUnread=(S.notifUnread||0)+1;
+            // Flash the bell icon
+            renderNav();
+            // Show a toast for important types
+            if(['connection','deal','review','mention'].includes(newNotif.type)){
+              toast('🔔 '+newNotif.title,'ok');
+            }
+          }
+          if(S.notifOpen) renderNotifPanel();
+        }
+
+        if(eventType.includes('.update')){
+          // A notification was marked as read
+          const existing=S.notifications?.find(n=>n.id===doc.$id);
+          if(existing){
+            const wasUnread=!existing.read;
+            existing.read=doc.read;
+            if(wasUnread&&doc.read){
+              S.notifUnread=Math.max(0,(S.notifUnread||0)-1);
+            }
+            renderNav();
+            if(S.notifOpen) renderNotifPanel();
+          }
+        }
+
+        if(eventType.includes('.delete')){
+          S.notifications=(S.notifications||[]).filter(n=>n.id!==doc.$id);
+          renderNav();
+          if(S.notifOpen) renderNotifPanel();
+        }
+      }
+    );
+    console.log('Realtime: notifications subscribed');
+
+    // Also subscribe to orders for live marketplace updates
+    _cl.subscribe(
+      [`databases.${AW_DB_ID}.collections.${AW_COL.orders}.documents`],
+      (response)=>{
+        if(!S.user||S.page!=='market') return; // only process if on marketplace
+        const doc=response.payload;
+        const eventType=response.events[0]||'';
+        if(eventType.includes('.create')){
+          // New order posted — add to top if it matches current filter
+          const newOrder={
+            id        :doc.$id,
+            userId    :doc.userId,
+            title     :doc.title,
+            category  :doc.category,
+            type      :doc.type,
+            price     :doc.price,
+            desc      :doc.desc||'',
+            status    :doc.status||'open',
+            imageId   :doc.imageId||'',
+            createdAt :doc.$createdAt,
+            views     :doc.views||0,
+            connects  :doc.connects||0,
+          };
+          S.orders=S.orders||[];
+          if(!S.orders.find(o=>o.id===newOrder.id)){
+            S.orders.unshift(newOrder);
+            if(S.page==='market') render(); // refresh marketplace silently
+          }
+        }
+        if(eventType.includes('.update')){
+          const idx=(S.orders||[]).findIndex(o=>o.id===doc.$id);
+          if(idx>-1){
+            Object.assign(S.orders[idx],{
+              title:doc.title,status:doc.status,price:doc.price,desc:doc.desc,
+            });
+            if(S.page==='market') render();
+          }
+        }
+        if(eventType.includes('.delete')){
+          S.orders=(S.orders||[]).filter(o=>o.id!==doc.$id);
+          if(S.page==='market') render();
+        }
+      }
+    );
+  }catch(e){
+    console.warn('Realtime subscribe failed, falling back to polling:',e.message);
+    // Graceful fallback — if Realtime fails, use slow polling
+    _ntfrt=setInterval(async()=>{
+      if(!S.user) return;
+      try{
+        const r=await DB.list('notifications',[
+          Query.equal('userId',[S.user.id]),
+          Query.equal('read',[false]),
+          Query.limit(1),
+        ]);
+        const newUnread=r.total||0;
+        if(newUnread!==S.notifUnread){
+          await loadNotifications();
+          renderNav();
+        }
+      }catch(e){}
+    },600000); // 10 min fallback only
+  }
+}
+
+function stopRealtimeNotifs(){
+  if(_realtimeSub){
+    try{_realtimeSub();}catch(e){}
+    _realtimeSub=null;
+    console.log('Realtime: notifications unsubscribed');
+  }
+}
+
+// Auto-reconnect Realtime when tab becomes visible again
+// (e.g. user comes back to the tab after phone sleep)
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&S.user){
+    // Check if realtime connection is still alive
+    if(!_realtimeSub){
+      console.log('Realtime: reconnecting after visibility change');
+      startRealtimeNotifs();
+    }
+    // Also do one fresh load to catch anything missed while tab was hidden
+    loadNotifications().then(()=>renderNav()).catch(()=>{});
+  }
+});
+
+// Reconnect after coming back online
+window.addEventListener('online',async()=>{
+  if(S.user){
+    setTimeout(()=>{
+      if(!_realtimeSub) startRealtimeNotifs();
+    },2000); // small delay to let network stabilise
+  }
+});
 
 function mapOrder(d){
   return {id:d.$id,userId:d.userId,userName:d.userName,userInitials:d.userInitials,
