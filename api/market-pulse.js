@@ -53,26 +53,29 @@ export default async function handler(req, res) {
     }
     body += ' Open Toomuchcoin for full analysis.';
 
-    // 6. Send via OneSignal
-    const osRes = await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${process.env.ONESIGNAL_REST_API_KEY}`,
-      },
-      body: JSON.stringify({
-        app_id: process.env.ONESIGNAL_APP_ID,
-        included_segments: ['All'],
-        headings: { en: title },
-        contents: { en: body },
-        url: 'https://www.toomuchcoin.com/financial/coinmarkets',
-        chrome_web_icon: 'https://www.toomuchcoin.com/toomuchcoin.png',
-        firefox_icon: 'https://www.toomuchcoin.com/toomuchcoin.png',
-      }),
-    });
+    // 6. Trigger existing Appwrite push function
+    const fnRes = await fetch(
+      'https://cloud.appwrite.io/v1/functions/6a33308800352853e374/executions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Appwrite-Project': '6a163159003bd203c63f',
+        },
+        body: JSON.stringify({
+          body: JSON.stringify({
+            title,
+            body,
+            url: 'https://www.toomuchcoin.com/financial/coinmarkets',
+            segment: 'All',
+          }),
+          async: true,
+        }),
+      }
+    );
 
-    const osData = await osRes.json();
-    return res.status(200).json({ success: true, notif: osData, gainers, watchCoin });
+    const fnData = await fnRes.json();
+    return res.status(200).json({ success: true, fn: fnData, gainers, watchCoin });
 
   } catch (e) {
     console.error('Market pulse error:', e);
