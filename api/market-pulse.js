@@ -40,7 +40,8 @@ export default async function handler(req, res) {
     // 5. Build notification message
     const top = gainers[0];
     const watchCoin = volSpikes[0];
-    let title = `🔥 ${top?.symbol?.toUpperCase()} +${top?.price_change_percentage_24h?.toFixed(1)}% — Today's top mover`;
+    
+    let title = `${top?.symbol?.toUpperCase()} +${top?.price_change_percentage_24h?.toFixed(1)}% — Today's top mover`;
     let body = ``;
     if (gainers.length) {
       body += `Top gainers: ${gainers.map(c => `${c.symbol.toUpperCase()} +${c.price_change_percentage_24h.toFixed(1)}%`).join(', ')}. `;
@@ -66,6 +67,7 @@ export default async function handler(req, res) {
           body: JSON.stringify({
             title,
             body,
+            icon: 'https://www.toomuchcoin.com/toomuchcoin.png', 
             url: 'https://www.toomuchcoin.com/financial/coinmarkets',
             segment: 'All',
           }),
