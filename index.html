@@ -4099,9 +4099,88 @@ const P = {
     const slice=filtered.slice(start,start+S.cps);
     const maxPg=7;
     return`
+      <!-- Market Pulse Card -->
+      ${(()=>{
+        if(!S.coins||S.coins.length<10) return '';
+        const gainers=[...S.coins].filter(c=>c.chg>0).sort((a,b)=>b.chg-a.chg).slice(0,3);
+        const losers=[...S.coins].filter(c=>c.chg<0).sort((a,b)=>a.chg-b.chg).slice(0,3);
+        const MEME=['DOGE','SHIB','PEPE','FLOKI','BONK','WIF','MEME','BOME','POPCAT','TURBO','MOG','BRETT'];
+        const hotMemes=[...S.coins].filter(c=>MEME.includes(c.sym.toUpperCase())&&c.chg>0).sort((a,b)=>b.chg-a.chg).slice(0,2);
+        const volSpikes=[...S.coins].filter(c=>c.vol&&c.mktcap&&c.mktcap>0).map(c=>({...c,vr:c.vol/c.mktcap})).filter(c=>c.vr>0.1).sort((a,b)=>b.vr-a.vr).slice(0,3);
+        const pulse=[...gainers].slice(0,1)[0];
+        if(!pulse) return '';
+        return`<div style="background:linear-gradient(135deg,#FBF8EC,#fff8e6);border:1.5px solid rgba(212,175,55,.25);border-radius:var(--rmd);padding:16px 18px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#D4AF37;animation:blink 1.4s infinite"></div>
+              <span style="font-weight:700;font-size:.8125rem;color:#1a1408">Market Pulse</span>
+              <span style="font-size:.72rem;color:rgba(26,20,8,.4)">Updated ${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span>
+            </div>
+            <span style="font-size:.72rem;color:rgba(212,175,55,.8);cursor:pointer;font-weight:600" onclick="loadCoins().then(()=>render())">↻ Refresh</span>
+          </div>
+          <!-- Gainers -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px">🔥 Top Gainers</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${gainers.map(c=>`
+              <div onclick="A.openCoin('${c.id}')" style="flex:1;min-width:100px;background:#fff;border:1px solid rgba(212,175,55,.2);border-radius:var(--rsm);padding:8px 10px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#D4AF37'" onmouseout="this.style.borderColor='rgba(212,175,55,.2)'">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                  ${coinIcon(c,0,22)}
+                  <span style="font-weight:700;font-size:.75rem">${c.sym}</span>
+                </div>
+                <div style="font-size:.8rem;font-weight:700;color:#16a34a">+${c.chg.toFixed(2)}%</div>
+                <div style="font-size:.7rem;color:var(--t3)">${fmtp(c.price)}</div>
+              </div>`).join('')}
+            </div>
+          </div>
+          <!-- Volume Spikes / Ones to watch -->
+          ${volSpikes.length?`<div style="margin-bottom:10px">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px">📡 Volume Spike — Watch These</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${volSpikes.map(c=>`
+              <div onclick="A.openCoin('${c.id}')" style="flex:1;min-width:100px;background:#fff;border:1px solid rgba(212,175,55,.2);border-radius:var(--rsm);padding:8px 10px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#D4AF37'" onmouseout="this.style.borderColor='rgba(212,175,55,.2)'">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                  ${coinIcon(c,1,22)}
+                  <span style="font-weight:700;font-size:.75rem">${c.sym}</span>
+                </div>
+                <div style="font-size:.7rem;color:#D4AF37;font-weight:600">Vol ${(c.vr*100).toFixed(0)}% of MCap</div>
+                <div style="font-size:.7rem;color:var(--t3)">${fmtp(c.price)} <span class="${c.chg>=0?'cp':'cn'}">${fmtpct(c.chg)}</span></div>
+              </div>`).join('')}
+            </div>
+          </div>`:''}
+          <!-- Hot Memes -->
+          ${hotMemes.length?`<div>
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px">😂 Hot Memes</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${hotMemes.map(c=>`
+              <div onclick="A.openCoin('${c.id}')" style="flex:1;min-width:100px;background:#fff;border:1px solid rgba(212,175,55,.2);border-radius:var(--rsm);padding:8px 10px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#D4AF37'" onmouseout="this.style.borderColor='rgba(212,175,55,.2)'">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                  ${coinIcon(c,2,22)}
+                  <span style="font-weight:700;font-size:.75rem">${c.sym}</span>
+                </div>
+                <div style="font-size:.8rem;font-weight:700;color:#16a34a">+${c.chg.toFixed(2)}%</div>
+                <div style="font-size:.7rem;color:var(--t3)">${fmtp(c.price)}</div>
+              </div>`).join('')}
+            </div>
+          </div>`:''}
+          <!-- Biggest drops -->
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(212,175,55,.15)">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px">📉 Biggest Drops — Dip Watch</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              ${losers.map(c=>`
+              <div onclick="A.openCoin('${c.id}')" style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid rgba(196,48,48,.15);border-radius:100px;padding:5px 10px;cursor:pointer;font-size:.75rem;transition:all .15s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(196,48,48,.15)'">
+                ${coinIcon(c,3,18)}
+                <span style="font-weight:600">${c.sym}</span>
+                <span style="color:var(--red);font-weight:700">${fmtpct(c.chg)}</span>
+              </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      })()}
+
       <div class="mtbar">
-        <div class="swrap"><i data-lucide="search" style="width:14px;height:14px"></i><input type="text" placeholder="Search assets…" value="${S.csearch}" oninput="A.cSearch(this.value)"/></div>
-        <span style="font-size:.8rem;color:var(--t2);margin-left:auto">${total.toLocaleString()} result${total!==1?'s':''}</span>
+        <div class="swrap"><i data-lucide="search" style="width:14px;height:14px"></i><input type="text" id="coin-search-input" placeholder="Search assets…" value="${S.csearch}" oninput="A.cSearchLive(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/></div>
+        <span style="font-size:.8rem;color:var(--t2);margin-left:auto" id="coin-search-count">${total.toLocaleString()} result${total!==1?'s':''}</span>
       </div>
       <div class="mtwrap">
         <table>${thead}<tbody>${slice.map((c,i)=>tblRow(c,start+i)).join('')}</tbody></table>
@@ -8248,6 +8327,52 @@ Rules:
     lucide.createIcons();
   },
   cSearch(q){ S.csearch=q; S.cpage=1; render(); },
+  cSearchLive(q){
+    S.csearch=q; S.cpage=1;
+    // Update only the table and count — never the input itself
+    const filtered=q.trim().toLowerCase()
+      ?S.coins.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||c.sym.toLowerCase().includes(q.toLowerCase()))
+      :S.coins;
+    const total=filtered.length;
+    const countEl=document.getElementById('coin-search-count');
+    if(countEl) countEl.textContent=total.toLocaleString()+' result'+(total!==1?'s':'');
+    // Rebuild just the table body
+    const tbody=document.querySelector('.mtwrap tbody');
+    const pgn=document.querySelector('.pgn');
+    if(!tbody) return;
+    const pages=Math.max(1,Math.ceil(total/S.cps));
+    const pg=Math.min(S.cpage,pages);
+    const start=(pg-1)*S.cps;
+    const slice=filtered.slice(start,start+S.cps);
+    tbody.innerHTML=slice.map((c,i)=>{
+      const pos=c.chg>=0;const st=S.watchlist.has(c.id);
+      return`<tr onclick="A.openCoin('${c.id}')">
+        <td style="color:var(--t3);font-size:.78rem">${c.rank||start+i+1}</td>
+        <td><div class="acell">${coinIcon(c,start+i,34)}<div><div class="aname">${c.name}</div><div class="asym">${c.sym}</div></div></div></td>
+        <td class="r price-c">${fmtp(c.price)}</td>
+        <td class="r ${pos?'cp':'cn'}">${fmtpct(c.chg)}</td>
+        <td class="r" onclick="event.stopPropagation()">
+          <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
+            <button class="wbtn" onclick="A.setAlert('${c.id}','${c.name}',${c.price})"><i data-lucide="bell" style="width:13px;height:13px"></i></button>
+            <button class="wbtn ${st?'on':''}" onclick="A.toggleWatch('${c.id}')"><i data-lucide="star" style="width:15px;height:15px;${st?'fill:currentColor':''}"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    if(pgn){
+      const maxPg=7;
+      pgn.innerHTML=`<span class="pgninf">Page ${pg} / ${pages} &nbsp;•&nbsp; ${total.toLocaleString()} assets</span>
+        <div class="pgnc">
+          <button class="pgbtn" onclick="A.cPage(${pg-1})" ${pg<=1?'disabled':''}><i data-lucide="chevron-left" style="width:13px;height:13px"></i></button>
+          ${Array.from({length:Math.min(pages,maxPg)},(_,i)=>{const p=i+1;return`<button class="pgbtn ${p===pg?'on':''}" onclick="A.cPage(${p})">${p}</button>`;}).join('')}
+          ${pages>maxPg?`<span style="padding:0 4px;color:var(--t3);font-size:.78rem">…${pages}</span>`:''}
+          <button class="pgbtn" onclick="A.cPage(${pg+1})" ${pg>=pages?'disabled':''}><i data-lucide="chevron-right" style="width:13px;height:13px"></i></button>
+        </div>`;
+    }
+    lucide.createIcons();
+    // Keep focus on the input — crucial
+    document.getElementById('coin-search-input')?.focus();
+  },
   cPage(p){
     const q=S.csearch.toLowerCase().trim();
     const coins=q?S.coins.filter(c=>c.name.toLowerCase().includes(q)||c.sym.toLowerCase().includes(q)):S.coins;
