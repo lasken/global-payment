@@ -1,28 +1,23 @@
 const CACHE = 'toomuchcoin-v3';
 
-self.addEventListener('install', () => self.skipWaiting());
+// Let OneSignal handle its own messages
+self.addEventListener('message', e => {
+  if (!e.data) return;
+  // Ignore OneSignal internal messages silently
+  if (e.data.type && e.data.type.startsWith('onesignal')) return;
+});
+
+self.addEventListener('install', e => {
+  self.skipWaiting();
+});
+
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  e.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', e => {
-  // Ignore non-GET, chrome-extension, and all external APIs
-  if (e.request.method !== 'GET') return;
-  if (e.request.url.startsWith('chrome-extension')) return;
-  if (!e.request.url.startsWith(self.location.origin)) return;
-
-  // Only handle same-origin navigation — serve index.html
-  if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch('/index.html').catch(() => new Response('Offline', {
-        status: 503,
-        headers: { 'Content-Type': 'text/plain' }
-      }))
-    );
-  }
-  // Everything else — do nothing, let browser handle normally
+  // Pass through all requests — no caching interference
+  e.respondWith(fetch(e.request).catch(() => {
+    return new Response('Offline', { status: 503 });
+  }));
 });
