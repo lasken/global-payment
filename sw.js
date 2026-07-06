@@ -1,4 +1,4 @@
-const CACHE = 'toomuchcoin-v3';
+const CACHE = 'toomuchcoin-v4';
 
 // Let OneSignal handle its own messages
 self.addEventListener('message', e => {
