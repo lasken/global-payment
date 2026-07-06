@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/market-pulse",
+      "schedule": "0 6 * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/howtoguides/:cat/:slug", "destination": "/index.html" },
     { "source": "/blog/:slug", "destination": "/index.html" },
