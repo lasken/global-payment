@@ -4120,7 +4120,7 @@ const P = {
           </div>
           <!-- Gainers -->
           <div style="margin-bottom:10px">
-            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px">🔥 Top Gainers</div>
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px;display:flex;align-items:center;gap:5px"><i data-lucide="trending-up" style="width:11px;height:11px;color:#16a34a"></i>Top Gainers</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               ${gainers.map(c=>`
               <div onclick="A.openCoin('${c.id}')" style="flex:1;min-width:100px;background:#fff;border:1px solid rgba(212,175,55,.2);border-radius:var(--rsm);padding:8px 10px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#D4AF37'" onmouseout="this.style.borderColor='rgba(212,175,55,.2)'">
@@ -4135,7 +4135,7 @@ const P = {
           </div>
           <!-- Volume Spikes / Ones to watch -->
           ${volSpikes.length?`<div style="margin-bottom:10px">
-            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px">📡 Volume Spike — Watch These</div>
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px;display:flex;align-items:center;gap:5px"><i data-lucide="radio" style="width:11px;height:11px;color:#D4AF37"></i>Volume Spike — Watch These</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               ${volSpikes.map(c=>`
               <div onclick="A.openCoin('${c.id}')" style="flex:1;min-width:100px;background:#fff;border:1px solid rgba(212,175,55,.2);border-radius:var(--rsm);padding:8px 10px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#D4AF37'" onmouseout="this.style.borderColor='rgba(212,175,55,.2)'">
@@ -4150,7 +4150,7 @@ const P = {
           </div>`:''}
           <!-- Hot Memes -->
           ${hotMemes.length?`<div>
-            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px">😂 Hot Memes</div>
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px;display:flex;align-items:center;gap:5px"><i data-lucide="flame" style="width:11px;height:11px;color:#f59e0b"></i>Hot Memes</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               ${hotMemes.map(c=>`
               <div onclick="A.openCoin('${c.id}')" style="flex:1;min-width:100px;background:#fff;border:1px solid rgba(212,175,55,.2);border-radius:var(--rsm);padding:8px 10px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#D4AF37'" onmouseout="this.style.borderColor='rgba(212,175,55,.2)'">
@@ -4165,7 +4165,7 @@ const P = {
           </div>`:''}
           <!-- Biggest drops -->
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(212,175,55,.15)">
-            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px">📉 Biggest Drops — Dip Watch</div>
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(26,20,8,.4);margin-bottom:6px;display:flex;align-items:center;gap:5px"><i data-lucide="trending-down" style="width:11px;height:11px;color:var(--red)"></i>Biggest Drops — Dip Watch</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               ${losers.map(c=>`
               <div onclick="A.openCoin('${c.id}')" style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid rgba(196,48,48,.15);border-radius:100px;padding:5px 10px;cursor:pointer;font-size:.75rem;transition:all .15s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(196,48,48,.15)'">
@@ -4178,7 +4178,7 @@ const P = {
         </div>`;
       })()}
 
-      <div class="mtbar">
+      <div class="mtbar" id="mp-lucide-hook">
         <div class="swrap"><i data-lucide="search" style="width:14px;height:14px"></i><input type="text" id="coin-search-input" placeholder="Search assets…" value="${S.csearch}" oninput="A.cSearchLive(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/></div>
         <span style="font-size:.8rem;color:var(--t2);margin-left:auto" id="coin-search-count">${total.toLocaleString()} result${total!==1?'s':''}</span>
       </div>
