@@ -1174,20 +1174,31 @@ const W={
       '1 month Pro subscription — paid with $TMC','');
     if(ok){
       const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
-      await DB.create('subscription',{
-        userId       :S.user.id,
-        status       :'active',
-        plan         :'monthly',
-        amount       :'0',
-        reference    :'TMC_'+Date.now(),
-        paymentMethod:'tmc',
-        periodEnd,
-      });
+      try{
+        await DB.create('subscription',{
+          userId       :S.user.id,
+          status       :'active',
+          plan         :'monthly',
+          amount       :'0',
+          reference    :'TMC_'+Date.now(),
+          paymentMethod:'tmc',
+          periodEnd,
+        });
+      }catch(e){console.error('sub create failed:',e.message);}
+      // Clear subscription cache so loadSubscription re-reads from DB
+      _cacheClear('subscription_'+S.user.id);
       S.subStatus='active';
       S.subscribed=true;
       S._subPeriodEnd=periodEnd;
+      S._trialDoc={status:'active',periodEnd};
+      await createNotif(S.user.id,'subscription',
+        '✓ Pro activated with $TMC!',
+        `${cost} TMC deducted. Full Pro access is now live — enjoy the marketplace, forum, Datum List, and KayKay.`,
+        'profile'
+      );
+      await loadNotifications();
       render();
-      toast('Pro access activated with $TMC!','ok');
+      toast('Pro access activated with $TMC! 🎉','ok');
     }
   },
 
@@ -1257,6 +1268,41 @@ const W={
     render(); // refresh wallet page with new balance
   },
 
+  // ── Buy TMC at counter ──
+  async submitBuyTMC(){
+    if(!S.user||!S.subscribed){toast('Pro members only.','err');return;}
+    const amtRaw=parseFloat(document.getElementById('buy-tmc-amount')?.value);
+    const ref=document.getElementById('buy-tmc-ref')?.value?.trim();
+    const err=document.getElementById('buy-tmc-err');
+    const counterRate=(W.config.nairaPerTmc||306.08)+50;
+    if(!amtRaw||isNaN(amtRaw)||amtRaw<5){err.textContent='Minimum purchase is 5 TMC.';return;}
+    if(!ref||ref.length<3){err.textContent='Please provide your payment reference.';return;}
+    const nairaTotal=Math.round(amtRaw*counterRate);
+    if(!confirm(`Buy ${amtRaw} TMC for ₦${nairaTotal.toLocaleString()}?\n\nPay to: Zenith Bank 1312154595 (Datum Logistics)\nReference: ${ref}\n\nTMC will be credited within 2 hours after admin confirms payment.`)) return;
+    err.textContent='';
+    try{
+      // Notify admin
+      await createNotif(ADMIN_ID,'commission',
+        `TMC Purchase: ${S.user.name}`,
+        `${S.user.name} (${S.user.email}) wants to buy ${amtRaw} TMC.\nNaira total: ₦${nairaTotal.toLocaleString()} at ₦${counterRate.toFixed(0)}/TMC.\nPayment ref: ${ref}\n\nOnce confirmed, manually credit their wallet via the admin panel.`,
+        'profile','',''
+      );
+      // Notify user
+      await createNotif(S.user.id,'subscription',
+        'TMC purchase request received ✓',
+        `Your request to buy ${amtRaw} TMC (₦${nairaTotal.toLocaleString()}) has been received. We'll credit your wallet within 2 hours of payment confirmation.`,
+        'wallet','',''
+      );
+      await loadNotifications();
+      document.getElementById('buy-tmc-amount').value='';
+      document.getElementById('buy-tmc-ref').value='';
+      document.getElementById('buy-tmc-preview').textContent='';
+      toast(`Purchase request submitted! ${amtRaw} TMC will be credited within 2 hours.`,'ok');
+    }catch(e){
+      err.textContent='Failed to submit: '+e.message;
+    }
+  },
+
   // ── Format balance for display ──
   fmt(n){
     if(n==null) return'—';
@@ -1269,28 +1315,36 @@ const W={
     const txs=W.txs;
     if(!w) return `<div style="padding:60px 24px;text-align:center;color:var(--t3)"><div class="spin" style="margin:0 auto 14px"></div><div style="font-size:.875rem">Loading your wallet…</div></div>`;
     const typeIcon={
-      login      :'sun',
-      listing    :'layout-list',
-      deal       :'flag',
-      review     :'star',
-      vote       :'thumbs-up',
-      guide_read :'book-open',
-      referral   :'users',
-      spend_sub  :'zap',
-      spend_commission:'dollar-sign',
-      admin_grant:'gift',
+      login            :'sun',
+      listing          :'layout-list',
+      deal             :'flag',
+      review           :'star',
+      vote             :'thumbs-up',
+      guide_read       :'book-open',
+      referral         :'users',
+      spend_sub        :'zap',
+      spend_commission :'dollar-sign',
+      admin_grant      :'gift',
+      wager_win        :'trophy',
+      wager_loss       :'trending-down',
+      wager_refund     :'rotate-ccw',
+      wager_stake      :'target',
     };
     const typeLabel={
-      login      :'Daily Login',
-      listing    :'Posted Listing',
-      deal       :'Completed Deal',
-      review     :'Left a Review',
-      vote       :'Voted for Vendor',
-      guide_read :'Read a Guide',
-      referral   :'Referral Bonus',
-      spend_sub  :'Subscription',
-      spend_commission:'Commission',
-      admin_grant:'Welcome Bonus',
+      login            :'Daily Login',
+      listing          :'Posted Listing',
+      deal             :'Completed Deal',
+      review           :'Left a Review',
+      vote             :'Voted for Vendor',
+      guide_read       :'Read a Guide',
+      referral         :'Referral Bonus',
+      spend_sub        :'Subscription',
+      spend_commission :'Wager / Commission',
+      admin_grant      :'Credit / Wager Win',
+      wager_win        :'Wager Won',
+      wager_loss       :'Wager Lost',
+      wager_refund     :'Wager Refund',
+      wager_stake      :'Wager Staked',
     };
     return`<div style="max-width:680px;margin:0 auto;padding:32px 24px 80px">
 
@@ -1334,7 +1388,7 @@ const W={
         </div>
       </div>
       <!-- Actions -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <button class="btn bp" style="justify-content:center;padding:13px;background:#D4AF37;border:none;color:#1a1408;font-weight:700" onclick="W.paySubWithTMC()">
           <i data-lucide="zap" style="width:15px;height:15px"></i>
           Pay Sub (${W.config.subsRate||45} TMC)
@@ -1343,6 +1397,42 @@ const W={
           <i data-lucide="arrow-left-right" style="width:15px;height:15px"></i>
           Trade $TMC
         </button>
+      </div>
+
+      <!-- Buy TMC at counter — Pro only -->
+      <div style="background:${S.subscribed?'linear-gradient(135deg,#FBF8EC,#fff8e0)':'var(--off)'};border:1.5px solid ${S.subscribed?'rgba(212,175,55,.35)':'var(--bdr)'};border-radius:var(--rmd);padding:16px;margin-bottom:24px;position:relative;${S.subscribed?'':'overflow:hidden'}">
+        ${!S.subscribed?`<div style="position:absolute;inset:0;background:rgba(248,247,244,.88);backdrop-filter:blur(2px);z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:var(--rmd)">
+          <i data-lucide="lock" style="width:20px;height:20px;color:#D4AF37"></i>
+          <div style="font-weight:700;font-size:.875rem">Pro Members Only</div>
+          <div style="font-size:.78rem;color:var(--t2);text-align:center;max-width:200px;line-height:1.5">Buy $TMC directly at our counter rate — a Pro membership benefit.</div>
+          <button onclick="R.go('sub')" style="background:#D4AF37;color:#1a1408;border:none;border-radius:var(--rsm);padding:8px 20px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:var(--fb)">Upgrade to Pro</button>
+        </div>`:''}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span style="font-weight:700;font-size:.875rem">Buy $TMC at the Counter</span>
+          <span class="tag tpur" style="font-size:.65rem">Pro Benefit</span>
+        </div>
+        <div style="font-size:.78rem;color:var(--t2);margin-bottom:14px;line-height:1.55">
+          Buy $TMC directly from us at <strong>₦${((W.config.nairaPerTmc||306.08)+50).toFixed(0)} per TMC</strong> — ₦50 above market rate, credited to your wallet instantly. Min 5 TMC.
+          <br><span style="font-size:.72rem;color:var(--t3);margin-top:3px;display:block">Pay by bank transfer to Zenith 1312154595 · Datum Logistics</span>
+        </div>
+        <div class="fg" style="margin-bottom:10px">
+          <label>How many TMC to buy?</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="buy-tmc-amount" placeholder="Min 5 TMC" min="5" step="1" style="flex:1" oninput="(function(){const v=parseFloat(document.getElementById('buy-tmc-amount').value)||0;const rate=${((W.config.nairaPerTmc||306.08)+50).toFixed(0)};document.getElementById('buy-tmc-preview').textContent=v>=5?'You pay: ₦'+Math.round(v*rate).toLocaleString():'';})()"/>
+          </div>
+          <div id="buy-tmc-preview" style="font-size:.8rem;color:#D4AF37;font-weight:600;margin-top:5px;min-height:18px"></div>
+        </div>
+        <div class="fg" style="margin-bottom:10px">
+          <label>Your payment reference / proof</label>
+          <input type="text" id="buy-tmc-ref" placeholder="Bank transfer reference or screenshot description"/>
+        </div>
+        <div class="ferr" id="buy-tmc-err"></div>
+        <button class="btn" style="width:100%;justify-content:center;padding:12px;background:#D4AF37;color:#1a1408;border:none;font-weight:700" onclick="W.submitBuyTMC()">
+          <i data-lucide="shopping-cart" style="width:14px;height:14px"></i>
+          Request TMC Purchase
+        </button>
+        <div style="font-size:.72rem;color:var(--t3);margin-top:8px;text-align:center">TMC credited to your wallet within 2 hours after payment confirmed · Admin verified</div>
       </div>
 
       <!-- Earn rates -->
@@ -3726,6 +3816,9 @@ const P = {
             <button class="btn bpur bsm" onclick="A.adminAnnounce()">
               <i data-lucide="megaphone" style="width:12px;height:12px"></i>Announce to All
             </button>
+            <button class="btn bg bsm" onclick="A.adminCreditTMC()">
+              <i data-lucide="plus-circle" style="width:12px;height:12px"></i>Credit TMC
+            </button>
           </div>
 
           <!-- Commission payments -->
@@ -3993,17 +4086,22 @@ const P = {
   },
 
   _wagersBoard(){
+    const wagerTab=S._wagerTab||'active';
+
     // Load wagers if not yet loaded
     if(!S._wagersLoaded){
       S._wagersLoaded=true;
       S._wagersLoading=true;
+      const statusFilter=wagerTab==='history'
+        ?[Query.equal('status',['settled']),Query.orderDesc('$updatedAt'),Query.limit(30)]
+        :[Query.equal('status',['open']),Query.orderDesc('$createdAt'),Query.limit(20)];
       Promise.all([
-        DB.list('wagers',[Query.equal('status',['open']),Query.orderDesc('$createdAt'),Query.limit(20)]),
-        S.user?DB.list('wager_bets',[Query.equal('userId',[S.user.id]),Query.limit(100)]):Promise.resolve({documents:[]}),
+        _db.listDocuments(AW_DB_ID,'wagers',statusFilter),
+        S.user?_db.listDocuments(AW_DB_ID,'wager_bets',[Query.equal('userId',[S.user.id]),Query.limit(200)]):Promise.resolve({documents:[]}),
       ]).then(([wagersRes,betsRes])=>{
         S._wagers=wagersRes.documents;
         S._myBets={};
-        betsRes.documents.forEach(b=>S._myBets[b.wagerId]=b);
+        betsRes.documents.forEach(b=>{S._myBets[b.wagerId]=b;});
         S._wagersLoading=false;
         render();
       }).catch(e=>{
@@ -4020,6 +4118,12 @@ const P = {
 
     return`<div style="max-width:720px;margin:0 auto">
 
+      <!-- Sub-tabs: Active / History -->
+      <div style="display:flex;gap:4px;background:var(--surf);border-radius:var(--rmd);padding:4px;margin-bottom:20px;width:fit-content">
+        <button onclick="S._wagerTab='active';S._wagersLoaded=false;S._wagers=null;render()" style="padding:8px 20px;border-radius:8px;border:none;font-size:.875rem;font-weight:500;cursor:pointer;font-family:var(--fb);transition:var(--ease);background:${(S._wagerTab||'active')==='active'?'var(--white)':'transparent'};color:${(S._wagerTab||'active')==='active'?'#D4AF37':'var(--t2)'};box-shadow:${(S._wagerTab||'active')==='active'?'var(--s1)':'none'}">Active</button>
+        <button onclick="S._wagerTab='history';S._wagersLoaded=false;S._wagers=null;render()" style="padding:8px 20px;border-radius:8px;border:none;font-size:.875rem;font-weight:500;cursor:pointer;font-family:var(--fb);transition:var(--ease);background:${S._wagerTab==='history'?'var(--white)':'transparent'};color:${S._wagerTab==='history'?'#D4AF37':'var(--t2)'};box-shadow:${S._wagerTab==='history'?'var(--s1)':'none'}">History</button>
+      </div>
+
       <!-- Admin create wager -->
       ${isAdmin?`
       <div style="background:var(--off);border:1.5px solid rgba(212,175,55,.25);border-radius:var(--rmd);padding:18px;margin-bottom:20px">
@@ -4027,9 +4131,9 @@ const P = {
           <i data-lucide="shield" style="width:12px;height:12px;color:#D4AF37"></i>Admin — Create Wager
         </div>
         <div class="fg"><label>Wager Title</label><input type="text" id="wg-title" placeholder="e.g. Will BTC hit $70k this week?"/></div>
-        <div class="fg"><label>Description (optional)</label><textarea id="wg-desc" rows="2" placeholder="Extra context for users…"></textarea></div>
+        <div class="fg"><label>Description (optional)</label><textarea id="wg-desc" rows="2" placeholder="Give users context — why does this matter?"></textarea></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="fg"><label>Option A</label><input type="text" id="wg-optA" placeholder="e.g. Yes — it will"/></div>
+          <div class="fg"><label>Option A</label><input type="text" id="wg-optA" placeholder="e.g. Yes — hits $70k"/></div>
           <div class="fg"><label>Option B</label><input type="text" id="wg-optB" placeholder="e.g. No — stays below"/></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -4037,6 +4141,26 @@ const P = {
           <div class="fg"><label>Max Stake (TMC)</label><input type="number" id="wg-max" value="50" min="1" step="1"/></div>
         </div>
         <div class="fg"><label>Ends At</label><input type="datetime-local" id="wg-ends"/></div>
+        <div style="border-top:1px solid var(--bdr);padding-top:14px;margin-top:4px">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:10px">Media & Context</div>
+          <div class="fg">
+            <label>Cover Image (optional)</label>
+            <div class="img-drop" onclick="document.getElementById('wg-img').click()">
+              <i data-lucide="image" style="width:18px;height:18px;color:var(--t3);display:block;margin:0 auto 5px"></i>
+              <div style="font-size:.76rem;color:var(--t3)">Click to upload wager image</div>
+            </div>
+            <input type="file" id="wg-img" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="(function(f){if(!f)return;const u=URL.createObjectURL(f);const d=document.getElementById('wg-img-preview');if(d){d.innerHTML='<img src='+u+' style=width:100%;max-height:140px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);margin-top:8px;display:block>';}})(this.files[0])"/>
+            <div id="wg-img-preview"></div>
+          </div>
+          <div class="fg">
+            <label>YouTube / Video URL (optional)</label>
+            <input type="url" id="wg-video" placeholder="https://youtube.com/watch?v=… or https://youtu.be/…"/>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px">
+            <div class="fg"><label>Source Link (optional — shown as clickable button)</label><input type="url" id="wg-link" placeholder="https://coindesk.com/…"/></div>
+            <div class="fg"><label>Button Label</label><input type="text" id="wg-link-label" placeholder="Read Article" style="width:130px"/></div>
+          </div>
+        </div>
         <div class="ferr" id="wg-err"></div>
         <button class="btn" style="background:#D4AF37;color:#1a1408;border:none;font-weight:700;width:100%;justify-content:center;padding:11px" onclick="A.createWager()">
           <i data-lucide="plus" style="width:14px;height:14px"></i>Create Wager
@@ -4074,12 +4198,32 @@ const P = {
         const daysLeft=Math.floor(hoursLeft/24);
         const timeLabel=daysLeft>0?`${daysLeft}d ${hoursLeft%24}h left`:`${hoursLeft}h left`;
         const isExpired=endsIn<=0;
-        return`<div style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:20px;margin-bottom:14px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 20px rgba(212,175,55,.1)'" onmouseout="this.style.boxShadow='none'">
+        return`<div data-wager-id="${wager.$id}" style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:20px;margin-bottom:14px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 20px rgba(212,175,55,.1)'" onmouseout="this.style.boxShadow='none'">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
             <div style="font-weight:700;font-size:.9375rem;color:var(--t1);line-height:1.4">${wager.title}</div>
-            <span style="font-size:.7rem;color:${hoursLeft<24&&!isExpired?'var(--red)':'var(--t3)'};white-space:nowrap;flex-shrink:0;font-weight:${hoursLeft<24?'700':'400'}">${isExpired?'Closed':timeLabel}</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+              <span style="font-size:.7rem;color:${hoursLeft<24&&!isExpired?'var(--red)':'var(--t3)'};font-weight:${hoursLeft<24?'700':'400'}">${isExpired?'Closed':timeLabel}</span>
+              <button onclick="A.shareWager('${wager.$id}','${wager.title.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')" style="width:28px;height:28px;border-radius:50%;background:var(--off);border:1px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:var(--ease)" onmouseover="this.style.borderColor='#D4AF37';this.style.color='#D4AF37'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t2)'">
+                <i data-lucide="share-2" style="width:12px;height:12px"></i>
+              </button>
+            </div>
           </div>
           ${wager.description?`<div style="font-size:.8rem;color:var(--t2);margin-bottom:12px;line-height:1.5">${wager.description}</div>`:''}
+
+          <!-- Cover image -->
+          ${(wager.imageId||wager.image_id)?`<img src="${fileUrl(wager.imageId||wager.image_id)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--rsm);margin-bottom:12px;display:block;border:1px solid var(--bdr)">`:''}
+
+          <!-- Embedded video -->
+          ${wager.videoUrl?(()=>{
+            const yt=wager.videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if(yt) return`<div style="position:relative;padding-bottom:56.25%;border-radius:var(--rsm);overflow:hidden;margin-bottom:12px;background:#000"><iframe src="https://www.youtube.com/embed/${yt[1]}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen loading="lazy"></iframe></div>`;
+            return`<video src="${wager.videoUrl}" controls style="width:100%;border-radius:var(--rsm);margin-bottom:12px;display:block;max-height:220px;background:#000"></video>`;
+          })():''}
+
+          <!-- Source link -->
+          ${wager.link?`<a href="${wager.link}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:var(--off);border:1.5px solid var(--bdr);border-radius:100px;padding:6px 14px;font-size:.78rem;font-weight:500;color:var(--t1);text-decoration:none;margin-bottom:12px;transition:var(--ease)" onmouseover="this.style.borderColor='#D4AF37';this.style.color='#D4AF37'" onmouseout="this.style.borderColor='var(--bdr)';this.style.color='var(--t1)'">
+            <i data-lucide="external-link" style="width:12px;height:12px"></i>${wager.linkLabel||'View Source'}
+          </a>`:''}
 
           <!-- Pool bar -->
           <div style="margin-bottom:14px">
@@ -4093,26 +4237,54 @@ const P = {
             <div style="font-size:.72rem;color:var(--t3);margin-top:5px;text-align:center">Pool: ${totalPool.toFixed(2)} TMC · Stake ${wager.stakeMin}–${wager.stakeMax} TMC</div>
           </div>
 
-          ${isAdmin&&!isExpired?`
+          ${isAdmin&&!isExpired&&wager.status==='open'?`
           <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;padding:10px;background:var(--off);border-radius:var(--rsm)">
             <span style="font-size:.72rem;color:var(--t3);align-self:center;margin-right:4px">Admin settle:</span>
-            <button class="btn bc bsm" onclick="A.settleWager('${wager.$id}','A')">A Wins</button>
-            <button class="btn bc bsm" onclick="A.settleWager('${wager.$id}','B')">B Wins</button>
-            <button class="btn bo bsm" style="color:var(--t3)" onclick="A.settleWager('${wager.$id}','void')">Void</button>
+            <button class="btn bc bsm" onclick="A.settleWager('${wager.$id}','A','${wager.optionA.replace(/'/g,"\\'")}','${wager.optionB.replace(/'/g,"\\'")}','${wager.title.replace(/'/g,"\\'")}')">Option A Wins</button>
+            <button class="btn bc bsm" onclick="A.settleWager('${wager.$id}','B','${wager.optionA.replace(/'/g,"\\'")}','${wager.optionB.replace(/'/g,"\\'")}','${wager.title.replace(/'/g,"\\'")}')">Option B Wins</button>
+            <button class="btn bo bsm" style="color:var(--t3)" onclick="A.settleWager('${wager.$id}','void','${wager.optionA.replace(/'/g,"\\'")}','${wager.optionB.replace(/'/g,"\\'")}','${wager.title.replace(/'/g,"\\'")}')">Void</button>
           </div>`:''}
 
+          <!-- Settled history view -->
+          ${wager.status==='settled'?`
+          <div style="background:${wager.winner==='void'?'var(--surf)':wager.winner==='A'?'#E6F5EE':'#E6F5EE'};border:1px solid ${wager.winner==='void'?'var(--bdr)':'#B3DFCA'};border-radius:var(--rsm);padding:14px;margin-bottom:${myBet?'12px':'0'}">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <i data-lucide="${wager.winner==='void'?'minus-circle':'trophy'}" style="width:16px;height:16px;color:${wager.winner==='void'?'var(--t3)':'var(--grn)'}"></i>
+              <span style="font-weight:700;font-size:.875rem;color:${wager.winner==='void'?'var(--t2)':'var(--grn)'}">
+                ${wager.winner==='void'?'Wager Voided — All stakes refunded':
+                  wager.winner==='A'?`Winner: ${wager.optionA}`:
+                  `Winner: ${wager.optionB}`}
+              </span>
+            </div>
+            <div style="font-size:.75rem;color:var(--t2)">Total pool: ${((wager.totalA||0)+(wager.totalB||0)).toFixed(2)} TMC · ${(wager.totalA||0).toFixed(2)} on A · ${(wager.totalB||0).toFixed(2)} on B</div>
+          </div>
+          ${myBet?`
+          <div style="background:${myBet.status==='won'?'rgba(212,175,55,.08)':myBet.status==='refunded'?'var(--surf)':'#FDEAEA'};border:1px solid ${myBet.status==='won'?'rgba(212,175,55,.2)':myBet.status==='refunded'?'var(--bdr)':'#F0BFBF'};border-radius:var(--rsm);padding:12px;display:flex;align-items:center;gap:10px">
+            <i data-lucide="${myBet.status==='won'?'trending-up':myBet.status==='refunded'?'rotate-ccw':'trending-down'}" style="width:16px;height:16px;color:${myBet.status==='won'?'#D4AF37':myBet.status==='refunded'?'var(--t2)':'var(--red)'};flex-shrink:0"></i>
+            <div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--t1)">
+                ${myBet.status==='won'?`You won ${myBet.payout?.toFixed(2)||'0'} TMC 🏆`:
+                  myBet.status==='refunded'?`Refunded ${myBet.amount?.toFixed(2)||'0'} TMC`:
+                  `You lost ${myBet.amount?.toFixed(2)||'0'} TMC`}
+              </div>
+              <div style="font-size:.72rem;color:var(--t3)">You bet on: ${myBet.option==='A'?wager.optionA:wager.optionB} · Staked: ${myBet.amount?.toFixed(2)||'0'} TMC</div>
+            </div>
+          </div>`:''}
+          `:`
+
+          <!-- Active betting UI -->
           ${myBet?`
             <div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2);border-radius:var(--rsm);padding:12px;display:flex;align-items:center;gap:10px">
               <i data-lucide="check-circle" style="width:16px;height:16px;color:#D4AF37;flex-shrink:0"></i>
               <div>
-                <div style="font-size:.8rem;font-weight:600;color:var(--t1)">You staked ${myBet.amount.toFixed(2)} TMC on <strong>${myBet.option==='A'?wager.optionA:wager.optionB}</strong></div>
-                <div style="font-size:.72rem;color:var(--t3)">Status: ${myBet.status} · Results when wager closes</div>
+                <div style="font-size:.8rem;font-weight:600;color:var(--t1)">You staked <strong>${myBet.amount?.toFixed(2)||'0'} TMC</strong> on <strong>${myBet.option==='A'?wager.optionA:wager.optionB}</strong></div>
+                <div style="font-size:.72rem;color:var(--t3)">Pending · Results when wager closes</div>
               </div>
             </div>
           `:!S.user?`
             <button class="btn bp" style="width:100%;justify-content:center" onclick="M.auth()">Sign in to stake $TMC</button>
           `:isExpired?`
-            <div style="text-align:center;padding:10px;font-size:.8rem;color:var(--t3)">This wager has closed — results pending</div>
+            <div style="text-align:center;padding:10px;font-size:.8rem;color:var(--t3)">This wager has closed — admin settling results now</div>
           `:`
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
               <button id="wg-opt-A-${wager.$id}" onclick="A.selectWagerOpt('${wager.$id}','A')" style="flex:1;padding:10px;border-radius:var(--rsm);border:1.5px solid var(--bdr);background:var(--off);font-size:.8375rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--t1)">${wager.optionA}</button>
@@ -4125,7 +4297,7 @@ const P = {
               </button>
             </div>
             <div id="wg-err-${wager.$id}" style="font-size:.75rem;color:var(--red);margin-top:6px;min-height:16px"></div>
-          `}
+          `}`}
         </div>`;
       }).join('')}
     </div>`;
@@ -7937,6 +8109,78 @@ const A = {
     }
   },
 
+  adminCreditTMC(){
+    if(S.user?.id!==ADMIN_ID) return;
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal" style="max-width:440px">
+        <div class="mhdr">
+          <div><div class="mey">Admin</div><h2 class="mtitle">Credit TMC to User</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+        <div style="background:#FBF4E6;border:1px solid #E8D9B0;border-radius:var(--rsm);padding:11px 14px;margin-bottom:18px;font-size:.8rem;color:#8a6820;line-height:1.5">Use this to manually credit TMC for counter purchases or corrections.</div>
+        <div class="fg"><label>User Email</label><input type="email" id="credit-email" placeholder="user@example.com"/></div>
+        <div class="fg"><label>Amount (TMC)</label><input type="number" id="credit-amount" placeholder="e.g. 10" min="0.1" step="0.1"/></div>
+        <div class="fg"><label>Reason (shown to user)</label><input type="text" id="credit-reason" placeholder="e.g. TMC purchase — 10 TMC at ₦3,560"/></div>
+        <div class="ferr" id="credit-err"></div>
+        <button class="btn bp" id="credit-btn" style="width:100%;justify-content:center;padding:12px;background:#D4AF37;border:none;color:#1a1408;font-weight:700" onclick="A.submitAdminCredit()">
+          <i data-lucide="plus-circle" style="width:14px;height:14px"></i>Credit TMC
+        </button>
+      </div>
+    </div>`);
+    lucide.createIcons();
+  },
+
+  async submitAdminCredit(){
+    const email=document.getElementById('credit-email')?.value?.trim().toLowerCase();
+    const amt=parseFloat(document.getElementById('credit-amount')?.value);
+    const reason=document.getElementById('credit-reason')?.value?.trim();
+    const err=document.getElementById('credit-err');
+    const btn=document.getElementById('credit-btn');
+    if(!email){err.textContent='Email required.';return;}
+    if(!amt||isNaN(amt)||amt<=0){err.textContent='Amount required.';return;}
+    if(!reason){err.textContent='Reason required.';return;}
+    btn.disabled=true;btn.textContent='Processing…';
+    try{
+      // Find user by email via profiles
+      const profRes=await _db.listDocuments(AW_DB_ID,'profiles',[
+        Query.equal('email',[email]),
+        Query.limit(1),
+      ]);
+      if(!profRes.documents[0]){err.textContent='No user found with that email.';btn.disabled=false;btn.textContent='Credit TMC';return;}
+      const prof=profRes.documents[0];
+      const userId=prof.userId;
+      // Find their wallet
+      const walletRes=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
+        Query.equal('userId',[userId]),
+        Query.limit(1),
+      ]);
+      if(!walletRes.documents[0]){err.textContent='User has no wallet yet — they need to log in first.';btn.disabled=false;btn.textContent='Credit TMC';return;}
+      const wd=walletRes.documents[0];
+      const newBal=parseFloat(((wd.balance||0)+amt).toFixed(3));
+      const newEarned=parseFloat(((wd.lifetimeEarned||0)+amt).toFixed(3));
+      await _db.updateDocument(AW_DB_ID,'tmc_wallet',wd.$id,{balance:newBal,lifetimeEarned:newEarned});
+      // Log transaction
+      await _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+        userId,type:'admin_grant',amount:Number(amt),
+        balanceAfter:newBal,description:reason,refId:'admin',
+        createdAt:new Date().toISOString(),
+      });
+      // Update profile balance
+      await _db.updateDocument(AW_DB_ID,'profiles',prof.$id,{tmcBalance:newBal});
+      // Notify user
+      await createNotif(userId,'subscription',
+        `+${amt} TMC credited to your wallet`,
+        reason+`. New balance: ${newBal.toFixed(3)} TMC.`,
+        'wallet'
+      );
+      M.close();
+      toast(`${amt} TMC credited to ${prof.name} (${email}). New balance: ${newBal.toFixed(3)} TMC.`,'ok');
+    }catch(e){
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Credit TMC';
+    }
+  },
+
   async adminLoadSources(){
     if(S.user?.id!==ADMIN_ID) return;
     const r=await DB.list('profiles',[Query.orderDesc('$createdAt'),Query.limit(500)]);
@@ -9862,6 +10106,15 @@ Rules:
   editOrder(id){
     const o=(S.orders||[]).find(x=>x.id===id);
     if(!o||o.userId!==S.user?.id) return;
+    // Build existing image previews
+    const existingImgIds=(o.imageId||'').split(',').filter(Boolean);
+    S._editOrderRemovedImgs=[];
+    S._editOrderNewImgFiles=[];
+    const existingImgHtml=existingImgIds.map((fid,i)=>`
+      <div id="eo-existing-img-${i}" style="position:relative;display:inline-block">
+        <img src="${fileUrl(fid)}" style="width:72px;height:72px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);display:block">
+        <button onclick="A.removeExistingOrderImg('${fid}',${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+      </div>`).join('');
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
         <div class="mhdr"><div><div class="mey">Edit Listing</div><h2 class="mtitle">Update Your Order</h2></div><button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button></div>
@@ -9871,6 +10124,23 @@ Rules:
         <div class="fg"><label>Price / Budget</label><div class="pfx"><span class="pfx-sym">$</span><input type="text" id="eo-price" value="${(o.price||'').replace('$','')}"/></div></div>
         <div class="fg"><label>Description</label><textarea id="eo-desc" rows="3">${o.desc||''}</textarea></div>
         <div class="fg"><label>Status</label><select id="eo-status"><option value="open" ${o.status==='open'?'selected':''}>Open</option><option value="negotiating" ${o.status==='negotiating'?'selected':''}>Negotiating</option><option value="filled" ${o.status==='filled'?'selected':''}>Filled / Resolved</option><option value="closed" ${o.status==='closed'?'selected':''}>Closed</option></select></div>
+
+        <!-- Image editing section -->
+        <div class="fg">
+          <label>Photos <span style="font-weight:400;color:var(--t3)">(up to 3 total)</span></label>
+          ${existingImgIds.length?`
+          <div style="font-size:.72rem;color:var(--t3);margin-bottom:8px">Current photos — click × to remove</div>
+          <div id="eo-existing-imgs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            ${existingImgHtml}
+          </div>`:''}
+          <div id="eo-new-imgs-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+          <div class="img-drop" id="eo-img-drop" onclick="document.getElementById('eo-new-imgs').click()" style="${existingImgIds.length>=3?'opacity:.5;pointer-events:none':''}">
+            <i data-lucide="image" style="width:18px;height:18px;color:var(--t3);display:block;margin:0 auto 5px"></i>
+            <div style="font-size:.76rem;color:var(--t3)">${existingImgIds.length>=3?'Remove a photo to add new ones':'Click to add photos'}</div>
+          </div>
+          <input type="file" id="eo-new-imgs" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="A.previewNewOrderImgs(this,${existingImgIds.length})"/>
+        </div>
+
         <div class="ferr" id="eo-err"></div>
         <div style="display:flex;gap:10px">
           <button class="btn bp" id="eo-btn" style="flex:1;justify-content:center;padding:12px" onclick="A.saveOrderEdit('${id}')"><i data-lucide="save" style="width:14px;height:14px"></i>Save Changes</button>
@@ -9878,7 +10148,53 @@ Rules:
         </div>
       </div>
     </div>`);
+    lucide.createIcons();
   },
+  removeExistingOrderImg(fileId,index){
+    S._editOrderRemovedImgs=S._editOrderRemovedImgs||[];
+    S._editOrderRemovedImgs.push(fileId);
+    const el=document.getElementById(`eo-existing-img-${index}`);
+    if(el) el.remove();
+    // Re-enable drop zone if under 3 remaining
+    const remaining=document.querySelectorAll('[id^="eo-existing-img-"]').length;
+    const drop=document.getElementById('eo-img-drop');
+    if(drop&&remaining<3){drop.style.opacity='1';drop.style.pointerEvents='auto';drop.querySelector('div').textContent='Click to add photos';}
+  },
+
+  previewNewOrderImgs(input,existingCount){
+    const existing=document.querySelectorAll('[id^="eo-existing-img-"]').length;
+    const room=3-existing;
+    if(room<=0){toast('Remove an existing photo first.','notif');return;}
+    const files=Array.from(input.files||[]).slice(0,room);
+    S._editOrderNewImgFiles=S._editOrderNewImgFiles||[];
+    // Limit combined total to 3
+    const canAdd=room-S._editOrderNewImgFiles.length;
+    const toAdd=files.slice(0,canAdd);
+    toAdd.forEach(f=>{S._editOrderNewImgFiles.push(f);});
+    const preview=document.getElementById('eo-new-imgs-preview');
+    if(preview){
+      preview.innerHTML=(S._editOrderNewImgFiles||[]).map((f,i)=>`
+        <div style="position:relative;display:inline-block">
+          <img src="${URL.createObjectURL(f)}" style="width:72px;height:72px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);display:block">
+          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);color:#fff;font-size:.6rem;text-align:center;border-radius:0 0 var(--rsm) var(--rsm)">New</div>
+          <button onclick="A.removeNewOrderImg(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">×</button>
+        </div>`).join('');
+    }
+    input.value='';
+  },
+
+  removeNewOrderImg(index){
+    S._editOrderNewImgFiles=(S._editOrderNewImgFiles||[]).filter((_,i)=>i!==index);
+    const preview=document.getElementById('eo-new-imgs-preview');
+    if(preview){
+      preview.innerHTML=(S._editOrderNewImgFiles||[]).map((f,i)=>`
+        <div style="position:relative;display:inline-block">
+          <img src="${URL.createObjectURL(f)}" style="width:72px;height:72px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);display:block">
+          <button onclick="A.removeNewOrderImg(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">×</button>
+        </div>`).join('');
+    }
+  },
+
   async saveOrderEdit(id){
     const title=document.getElementById('eo-title')?.value?.trim();
     const cat=document.getElementById('eo-cat')?.value;
@@ -9892,10 +10208,36 @@ Rules:
     if(!rawP){err.textContent='Price is required.';return;}
     const price=rawP.toLowerCase()==='negotiable'?'Negotiable':(rawP.startsWith('$')?rawP:'$'+rawP);
     btn.disabled=true;btn.textContent='Saving…';
+
+    // Build new imageId list
+    const o=(S.orders||[]).find(x=>x.id===id);
+    const removed=new Set(S._editOrderRemovedImgs||[]);
+    let imgIds=(o?.imageId||'').split(',').filter(b=>b&&!removed.has(b));
+
+    // Upload new images
+    const newFiles=S._editOrderNewImgFiles||[];
+    if(newFiles.length){
+      btn.textContent='Uploading images…';
+      for(const f of newFiles){
+        if(imgIds.length>=3) break;
+        try{
+          const up=await _storage.createFile(BUCKET_ID,ID.unique(),f);
+          imgIds.push(up.$id);
+        }catch(e){console.warn('img upload:',e.message);}
+      }
+    }
+    // Delete removed images from storage
+    for(const fid of [...removed]){
+      _storage.deleteFile(BUCKET_ID,fid).catch(()=>{});
+    }
+
+    btn.textContent='Saving…';
+    const imageId=imgIds.join(',');
     try{
-      await DB.update('orders',id,{title,category:cat,type,price,desc:desc||'',status});
-      const o=(S.orders||[]).find(x=>x.id===id);
-      if(o){o.title=title;o.category=cat;o.type=type;o.price=price;o.desc=desc||'';o.status=status;}
+      await DB.update('orders',id,{title,category:cat,type,price,desc:desc||'',status,imageId});
+      if(o){o.title=title;o.category=cat;o.type=type;o.price=price;o.desc=desc||'';o.status=status;o.imageId=imageId;}
+      S._editOrderRemovedImgs=[];
+      S._editOrderNewImgFiles=[];
       M.close();render();
       toast('Listing updated!','ok');
     }catch(e){
@@ -9912,6 +10254,23 @@ Rules:
       toast('Listing deleted.','ok');
     }catch(e){toast('Could not delete: '+e.message,'err');}
   },
+  async shareWager(wagerId,title){
+    const cleanTitle=(title||'Wager').toLowerCase().trim()
+      .replace(/[^a-z0-9\s-]/g,'')
+      .replace(/\s+/g,'-')
+      .replace(/-+/g,'-')
+      .slice(0,50)
+      .replace(/-$/,'');
+    const url=`https://www.toomuchcoin.com/marketplace/wagers/${wagerId}`;
+    const shareText=`Place your $TMC bet on "${title}" — Toomuchcoin Wager\n${url}`;
+    if(navigator.share){
+      try{await navigator.share({title:`Wager: ${title}`,text:shareText,url});return;}
+      catch(e){if(e.name==='AbortError')return;}
+    }
+    try{await navigator.clipboard.writeText(url);toast('Wager link copied!','ok');}
+    catch(e){prompt('Copy this wager link:',url);}
+  },
+
   selectWagerOpt(wagerId,opt){
     ['A','B'].forEach(o=>{
       const btn=document.getElementById(`wg-opt-${o}-${wagerId}`);
@@ -9931,21 +10290,45 @@ Rules:
     const min=parseFloat(document.getElementById('wg-min')?.value);
     const max=parseFloat(document.getElementById('wg-max')?.value);
     const endsAt=document.getElementById('wg-ends')?.value;
+    const link=document.getElementById('wg-link')?.value?.trim();
+    const linkLabel=document.getElementById('wg-link-label')?.value?.trim();
+    const videoUrl=document.getElementById('wg-video')?.value?.trim();
     const err=document.getElementById('wg-err');
     if(!title){err.textContent='Title required.';return;}
     if(!optA||!optB){err.textContent='Both options required.';return;}
     if(!endsAt){err.textContent='End date required.';return;}
     if(min>=max){err.textContent='Max must be greater than min.';return;}
+
+    // Upload image if provided
+    let imageId='';
+    const imgInput=document.getElementById('wg-img');
+    if(imgInput?.files[0]){
+      try{
+        const up=await _storage.createFile(BUCKET_ID,ID.unique(),imgInput.files[0]);
+        imageId=up.$id;
+      }catch(e){console.warn('wager img upload:',e.message);}
+    }
+
     try{
-      await DB.create('wagers',{
+      await _db.createDocument(AW_DB_ID,'wagers',ID.unique(),{
         title,description:desc||'',optionA:optA,optionB:optB,
         stakeMin:min,stakeMax:max,
         endsAt:new Date(endsAt).toISOString(),
         status:'open',winner:'',totalA:0,totalB:0,
         createdBy:S.user.id,
+        imageId:imageId||'',
+        videoUrl:videoUrl||'',
+        link:link||'',
+        linkLabel:linkLabel||'View Source',
       });
       err.textContent='';
-      toast('Wager created!','ok');
+      // Notify all users
+      await notifyAllUsers(
+        '⚡ New Wager: '+title,
+        (desc||optA+' vs '+optB)+' — Stake your $TMC now.',
+        'market'
+      );
+      toast('Wager created and users notified!','ok');
       S._wagersLoaded=false;S._wagers=null;
       render();
     }catch(e){err.textContent='Failed: '+e.message;}
@@ -10019,49 +10402,134 @@ Rules:
     }
   },
 
-  async settleWager(wagerId,winner){
-    if(!confirm(`Settle wager — winner: ${winner}?`)) return;
+  async settleWager(wagerId,winner,optionA,optionB,wagerTitle){
+    if(S.user?.id!==ADMIN_ID){toast('Admin only.','err');return;}
+    const winLabel=winner==='void'?'VOID':winner==='A'?(optionA||'Option A'):(optionB||'Option B');
+    if(!confirm(`Settle wager — winner: ${winLabel}?\n\nThis pays out all winning bets and cannot be undone.`)) return;
+    toast('Settling wager…');
     try{
-      const bets=await DB.list('wager_bets',[Query.equal('wagerId',[wagerId]),Query.limit(100)]);
-      const wager=await _db.getDocument(AW_DB_ID,AW_COL.wagers,wagerId);
-      const totalA=wager.totalA||0,totalB=wager.totalB||0;
-      for(const bet of bets.documents){
-        if(winner==='void'){
-          // Refund
-          const refundWallet=await DB.list('tmc_wallet',[Query.equal('userId',[bet.userId]),Query.limit(1)]);
-          if(refundWallet.documents[0]){
-            const rw=refundWallet.documents[0];
-            const newBal=parseFloat(((rw.balance||0)+bet.amount).toFixed(3));
-            await _db.updateDocument(AW_DB_ID,'tmc_wallet',rw.$id,{balance:newBal,lifetimeEarned:parseFloat(((rw.lifetimeEarned||0)+bet.amount).toFixed(3))});
-          }
-          await DB.update('wager_bets',bet.$id,{status:'refunded',payout:bet.amount});
-        } else {
-          const won=bet.option===winner;
-          if(won){
-            const winPool=winner==='A'?totalA:totalB;
-            const losePool=winner==='A'?totalB:totalA;
-            const share=winPool>0?(bet.amount/winPool):0;
-            const payout=parseFloat((bet.amount+losePool*share*0.9).toFixed(3));
-            // Credit winner's wallet
-            const winWallet=await DB.list('tmc_wallet',[Query.equal('userId',[bet.userId]),Query.limit(1)]);
-            if(winWallet.documents[0]){
-              const ww=winWallet.documents[0];
-              const newBal=parseFloat(((ww.balance||0)+payout).toFixed(3));
-              await _db.updateDocument(AW_DB_ID,'tmc_wallet',ww.$id,{balance:newBal,lifetimeEarned:parseFloat(((ww.lifetimeEarned||0)+payout).toFixed(3))});
+      const wager=await _db.getDocument(AW_DB_ID,'wagers',wagerId);
+      const title=wager.title||wagerTitle||'Wager';
+      const totalA=Number(wager.totalA||0);
+      const totalB=Number(wager.totalB||0);
+
+      const betsRes=await _db.listDocuments(AW_DB_ID,'wager_bets',[
+        Query.equal('wagerId',[wagerId]),
+        Query.limit(200),
+      ]);
+      const bets=betsRes.documents;
+      console.log('Settling',bets.length,'bets, winner:',winner);
+
+      let settledCount=0;
+      const errors=[];
+
+      for(const bet of bets){
+        try{
+          if(winner==='void'){
+            // --- REFUND ---
+            const rwRes=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
+              Query.equal('userId',[bet.userId]),Query.limit(1),
+            ]);
+            if(rwRes.documents[0]){
+              const rw=rwRes.documents[0];
+              const newBal=parseFloat(((rw.balance||0)+bet.amount).toFixed(3));
+              const newEarned=parseFloat(((rw.lifetimeEarned||0)+bet.amount).toFixed(3));
+              await _db.updateDocument(AW_DB_ID,'tmc_wallet',rw.$id,{balance:newBal,lifetimeEarned:newEarned});
+              // Log transaction
+              await _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+                userId:bet.userId,
+                type:'admin_grant',
+                amount:Number(bet.amount),
+                balanceAfter:newBal,
+                description:`Wager refunded — "${title}" was voided`,
+                refId:wagerId,
+                createdAt:new Date().toISOString(),
+              });
             }
-            await DB.update('wager_bets',bet.$id,{status:'won',payout});
-            await createNotif(bet.userId,'deal',`Wager won! +${payout.toFixed(2)} TMC`,`You won the wager "${wager.title}" — ${payout.toFixed(2)} TMC has been added to your wallet.`,'wallet');
+            await _db.updateDocument(AW_DB_ID,'wager_bets',bet.$id,{status:'refunded',payout:Number(bet.amount)});
+            await createNotif(bet.userId,'subscription',
+              'Wager voided — refund issued',
+              `"${title}" was voided. Your ${bet.amount.toFixed(2)} TMC has been refunded to your wallet.`,
+              'wallet'
+            );
+
           } else {
-            await DB.update('wager_bets',bet.$id,{status:'lost',payout:0});
-            await createNotif(bet.userId,'subscription',`Wager result: ${wager.title}`,`Your option didn't win this time. Better luck next week!`,'market');
+            const won=bet.option===winner;
+            if(won){
+              // --- WINNER PAYOUT ---
+              const winPool=winner==='A'?totalA:totalB;
+              const losePool=winner==='A'?totalB:totalA;
+              const share=winPool>0?(bet.amount/winPool):0;
+              const winnings=parseFloat((losePool*share*0.9).toFixed(3));
+              const payout=parseFloat((bet.amount+winnings).toFixed(3));
+
+              const wwRes=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
+                Query.equal('userId',[bet.userId]),Query.limit(1),
+              ]);
+              if(wwRes.documents[0]){
+                const ww=wwRes.documents[0];
+                const newBal=parseFloat(((ww.balance||0)+payout).toFixed(3));
+                const newEarned=parseFloat(((ww.lifetimeEarned||0)+payout).toFixed(3));
+                await _db.updateDocument(AW_DB_ID,'tmc_wallet',ww.$id,{balance:newBal,lifetimeEarned:newEarned});
+                // Log transaction in tmc_transactions
+                await _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+                  userId:bet.userId,
+                  type:'admin_grant',
+                  amount:Number(payout),
+                  balanceAfter:newBal,
+                  description:`Wager won — "${title}" (Option ${winner}: ${winner==='A'?(optionA||'A'):(optionB||'B')}). Stake: ${bet.amount.toFixed(2)} + Winnings: ${winnings.toFixed(2)} TMC`,
+                  refId:wagerId,
+                  createdAt:new Date().toISOString(),
+                });
+              }
+              await _db.updateDocument(AW_DB_ID,'wager_bets',bet.$id,{status:'won',payout:Number(payout)});
+              await createNotif(bet.userId,'deal',
+                `🏆 You won ${payout.toFixed(2)} TMC!`,
+                `Your bet on "${title}" paid out — Option ${winner} (${winner==='A'?(optionA||'A'):(optionB||'B')}) won. Stake returned: ${bet.amount.toFixed(2)} + Winnings: ${winnings.toFixed(2)} TMC.`,
+                'wallet'
+              );
+            } else {
+              // --- LOSER ---
+              await _db.updateDocument(AW_DB_ID,'wager_bets',bet.$id,{status:'lost',payout:0});
+              // Log the loss in transaction history too
+              await _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+                userId:bet.userId,
+                type:'spend_commission',
+                amount:-Number(bet.amount),
+                balanceAfter:0, // we don't know exact balance without fetching, so use 0 as placeholder
+                description:`Wager lost — "${title}" (you picked Option ${bet.option}, winner was Option ${winner})`,
+                refId:wagerId,
+                createdAt:new Date().toISOString(),
+              }).catch(()=>{}); // non-critical
+              await createNotif(bet.userId,'subscription',
+                `Wager result: ${title}`,
+                `Option ${winner} (${winner==='A'?(optionA||'A'):(optionB||'B')}) won this week. Your ${bet.amount.toFixed(2)} TMC stake went to the winners. Better luck next week!`,
+                'market'
+              );
+            }
           }
+          settledCount++;
+        }catch(betErr){
+          console.error('bet settle error:',bet.$id,betErr.message);
+          errors.push(betErr.message);
         }
       }
-      await DB.update('wagers',wagerId,{status:'settled',winner});
-      toast('Wager settled!','ok');
+
+      // Mark wager settled
+      await _db.updateDocument(AW_DB_ID,'wagers',wagerId,{status:'settled',winner});
+
       S._wagersLoaded=false;S._wagers=null;
       render();
-    }catch(e){toast('Settle failed: '+e.message,'err');}
+
+      if(errors.length){
+        toast(`Settled with ${errors.length} errors. ${settledCount} bets processed.`,'err');
+      } else {
+        toast(`Wager settled! ${settledCount} bets processed. Winners paid + notified.`,'ok');
+      }
+    }catch(e){
+      console.error('settleWager failed:',e);
+      toast('Settle failed: '+e.message,'err');
+    }
   },
 
   async shareOrder(id,title){
@@ -10516,6 +10984,34 @@ document.addEventListener('DOMContentLoaded', async()=>{
     }
   }
 
+  if(_path.startsWith('/marketplace/wagers/')){
+    const _wagerId=_path.replace('/marketplace/wagers/','').replace(/\/$/,'');
+    history.replaceState({},'',_path);
+    S.page='market';S.mTab='wagers';S._wagerTab='active';
+    S._wagersLoaded=false;S._wagers=null;
+    render();
+    // After render, scroll to this specific wager and highlight it
+    setTimeout(async()=>{
+      try{
+        const wagerDoc=await _db.getDocument(AW_DB_ID,'wagers',_wagerId);
+        // If settled, switch to history tab
+        if(wagerDoc.status==='settled'){
+          S._wagerTab='history';S._wagersLoaded=false;S._wagers=null;render();
+        }
+        // Highlight after render
+        setTimeout(()=>{
+          const cards=document.querySelectorAll('[data-wager-id]');
+          cards.forEach(c=>{
+            if(c.dataset.wagerId===_wagerId){
+              c.style.outline='2.5px solid #D4AF37';
+              c.style.outlineOffset='2px';
+              c.scrollIntoView({behavior:'smooth',block:'center'});
+            }
+          });
+        },400);
+      }catch(e){console.warn('wager deep link:',e.message);}
+    },300);
+  }
   if(_path==='/marketplace/orderboard'){
     history.replaceState({},'','/marketplace/orderboard');
     S.page='market';S.mTab='board';loadOrders();startAR();render();
