@@ -55,6 +55,37 @@ export default async function handler(req, res) {
     body += ' Open Toomuchcoin for full analysis.';
 
     // 6. Trigger existing Appwrite push function
+    // Also send Datum List teaser notification
+    const datumAssets=['Gold','Bitcoin','NVIDIA','Tesla','TSMC','LVMH','S&P 500'];
+    const teaserAsset=datumAssets[new Date().getDay()%datumAssets.length];
+    const teaserMessages=[
+      `📈 ${teaserAsset} is looking very interesting today — open Datum List to see why`,
+      `⚡ Something is moving on the Datum List. ${teaserAsset} traders will want to see this`,
+      `🟢 All green on the Datum List today? Open the app to check your returns`,
+      `👀 ${teaserAsset} just did something worth seeing. Check your Datum List`,
+      `💡 Your Datum List has something for you today — ${teaserAsset} especially`,
+    ];
+    const teaserMsg=teaserMessages[Math.floor(Math.random()*teaserMessages.length)];
+    await fetch(
+      'https://cloud.appwrite.io/v1/functions/6a33308800352853e374/executions',
+      {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'X-Appwrite-Project':'6a163159003bd203c63f',
+        },
+        body:JSON.stringify({
+          body:JSON.stringify({
+            title:'Datum List Update 📊',
+            body:teaserMsg+'. Pro members only.',
+            url:'https://www.toomuchcoin.com/financial/datumlist',
+            segment:'All',
+          }),
+          async:true,
+        }),
+      }
+    ).catch(()=>{});
+
     const fnRes = await fetch(
       'https://cloud.appwrite.io/v1/functions/6a33308800352853e374/executions',
       {
