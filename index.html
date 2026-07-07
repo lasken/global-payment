@@ -98,6 +98,7 @@
   <script src="config-v2.js" onerror="console.warn('config-v2.js not found')"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+  <script src="prices.json" onerror="console.warn('Error in loading prices')"></script>
   <style>
     :root{
       --white:#fff;--off:#F8F7F4;--surf:#F2F1EE;--bdr:#E4E2DC;--bdr2:#C8C5BC;
@@ -704,6 +705,8 @@ const AW_COL = {
   tmc_wallet     : 'tmc_wallet',
   tmc_transactions: 'tmc_transactions',
   tmc_config     : 'tmc_config',
+  wagers         :'wagers',
+  wager_bets     :'wager_bets',
 };
 
 const { Client, Account, Databases, Storage, Functions, Query, ID } = Appwrite;
@@ -3932,8 +3935,11 @@ const P = {
           <span>Open Forum</span>
           ${!S.subscribed?`<i data-lucide="lock" style="width:11px;height:11px;color:var(--pur);opacity:.8"></i>`:''}
         </button>
+        <button class="tbtn ${S.mTab==='wagers'?'on':''}" onclick="A.setMTab('wagers')" style="${S.mTab==='wagers'?'color:#D4AF37':''}">
+          <i data-lucide="trophy" style="width:15px;height:15px"></i><span>Wagers</span>
+        </button>
       </div>
-      ${S.mTab==='board'?P._board():S.mTab==='vendors'?P._vendors():P._forum()}
+      ${S.mTab==='board'?P._board():S.mTab==='vendors'?P._vendors():S.mTab==='wagers'?P._wagersBoard():P._forum()}
     </div>`;
   },
 
@@ -3984,6 +3990,145 @@ const P = {
             </div>
           </div>`).join('')}
         </div>`}`;
+  },
+
+  _wagersBoard(){
+    // Load wagers if not yet loaded
+    if(!S._wagersLoaded){
+      S._wagersLoaded=true;
+      S._wagersLoading=true;
+      Promise.all([
+        DB.list('wagers',[Query.equal('status',['open']),Query.orderDesc('$createdAt'),Query.limit(20)]),
+        S.user?DB.list('wager_bets',[Query.equal('userId',[S.user.id]),Query.limit(100)]):Promise.resolve({documents:[]}),
+      ]).then(([wagersRes,betsRes])=>{
+        S._wagers=wagersRes.documents;
+        S._myBets={};
+        betsRes.documents.forEach(b=>S._myBets[b.wagerId]=b);
+        S._wagersLoading=false;
+        render();
+      }).catch(e=>{
+        console.warn('wagers load:',e.message);
+        S._wagers=[];S._wagersLoading=false;
+        render();
+      });
+    }
+
+    const w=W.wallet;
+    const wagers=S._wagers||[];
+    const myBets=S._myBets||{};
+    const isAdmin=S.user?.id===ADMIN_ID;
+
+    return`<div style="max-width:720px;margin:0 auto">
+
+      <!-- Admin create wager -->
+      ${isAdmin?`
+      <div style="background:var(--off);border:1.5px solid rgba(212,175,55,.25);border-radius:var(--rmd);padding:18px;margin-bottom:20px">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:12px;display:flex;align-items:center;gap:7px">
+          <i data-lucide="shield" style="width:12px;height:12px;color:#D4AF37"></i>Admin — Create Wager
+        </div>
+        <div class="fg"><label>Wager Title</label><input type="text" id="wg-title" placeholder="e.g. Will BTC hit $70k this week?"/></div>
+        <div class="fg"><label>Description (optional)</label><textarea id="wg-desc" rows="2" placeholder="Extra context for users…"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg"><label>Option A</label><input type="text" id="wg-optA" placeholder="e.g. Yes — it will"/></div>
+          <div class="fg"><label>Option B</label><input type="text" id="wg-optB" placeholder="e.g. No — stays below"/></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg"><label>Min Stake (TMC)</label><input type="number" id="wg-min" value="1" min="0.1" step="0.1"/></div>
+          <div class="fg"><label>Max Stake (TMC)</label><input type="number" id="wg-max" value="50" min="1" step="1"/></div>
+        </div>
+        <div class="fg"><label>Ends At</label><input type="datetime-local" id="wg-ends"/></div>
+        <div class="ferr" id="wg-err"></div>
+        <button class="btn" style="background:#D4AF37;color:#1a1408;border:none;font-weight:700;width:100%;justify-content:center;padding:11px" onclick="A.createWager()">
+          <i data-lucide="plus" style="width:14px;height:14px"></i>Create Wager
+        </button>
+      </div>`:''}
+
+      <!-- Header card -->
+      <div style="background:linear-gradient(135deg,#1a1408,#2a1f00);border-radius:var(--rmd);padding:24px;margin-bottom:20px;border:1px solid rgba(212,175,55,.2)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <i data-lucide="trophy" style="width:20px;height:20px;color:#D4AF37"></i>
+          <span style="font-family:var(--fd);font-size:1.3rem;color:#F5E9C0">Weekly TMC Wagers</span>
+          <span class="tag" style="background:rgba(212,175,55,.15);color:#D4AF37;border:1px solid rgba(212,175,55,.3);font-size:.65rem">LIVE</span>
+        </div>
+        <div style="font-size:.8375rem;color:rgba(245,233,192,.55);line-height:1.6">Stake your $TMC on weekly events picked by us. Winners share the pool — 90% paid out, 10% platform fee.</div>
+        ${w?`<div style="margin-top:12px;padding:10px 14px;background:rgba(212,175,55,.08);border-radius:var(--rsm);display:inline-flex;align-items:center;gap:8px">
+          <span style="font-size:.75rem;color:rgba(212,175,55,.6)">Your balance</span>
+          <span style="font-weight:700;color:#D4AF37">${W.fmt(w.balance)} TMC</span>
+        </div>`:''}
+      </div>
+
+      ${S._wagersLoading?`<div style="text-align:center;padding:48px;color:var(--t3)"><div class="spin"></div><br>Loading wagers…</div>`
+      :!wagers.length?`
+        <div style="text-align:center;padding:60px 24px;color:var(--t3)">
+          <i data-lucide="trophy" style="width:32px;height:32px;display:block;margin:0 auto 12px;opacity:.3"></i>
+          <div style="font-size:.9rem">No active wagers this week</div>
+          <div style="font-size:.8rem;margin-top:4px">New wagers drop every Monday — check back soon</div>
+        </div>`
+      :wagers.map(wager=>{
+        const myBet=myBets[wager.$id];
+        const totalPool=(wager.totalA||0)+(wager.totalB||0);
+        const pctA=totalPool>0?Math.round((wager.totalA||0)/totalPool*100):50;
+        const pctB=100-pctA;
+        const endsIn=new Date(wager.endsAt)-Date.now();
+        const hoursLeft=Math.max(0,Math.floor(endsIn/3600000));
+        const daysLeft=Math.floor(hoursLeft/24);
+        const timeLabel=daysLeft>0?`${daysLeft}d ${hoursLeft%24}h left`:`${hoursLeft}h left`;
+        const isExpired=endsIn<=0;
+        return`<div style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rmd);padding:20px;margin-bottom:14px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 20px rgba(212,175,55,.1)'" onmouseout="this.style.boxShadow='none'">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
+            <div style="font-weight:700;font-size:.9375rem;color:var(--t1);line-height:1.4">${wager.title}</div>
+            <span style="font-size:.7rem;color:${hoursLeft<24&&!isExpired?'var(--red)':'var(--t3)'};white-space:nowrap;flex-shrink:0;font-weight:${hoursLeft<24?'700':'400'}">${isExpired?'Closed':timeLabel}</span>
+          </div>
+          ${wager.description?`<div style="font-size:.8rem;color:var(--t2);margin-bottom:12px;line-height:1.5">${wager.description}</div>`:''}
+
+          <!-- Pool bar -->
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--t3);margin-bottom:5px">
+              <span>${wager.optionA} — ${pctA}%</span>
+              <span>${pctB}% — ${wager.optionB}</span>
+            </div>
+            <div style="height:6px;background:var(--off);border-radius:100px;overflow:hidden">
+              <div style="height:100%;width:${pctA}%;background:linear-gradient(90deg,#D4AF37,#B8922A);border-radius:100px;transition:width .5s"></div>
+            </div>
+            <div style="font-size:.72rem;color:var(--t3);margin-top:5px;text-align:center">Pool: ${totalPool.toFixed(2)} TMC · Stake ${wager.stakeMin}–${wager.stakeMax} TMC</div>
+          </div>
+
+          ${isAdmin&&!isExpired?`
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;padding:10px;background:var(--off);border-radius:var(--rsm)">
+            <span style="font-size:.72rem;color:var(--t3);align-self:center;margin-right:4px">Admin settle:</span>
+            <button class="btn bc bsm" onclick="A.settleWager('${wager.$id}','A')">A Wins</button>
+            <button class="btn bc bsm" onclick="A.settleWager('${wager.$id}','B')">B Wins</button>
+            <button class="btn bo bsm" style="color:var(--t3)" onclick="A.settleWager('${wager.$id}','void')">Void</button>
+          </div>`:''}
+
+          ${myBet?`
+            <div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2);border-radius:var(--rsm);padding:12px;display:flex;align-items:center;gap:10px">
+              <i data-lucide="check-circle" style="width:16px;height:16px;color:#D4AF37;flex-shrink:0"></i>
+              <div>
+                <div style="font-size:.8rem;font-weight:600;color:var(--t1)">You staked ${myBet.amount.toFixed(2)} TMC on <strong>${myBet.option==='A'?wager.optionA:wager.optionB}</strong></div>
+                <div style="font-size:.72rem;color:var(--t3)">Status: ${myBet.status} · Results when wager closes</div>
+              </div>
+            </div>
+          `:!S.user?`
+            <button class="btn bp" style="width:100%;justify-content:center" onclick="M.auth()">Sign in to stake $TMC</button>
+          `:isExpired?`
+            <div style="text-align:center;padding:10px;font-size:.8rem;color:var(--t3)">This wager has closed — results pending</div>
+          `:`
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+              <button id="wg-opt-A-${wager.$id}" onclick="A.selectWagerOpt('${wager.$id}','A')" style="flex:1;padding:10px;border-radius:var(--rsm);border:1.5px solid var(--bdr);background:var(--off);font-size:.8375rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--t1)">${wager.optionA}</button>
+              <button id="wg-opt-B-${wager.$id}" onclick="A.selectWagerOpt('${wager.$id}','B')" style="flex:1;padding:10px;border-radius:var(--rsm);border:1.5px solid var(--bdr);background:var(--off);font-size:.8375rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--t1)">${wager.optionB}</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="wg-amount-${wager.$id}" placeholder="Enter TMC amount…" min="${wager.stakeMin}" max="${Math.min(wager.stakeMax,w?.balance||0)}" step="0.1" style="flex:1;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:var(--rsm);font-family:var(--fb);font-size:.875rem" onkeydown="if(event.key==='Enter')A.placeBet('${wager.$id}','${wager.title.replace(/'/g,"\\'")}',${wager.stakeMin},${wager.stakeMax})"/>
+              <button style="padding:10px 18px;background:#D4AF37;border:none;color:#1a1408;font-weight:700;border-radius:var(--rsm);cursor:pointer;font-family:var(--fb);white-space:nowrap;display:flex;align-items:center;gap:6px" onclick="event.stopPropagation();A.placeBet('${wager.$id}','${wager.title.replace(/'/g,"\\'")}',${wager.stakeMin},${wager.stakeMax})">
+                <i data-lucide="zap" style="width:13px;height:13px"></i>Stake TMC
+              </button>
+            </div>
+            <div id="wg-err-${wager.$id}" style="font-size:.75rem;color:var(--red);margin-top:6px;min-height:16px"></div>
+          `}
+        </div>`;
+      }).join('')}
+    </div>`;
   },
 
   _forum(){
@@ -7024,10 +7169,11 @@ const A = {
   setMTab(t){
     if(t==='forum'&&!S.subscribed){M.subscribe();return;}
     S.mTab=t;
-    const _tabUrl={board:'/marketplace/orderboard',vendors:'/marketplace/vendorlist',forum:'/marketplace/openforum'}[t]||'/marketplace/orderboard';
+    const _tabUrl={board:'/marketplace/orderboard',vendors:'/marketplace/vendorlist',forum:'/marketplace/openforum',wagers:'/marketplace/wagers'}[t]||'/marketplace/orderboard';
     if(window.location.pathname!==_tabUrl) history.pushState({},'',_tabUrl);
     if(t==='board') loadOrders();
     if(t==='forum'){loadChat();A._loadAllUsersForMention();}
+    if(t==='wagers'){S._wagers=null;S._wagersLoaded=false;}
     render();
   },
   setFilter(f){ S.mFilter=f; render(); },
@@ -7875,7 +8021,7 @@ const A = {
         gold:    [{h:'Central banks increase gold reserves to record highs amid dollar uncertainty',t:'World Gold Council',d:new Date().toISOString(),u:'#'},{h:'Gold outperforms equities as inflation hedge demand surges globally',t:'Reuters',d:new Date().toISOString(),u:'#'},{h:'Goldman Sachs raises gold price target citing structural demand shift',t:'Goldman Sachs',d:new Date().toISOString(),u:'#'}],
         nvda:    [{h:'Nvidia reports record data centre revenue driven by AI chip demand',t:'CNBC',d:new Date().toISOString(),u:'#'},{h:'Blackwell GPU production ramps — analysts raise price targets',t:'Bloomberg',d:new Date().toISOString(),u:'#'},{h:'Nvidia expands AI partnerships across sovereign wealth fund backed projects',t:'FT',d:new Date().toISOString(),u:'#'}],
         spx:    [{h:'S&P 500 hits new highs as Fed signals accommodative policy ahead',t:'WSJ',d:new Date().toISOString(),u:'#'},{h:'Q2 corporate earnings beat estimates — market breadth expands',t:'FactSet',d:new Date().toISOString(),u:'#'},{h:'Institutional inflows into US equities hit 12-month high',t:'Bloomberg',d:new Date().toISOString(),u:'#'}],
-        btc:    [{h:'Bitcoin ETF inflows reach record weekly high as institutional demand accelerates',t:'CoinDesk',d:new Date().toISOString(),u:'#'},{h:'MicroStrategy adds to Bitcoin treasury — corporate adoption trend continues',t:'Bloomberg',d:new Date().toISOString(),u:'#'},{h:'On-chain data shows long-term holders accumulating at current levels',t:'Glassnode',d:new Date().toISOString(),u:'#'}],
+        btc:    [{h:'Bull Crypto: BTC market analysis and price outlook',t:'@bullcryptozor on X',d:new Date().toISOString(),u:'#',summary:'Live BTC market analysis from crypto analyst Bull Crypto on X (Twitter). Strong outlook shared for Bitcoin price momentum.'},{h:'MicroStrategy adds to Bitcoin treasury — corporate adoption trend continues',t:'Bloomberg',d:new Date().toISOString(),u:'#'},{h:'On-chain data shows long-term holders accumulating at current levels',t:'Glassnode',d:new Date().toISOString(),u:'#'}],
         dxy:    [{h:'Dollar index stabilises as Fed holds rates — commodity markets benefit',t:'Reuters',d:new Date().toISOString(),u:'#'},{h:'Weaker DXY supports emerging market currencies and risk assets broadly',t:'Bloomberg',d:new Date().toISOString(),u:'#'},{h:'Currency strategists see dollar moderation as positive for global trade flows',t:'FT',d:new Date().toISOString(),u:'#'}],
         eth:    [{h:'Ethereum ETF sees strong institutional inflows in latest trading week',t:'CoinDesk',d:new Date().toISOString(),u:'#'},{h:'ETH supply continues deflationary trend post-merge — analysts bullish',t:'Ultrasound.money',d:new Date().toISOString(),u:'#'},{h:'Layer 2 adoption surges — Ethereum network activity at all-time highs',t:'Dune Analytics',d:new Date().toISOString(),u:'#'}],
         tet:    [{h:'$TET community governance passes key product expansion proposal',t:'Discord',d:new Date().toISOString(),u:'#'},{h:'New exchange listings drive increased $TET trading volume and visibility',t:'CoinMarketCap',d:new Date().toISOString(),u:'#'},{h:'Development team delivers on roadmap milestone ahead of schedule',t:'Official Blog',d:new Date().toISOString(),u:'#'}],
@@ -9766,6 +9912,158 @@ Rules:
       toast('Listing deleted.','ok');
     }catch(e){toast('Could not delete: '+e.message,'err');}
   },
+  selectWagerOpt(wagerId,opt){
+    ['A','B'].forEach(o=>{
+      const btn=document.getElementById(`wg-opt-${o}-${wagerId}`);
+      if(!btn) return;
+      if(o===opt){btn.style.borderColor='#D4AF37';btn.style.background='rgba(212,175,55,.1)';btn.style.color='#B8922A';}
+      else{btn.style.borderColor='var(--bdr)';btn.style.background='var(--off)';btn.style.color='var(--t1)';}
+    });
+    if(!window._wagerSelections) window._wagerSelections={};
+    window._wagerSelections[wagerId]=opt;
+  },
+
+  async createWager(){
+    const title=document.getElementById('wg-title')?.value?.trim();
+    const desc=document.getElementById('wg-desc')?.value?.trim();
+    const optA=document.getElementById('wg-optA')?.value?.trim();
+    const optB=document.getElementById('wg-optB')?.value?.trim();
+    const min=parseFloat(document.getElementById('wg-min')?.value);
+    const max=parseFloat(document.getElementById('wg-max')?.value);
+    const endsAt=document.getElementById('wg-ends')?.value;
+    const err=document.getElementById('wg-err');
+    if(!title){err.textContent='Title required.';return;}
+    if(!optA||!optB){err.textContent='Both options required.';return;}
+    if(!endsAt){err.textContent='End date required.';return;}
+    if(min>=max){err.textContent='Max must be greater than min.';return;}
+    try{
+      await DB.create('wagers',{
+        title,description:desc||'',optionA:optA,optionB:optB,
+        stakeMin:min,stakeMax:max,
+        endsAt:new Date(endsAt).toISOString(),
+        status:'open',winner:'',totalA:0,totalB:0,
+        createdBy:S.user.id,
+      });
+      err.textContent='';
+      toast('Wager created!','ok');
+      S._wagersLoaded=false;S._wagers=null;
+      render();
+    }catch(e){err.textContent='Failed: '+e.message;}
+  },
+
+  async placeBet(wagerId,wagerTitle,minStake,maxStake){
+    if(!S.user){M.auth();return;}
+    if(!W.wallet){toast('Wallet loading — please wait','err');return;}
+    const opt=window._wagerSelections?.[wagerId];
+    const errEl=document.getElementById(`wg-err-${wagerId}`);
+    if(!opt){if(errEl)errEl.textContent='Please select Option A or B first.';return;}
+    const amtInput=document.getElementById(`wg-amount-${wagerId}`);
+    const amtRaw=parseFloat(amtInput?.value);
+    if(!amtRaw||isNaN(amtRaw)){if(errEl)errEl.textContent='Please enter how much TMC to stake.';return;}
+    if(amtRaw<minStake){if(errEl)errEl.textContent=`Minimum stake is ${minStake} TMC.`;return;}
+    if(amtRaw>maxStake){if(errEl)errEl.textContent=`Maximum stake is ${maxStake} TMC.`;return;}
+    if(amtRaw>W.wallet.balance){if(errEl)errEl.textContent=`You only have ${W.fmt(W.wallet.balance)} TMC.`;return;}
+    if(errEl) errEl.textContent='';
+    if(!confirm(`Stake ${amtRaw.toFixed(2)} TMC on "${opt==='A'?wagerTitle+' → Option A':wagerTitle+' → Option B'}"?\n\nThis is non-refundable unless the wager is voided.`)) return;
+
+    // Deduct TMC first
+    const ok=await W.spend(amtRaw,'spend_commission',`Wager: ${wagerTitle} — Option ${opt}`,wagerId);
+    if(!ok) return;
+
+    // Save bet directly via _db to avoid AW_COL mapping issues
+    try{
+      const betDoc=await _db.createDocument(AW_DB_ID,'wager_bets',ID.unique(),{
+        wagerId,
+        userId:S.user.id,
+        option:opt,
+        amount:Number(amtRaw),
+        status:'pending',
+        payout:0,
+      });
+      console.log('Wager bet saved:',betDoc.$id);
+
+      // Update wager totals
+      try{
+        const wagerDoc=await _db.getDocument(AW_DB_ID,'wagers',wagerId);
+        const update=opt==='A'
+          ?{totalA:Number(((wagerDoc.totalA||0)+amtRaw).toFixed(3))}
+          :{totalB:Number(((wagerDoc.totalB||0)+amtRaw).toFixed(3))};
+        await _db.updateDocument(AW_DB_ID,'wagers',wagerId,update);
+        // Update local state
+        const localWager=(S._wagers||[]).find(w=>w.$id===wagerId||w.id===wagerId);
+        if(localWager){
+          if(opt==='A') localWager.totalA=(localWager.totalA||0)+amtRaw;
+          else localWager.totalB=(localWager.totalB||0)+amtRaw;
+        }
+      }catch(e){console.warn('wager total update:',e.message);}
+
+      // Update local bets state — don't reload from DB
+      if(!S._myBets) S._myBets={};
+      S._myBets[wagerId]={
+        $id:betDoc.$id,wagerId,
+        userId:S.user.id,
+        option:opt,
+        amount:amtRaw,
+        status:'pending',
+        payout:0,
+      };
+
+      toast(`Staked ${amtRaw.toFixed(2)} TMC on Option ${opt}! 🎉`,'ok');
+      render(); // re-render to show "You bet" state without full reload
+
+    }catch(e){
+      console.error('wager_bets create failed:',e);
+      // Refund TMC since bet didn't save
+      W.earn('admin_grant',`Wager refund — ${wagerTitle}`,wagerId).catch(()=>{});
+      toast('Bet failed — your TMC has been refunded. Error: '+e.message,'err');
+    }
+  },
+
+  async settleWager(wagerId,winner){
+    if(!confirm(`Settle wager — winner: ${winner}?`)) return;
+    try{
+      const bets=await DB.list('wager_bets',[Query.equal('wagerId',[wagerId]),Query.limit(100)]);
+      const wager=await _db.getDocument(AW_DB_ID,AW_COL.wagers,wagerId);
+      const totalA=wager.totalA||0,totalB=wager.totalB||0;
+      for(const bet of bets.documents){
+        if(winner==='void'){
+          // Refund
+          const refundWallet=await DB.list('tmc_wallet',[Query.equal('userId',[bet.userId]),Query.limit(1)]);
+          if(refundWallet.documents[0]){
+            const rw=refundWallet.documents[0];
+            const newBal=parseFloat(((rw.balance||0)+bet.amount).toFixed(3));
+            await _db.updateDocument(AW_DB_ID,'tmc_wallet',rw.$id,{balance:newBal,lifetimeEarned:parseFloat(((rw.lifetimeEarned||0)+bet.amount).toFixed(3))});
+          }
+          await DB.update('wager_bets',bet.$id,{status:'refunded',payout:bet.amount});
+        } else {
+          const won=bet.option===winner;
+          if(won){
+            const winPool=winner==='A'?totalA:totalB;
+            const losePool=winner==='A'?totalB:totalA;
+            const share=winPool>0?(bet.amount/winPool):0;
+            const payout=parseFloat((bet.amount+losePool*share*0.9).toFixed(3));
+            // Credit winner's wallet
+            const winWallet=await DB.list('tmc_wallet',[Query.equal('userId',[bet.userId]),Query.limit(1)]);
+            if(winWallet.documents[0]){
+              const ww=winWallet.documents[0];
+              const newBal=parseFloat(((ww.balance||0)+payout).toFixed(3));
+              await _db.updateDocument(AW_DB_ID,'tmc_wallet',ww.$id,{balance:newBal,lifetimeEarned:parseFloat(((ww.lifetimeEarned||0)+payout).toFixed(3))});
+            }
+            await DB.update('wager_bets',bet.$id,{status:'won',payout});
+            await createNotif(bet.userId,'deal',`Wager won! +${payout.toFixed(2)} TMC`,`You won the wager "${wager.title}" — ${payout.toFixed(2)} TMC has been added to your wallet.`,'wallet');
+          } else {
+            await DB.update('wager_bets',bet.$id,{status:'lost',payout:0});
+            await createNotif(bet.userId,'subscription',`Wager result: ${wager.title}`,`Your option didn't win this time. Better luck next week!`,'market');
+          }
+        }
+      }
+      await DB.update('wagers',wagerId,{status:'settled',winner});
+      toast('Wager settled!','ok');
+      S._wagersLoaded=false;S._wagers=null;
+      render();
+    }catch(e){toast('Settle failed: '+e.message,'err');}
+  },
+
   async shareOrder(id,title){
     const slug=(title||'listing')
       .toLowerCase()
