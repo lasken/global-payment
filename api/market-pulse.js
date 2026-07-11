@@ -77,7 +77,7 @@ export default async function handler(req, res) {
         body:JSON.stringify({
           body:JSON.stringify({
             title:'Datum List Update 📊',
-            body:teaserMsg+'. Pro members only.',
+            body:teaserMsg+'. Only in Toomuchcoin.',
             url:'https://www.toomuchcoin.com/financial/datumlist',
             segment:'All',
           }),
