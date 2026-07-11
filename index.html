@@ -4417,11 +4417,17 @@ const P = {
       <!-- Market Pulse Card -->
       ${(()=>{
         if(!S.coins||S.coins.length<10) return '';
-        const gainers=[...S.coins].filter(c=>c.chg>0).sort((a,b)=>b.chg-a.chg).slice(0,3);
-        const losers=[...S.coins].filter(c=>c.chg<0).sort((a,b)=>a.chg-b.chg).slice(0,3);
+        // Filter out micro-cap noise and absurd percentage movers
+        const sensibleCoins=S.coins.filter(c=>
+          c.mcap>5000000 &&          // at least $5M market cap
+          c.price>0.000001 &&        // not a dust coin
+          Math.abs(c.chg)<500        // no coin moves 500%+ in 24h legitimately
+        );
+        const gainers=[...sensibleCoins].filter(c=>c.chg>0).sort((a,b)=>b.chg-a.chg).slice(0,3);
+        const losers=[...sensibleCoins].filter(c=>c.chg<0).sort((a,b)=>a.chg-b.chg).slice(0,3);
         const MEME=['DOGE','SHIB','PEPE','FLOKI','BONK','WIF','MEME','BOME','POPCAT','TURBO','MOG','BRETT'];
-        const hotMemes=[...S.coins].filter(c=>MEME.includes(c.sym.toUpperCase())&&c.chg>0).sort((a,b)=>b.chg-a.chg).slice(0,2);
-        const volSpikes=[...S.coins].filter(c=>c.vol&&c.mktcap&&c.mktcap>0).map(c=>({...c,vr:c.vol/c.mktcap})).filter(c=>c.vr>0.1).sort((a,b)=>b.vr-a.vr).slice(0,3);
+        const hotMemes=[...sensibleCoins].filter(c=>MEME.includes(c.sym.toUpperCase())&&c.chg>0).sort((a,b)=>b.chg-a.chg).slice(0,2);
+        const volSpikes=[...sensibleCoins].filter(c=>c.vol&&c.mcap&&c.mcap>0).map(c=>({...c,vr:c.vol/c.mcap})).filter(c=>c.vr>0.05&&c.vr<10).sort((a,b)=>b.vr-a.vr).slice(0,3);
         const pulse=[...gainers].slice(0,1)[0];
         if(!pulse) return '';
         return`<div style="background:linear-gradient(135deg,#FBF8EC,#fff8e6);border:1.5px solid rgba(212,175,55,.25);border-radius:var(--rmd);padding:16px 18px;margin-bottom:16px">
