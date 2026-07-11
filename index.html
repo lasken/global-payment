@@ -4382,7 +4382,7 @@ const P = {
 
   _mktTable(){
     if(S.coinsState==='loading'||S.coinsState==='idle'){
-      return`<div class="mtwrap"><div class="lrow"><div class="spin"></div><br>Fetching 500 assets from CoinGecko…</div></div>`;
+      return`<div class="mtwrap"><div class="lrow"><div class="spin"></div><br>Fetching 500 assets…</div></div>`;
     }
     if(S.coinsState==='err'&&S.coins.length===0){
       return`<div class="mtwrap"><div class="lrow" style="color:var(--red)"><i data-lucide="alert-circle" style="width:24px;height:24px;display:block;margin:0 auto 10px"></i>Could not load market data.</div></div>`;
@@ -4665,7 +4665,7 @@ const P = {
       if(MANUAL_PRICES[id]!=null) return MANUAL_PRICES[id];
       return null;
     };
-    const NAIRA_IDS=['dangcem',];
+    const NAIRA_IDS=['dangcem','mtn'];
     const fmtAP=(p,id='')=>{
       if(p==null||isNaN(p))return'—';
       const sym=NAIRA_IDS.includes(id)?'₦':'$';
@@ -4709,7 +4709,8 @@ const P = {
         emoji:'🌍', name:'Africa',
         desc:'Top picks from African markets',
         assets:[
-          {id:'dangcem', n:'#', name:'Dangote Cement', sym:'DANGCEM', bg:'#C4622D',fg:'#fff', fp:'₦1,180.00', ytd:93.76, y1:168.18, y5:455.29, y10:615.00, sj:0},
+          {id:'dangcem', n:'#', name:'Dangote Cement', sym:'DANGCEM', bg:'#C4622D',fg:'#fff', fp:'₦1,047.00', ytd:93.76, y1:168.18, y5:455.29, y10:615.00, sj:0},
+          {id:'mtn',     n:'#', name:'MTN Group',      sym:'MTN',     bg:'#FFCC00',fg:'#000', fp:'₦810',    ytd:58.51,  y1:126.57,  y5:393.9,  y10:515.03, sj:0},
         ],
       },
       {
@@ -4766,6 +4767,7 @@ const P = {
         googl:'Alphabet controls the world\'s attention — Google Search, YouTube, Android, and Google Cloud. AI integration across every product makes this the most underrated AI play in the market. Trades at a discount to peers despite dominant cash generation.',
         aramco:'Saudi Aramco is the world\'s most profitable company and the backbone of global oil supply. With the lowest extraction cost on earth and a government-backed dividend policy, Aramco is the definitive energy hedge in any long-term portfolio.',
         ccecc:'China Civil Engineering Construction Corporation — a major state-owned infrastructure contractor with significant African project exposure. A proxy on Chinese-funded African development as Belt and Road Initiative projects continue across the continent.',
+        mtn:'MTN Group is Africa\'s largest mobile network operator with over 280 million subscribers across 19 markets. As Africa\'s digital infrastructure backbone — mobile money, data, fintech — MTN is the single best proxy on African economic growth and smartphone adoption.',
       };
 
       const NEWS={
@@ -4785,6 +4787,7 @@ const P = {
         aapl:[{h:'Apple intelligence features rolling out globally — user base responds positively',t:'MacRumors',d:new Date().toISOString(),u:'#'},{h:'App Store revenue hits record high — services margin expands',t:'Bloomberg',d:new Date().toISOString(),u:'#'},{h:'iPhone cycle expected to accelerate — AI upgrade supercycle thesis gains traction',t:'Morgan Stanley',d:new Date().toISOString(),u:'#'}],
         googl:[{h:'Google Search integrates AI overviews — query volume remains strong',t:'Reuters',d:new Date().toISOString(),u:'#'},{h:'YouTube ad revenue surges — platform outperforms Netflix on watch time',t:'Bloomberg',d:new Date().toISOString(),u:'#'},{h:'Google Cloud accelerates — enterprise AI adoption driving double-digit growth',t:'CNBC',d:new Date().toISOString(),u:'#'}],
         aramco:[{h:'Saudi Aramco declares record dividend — government confirms payout floor',t:'FT',d:new Date().toISOString(),u:'#'},{h:'Aramco oil production steady — OPEC+ agreement supports price floor',t:'Reuters',d:new Date().toISOString(),u:'#'},{h:'Aramco signs new LNG and hydrogen supply agreements with Asian buyers',t:'Bloomberg',d:new Date().toISOString(),u:'#'}],
+        mtn:[{h:'MTN Mobile Money hits 60 million active users across Africa',t:'BusinessDay',d:new Date().toISOString(),u:'#'},{h:'MTN Nigeria data revenue grows 38% as smartphone penetration rises',t:'Nairametrics',d:new Date().toISOString(),u:'#'},{h:'MTN Group expands fintech licences in West Africa — digital payments accelerating',t:'Reuters Africa',d:new Date().toISOString(),u:'#'}],
         ccecc:[{h:'CCECC awarded major rail contract in East Africa — $2.1B project',t:'African Business',d:new Date().toISOString(),u:'#'},{h:'China infrastructure spending in Africa reaches five-year high',t:'Reuters',d:new Date().toISOString(),u:'#'},{h:'CCECC parent CCCC reports strong overseas revenue growth in H1',t:'Xinhua',d:new Date().toISOString(),u:'#'}],
       };
 
@@ -4874,7 +4877,6 @@ const P = {
         </div>`).join('')}
 
       <div class="al-note" style="margin-top:8px">
-        <strong>Live data</strong> via Yahoo Finance &amp; CoinGecko. Stock logos via FMP. &nbsp;|&nbsp;
         <strong>Columns:</strong> YTD = year-to-date · 2020 (6Y) = since Jan 2020 · 5Y/10Y = multi-year cumulative · &nbsp;|&nbsp; Not financial advice.
       </div>`;
   },
@@ -5252,7 +5254,6 @@ const P = {
           <div class="blog-card-excerpt">${post.excerpt||post.body.replace(/<[^>]+>/g,'').slice(0,140)+'…'}</div>
           <div class="blog-card-meta" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             ${post.type!=='guide'?`${adminAvatar}<span>Deji Lasisi</span><span style="color:var(--bdr2)">·</span><span>${(post.originalCreatedAt||post.publishedAt)?new Date(post.originalCreatedAt||post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Recently'}</span>`:''}
-            ${post.type!=='guide'&&isLocked?`<span class="tag tpur" style="font-size:.65rem;margin-left:auto"><i data-lucide="lock" style="width:9px;height:9px"></i>Pro</span>`:''}
             ${post.type==='guide'?`<span class="tag tg" style="font-size:.65rem">Free</span>`:''}
           </div>
         </div>
@@ -5279,15 +5280,6 @@ const P = {
         </div>
         <div style="flex:1;height:1px;background:var(--bdr)"></div>
       </div>
-
-      ${isLocked?`
-      <div style="background:linear-gradient(135deg,#FBF8EC,#F5EEC8);border:1.5px solid #E8D9A0;border-radius:var(--rmd);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-        <div style="flex:1;min-width:200px">
-          <div style="font-weight:700;font-size:.875rem;color:var(--pur);margin-bottom:3px;display:flex;align-items:center;gap:6px"><i data-lucide="lock" style="width:13px;height:13px"></i>Pro members only</div>
-          <div style="font-size:.78rem;color:var(--t2);line-height:1.5">Top-tier market insight, culture, and opinion — content you won't find anywhere else. Upgrade to read in full.</div>
-        </div>
-        <button class="btn bpur bsm" onclick="R.go('sub')" style="white-space:nowrap"><i data-lucide="zap" style="width:13px;height:13px"></i>Upgrade — ₦10k/mo</button>
-      </div>`:''}
 
       ${loading?`<div style="text-align:center;padding:40px;color:var(--t3)"><div class="spin"></div><br>Loading…</div>`
       :blogPosts.length===0?`<div style="text-align:center;padding:48px 24px;color:var(--t3);border:1.5px dashed var(--bdr);border-radius:var(--rlg)">
@@ -5361,7 +5353,7 @@ const P = {
     // Blog posts free until 2026-07-07 (1 week from launch of this feature)
     const freeUntil=new Date('2026-07-07T23:59:59Z');
     const blogFreeNow=new Date()<freeUntil;
-    const isLocked=!isGuide&&!blogFreeNow&&!S.subscribed&&S.subStatus!=='trial';
+    const isLocked=false; // Blog is now free for all
     const imgUrl=post.coverImageId?fileUrl(post.coverImageId):null;
     // Always show back button — fixed at top
     // Body is now stored as rich HTML directly from the Quill editor — no conversion needed
@@ -5613,7 +5605,7 @@ const P = {
             :`<span style="font-size:.72rem;color:var(--t3)">Billed monthly · Cancel anytime</span>`}
           </div>
         </div>
-        <p style="font-size:.95rem;color:var(--t2);max-width:420px;margin:10px auto 0;line-height:1.6">One flat rate. Full access to marketplace, open forum, and 500+ live coins and assets.</p>
+        <p style="font-size:.95rem;color:var(--t2);max-width:420px;margin:10px auto 0;line-height:1.6">One flat rate. Full access to datum list, open forum , and kaykay.</p>
       </div>
 
       <!-- Free features strip -->
@@ -5645,7 +5637,7 @@ const P = {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </div>
           <div class="sub-feat-t" style="color:#B8922A">Datum List</div>
-          <div class="sub-feat-d">Handpicked wealth assets — Gold, BTC, NVDA, TSMC, LVMH, Dangote Cement and more. Live prices + your personal return since joining.</div>
+          <div class="sub-feat-d">Handpicked premium long-term wealth assets that grow as you use the app.</div>
         </div>
 
         <!-- 2. Open Forum -->
@@ -5654,7 +5646,7 @@ const P = {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <div class="sub-feat-t" style="color:#B8922A">Open Forum</div>
-          <div class="sub-feat-d">Join the real conversation — market takes, trading tips, coin talk, and community intelligence. Pro members only.</div>
+          <div class="sub-feat-d">Join conversation from winners that range from market opportunities, trading tips, coin talk, and community.</div>
         </div>
 
         <!-- 3. KayKay AI -->
@@ -5663,7 +5655,7 @@ const P = {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
           </div>
           <div class="sub-feat-t" style="color:#B8922A">KayKay AI</div>
-          <div class="sub-feat-d">Your personal AI assistant — navigate the app by voice, get market answers, and hear live notifications announced to you.</div>
+          <div class="sub-feat-d">Your personal AI assistant. A 2nd brain that helps you navigate new generation Agentic Commerce.</div>
         </div>
 
         <!-- 4. Private Consultation -->
@@ -5672,7 +5664,7 @@ const P = {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
           <div class="sub-feat-t" style="color:#B8922A">Private Consultation</div>
-          <div class="sub-feat-d">Direct access to Deji — private 1-on-1 on coin strategy, culture, commerce, and navigating global markets. Pro members get priority booking.</div>
+          <div class="sub-feat-d">Understand markets and brainstorm business strategies with resident experts.</div>
         </div>
 
       </div>
@@ -5683,7 +5675,7 @@ const P = {
           <div style="font-family:var(--fd);font-size:1.1rem;color:#fff;margin-bottom:4px">Book a Private Consultation</div>
           <div style="font-size:.8rem;color:rgba(255,255,255,.55);line-height:1.5;max-width:360px">Coin strategy · Culture & commerce · Global markets · Portfolio review · Life advice from someone who gets it.</div>
         </div>
-        <a href="mailto:help@toomuchcoin.com?subject=Private Consultation Request — Pro Member&body=Hi Deji,%0A%0AI'm a Pro member and I'd like to book a private consultation.%0A%0ATopic: %0APreferred time: %0A%0AThanks" style="display:inline-flex;align-items:center;gap:8px;background:#D4AF37;color:#1a1408;border-radius:var(--rsm);padding:11px 22px;font-weight:700;font-size:.875rem;text-decoration:none;white-space:nowrap;transition:var(--ease)" onmouseover="this.style.background='#B8922A'" onmouseout="this.style.background='#D4AF37'">
+        <a href="mailto:help@toomuchcoin.com?subject=Private Consultation Request — Pro Member&body=Hi Toomuchcoin,%0A%0AI'm a member of toomuchcoin and I'd like to book a private consultation.%0A%0ATopic: %0APreferred time: %0A%0AThanks" style="display:inline-flex;align-items:center;gap:8px;background:#D4AF37;color:#1a1408;border-radius:var(--rsm);padding:11px 22px;font-weight:700;font-size:.875rem;text-decoration:none;white-space:nowrap;transition:var(--ease)" onmouseover="this.style.background='#B8922A'" onmouseout="this.style.background='#D4AF37'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           Book Now
         </a>
@@ -6865,7 +6857,6 @@ const A = {
 
   setAlert(coinId,coinName,currentPrice){
     if(!S.user){M.auth();return;}
-    if(!S.subscribed){M.subscribe();return;}
     // Load existing alerts for this coin
     const existing=(S._priceAlerts||[]).filter(a=>a.coinId===coinId&&!a.triggered);
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
@@ -7299,7 +7290,6 @@ const A = {
 
   setAlert(coinId,coinName,currentPrice){
     if(!S.user){M.auth();return;}
-    if(!S.subscribed){M.subscribe();return;}
     // Load existing alerts for this coin
     const existing=(S._priceAlerts||[]).filter(a=>a.coinId===coinId&&!a.triggered);
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
@@ -8337,7 +8327,9 @@ const A = {
       tet:'TET token crypto',mstr:'MicroStrategy MSTR Bitcoin',
       tsla:'Tesla TSLA stock',nasdaq:'Nasdaq composite index',
       lvmh:'LVMH luxury stock',tsmc:'TSMC semiconductor stock',
-      dangcem:'Dangote Cement Nigeria',
+      dangcem:'Dangote Cement Nigeria',aapl:'Apple AAPL stock',
+      googl:'Alphabet Google GOOGL stock',aramco:'Saudi Aramco 2222',
+      ccecc:'CCECC China Civil Engineering',mtn:'MTN Group Africa',
     };
     if(!S._assetNews[id]){
       const POSITIVE_FALLBACK={
@@ -8409,11 +8401,12 @@ const A = {
       lvmh:'LVMH is the ultimate luxury conglomerate — 75+ brands including Louis Vuitton, Dior, and Moët. Luxury demand from Asia is structurally growing. LVMH captures aspirational spending at the highest margin.',
       tsmc:'TSMC fabricates the most advanced chips on earth. Without TSMC, there is no iPhone, no Nvidia GPU, no modern AI. They are the single most strategically important company in the global tech supply chain.',
       dangcem:'Dangote Cement is the largest cement producer in Africa. Nigeria\'s infrastructure deficit is massive — roads, housing, commercial real estate. Dangote is the direct pick-and-shovel play on African growth.',
+      mtn:'MTN Group is Africa\'s largest mobile network operator with over 280 million subscribers across 19 markets. As Africa\'s digital infrastructure backbone — mobile money, data, fintech — MTN is the single best proxy on African economic growth and smartphone adoption.',
     };
-    const NAMES={gold:'Gold',nvda:'Nvidia',spx:'S&P 500',btc:'Bitcoin',dxy:'Dollar Index',eth:'Ethereum',tet:'$TET',mstr:'Strategy',tsla:'Tesla',nasdaq:'Nasdaq',lvmh:'LVMH',tsmc:'TSMC',dangcem:'Dangote Cement',ccecc:'CCECC',aramco:'Saudi Aramco',aapl:'Apple',googl:'Alphabet/Google'};
-    const SYMS={gold:'XAU',nvda:'NVDA',spx:'SPX',btc:'BTC',dxy:'DXY',eth:'ETH',tet:'TET',mstr:'MSTR',tsla:'TSLA',nasdaq:'NDX',lvmh:'MC',tsmc:'TSM',dangcem:'DANGCEM',ccecc:'CCECC',aramco:'2222',aapl:'AAPL',googl:'GOOGL'};
-    const COLORS_MAP={gold:'#B8892A',nvda:'#76B900',spx:'#2B5BE0',btc:'#F7931A',dxy:'#26A17B',eth:'#627EEA',tet:'#26A17B',mstr:'#F7931A',tsla:'#E84142',nasdaq:'#2B5BE0',lvmh:'#2C1810',tsmc:'#E31837',dangcem:'#C4622D',ccecc:'#C0392B',aramco:'#006C35',aapl:'#555555',googl:'#4285F4'};
-    const NAIRA_IDS=['dangcem'];
+    const NAMES={gold:'Gold',nvda:'Nvidia',spx:'S&P 500',btc:'Bitcoin',dxy:'Dollar Index',eth:'Ethereum',tet:'$TET',mstr:'Strategy',tsla:'Tesla',nasdaq:'Nasdaq',lvmh:'LVMH',tsmc:'TSMC',dangcem:'Dangote Cement',aapl:'Apple',googl:'Alphabet (Google)',aramco:'Saudi Aramco',ccecc:'CCECC',mtn:'MTN Group'};
+    const SYMS={gold:'XAU',nvda:'NVDA',spx:'SPX',btc:'BTC',dxy:'DXY',eth:'ETH',tet:'TET',mstr:'MSTR',tsla:'TSLA',nasdaq:'NDX',lvmh:'MC',tsmc:'TSM',dangcem:'DANGCEM',aapl:'AAPL',googl:'GOOGL',aramco:'2222',ccecc:'CCECC',mtn:'MTN'};
+    const COLORS_MAP={gold:'#B8892A',nvda:'#76B900',spx:'#2B5BE0',btc:'#F7931A',dxy:'#26A17B',eth:'#627EEA',tet:'#26A17B',mstr:'#F7931A',tsla:'#E84142',nasdaq:'#2B5BE0',lvmh:'#2C1810',tsmc:'#E31837',dangcem:'#C4622D',ccecc:'#C0392B',aramco:'#006C35',aapl:'#555555',googl:'#4285F4',mtn:'#FFCC00'};
+    const NAIRA_IDS=['dangcem','mtn'];
     const mp=S._manualPrices||{};
     const cgMap={btc:'bitcoin',eth:'ethereum'};
     const coin=S.coins.find(c=>c.id===cgMap[id]);
@@ -9904,7 +9897,7 @@ Rules:
       if(published){
         await notifyAllUsers(
           '✦ New post: '+title,
-          'Deji just published a new post. Read it on the blog.',
+          'Admin just published a new post. Read it on the blog.',
           'blog'
         );
       }
