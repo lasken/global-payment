@@ -3542,7 +3542,7 @@ const P = {
     const trialDaysLeft=trialDoc?.trialEnd?Math.max(0,Math.ceil((new Date(trialDoc.trialEnd)-new Date())/(1000*60*60*24))):null;
     const subInfo={
       active:{cls:'vstat-verified',icon:'zap',col:'var(--pur)',title:'Pro Membership Active'+(S._subPeriodEnd?` — ${Math.max(0,Math.ceil((new Date(S._subPeriodEnd)-new Date())/(1000*60*60*24)))} day${Math.ceil((new Date(S._subPeriodEnd)-new Date())/(1000*60*60*24))!==1?'s':''} remaining`:''),
-        desc:'Full access to all marketplace, forum, kaykay, and 500+ crypto features.'},
+        desc:'Full access to Datum List, Open Forum, KayKay AI, and Private Consultation with the team.'},
       trial:{cls:'vstat-verified',icon:'gift',col:'var(--grn)',title:'Free Trial Active'+(trialDaysLeft!==null?' — '+trialDaysLeft+' day'+(trialDaysLeft===1?'':'s')+' remaining':''),
         desc:'You\'re on a free 30-day Pro trial. Enjoy full access to all features. Upgrade before your trial ends to keep access.'},
       pending:{cls:'vstat-pending',icon:'clock',col:'var(--gld)',title:'Payment Under Review',
@@ -4307,7 +4307,7 @@ const P = {
     if(!S.subscribed){return`<div class="gate-banner">
       <div class="gate-icon"><i data-lucide="message-circle" style="width:24px;height:24px"></i></div>
       <h3 class="gate-t">Open Forum is a Pro Feature</h3>
-      <p class="gate-d">Join the community, share market insights, and connect with traders — included in the ₦10,000/month Pro plan.</p>
+      <p class="gate-d">The Open Forum, Datum List, and KayKay AI are Pro-only. The marketplace and vendor directory are free for everyone.</p>
       <button class="btn bpur" onclick="R.go('sub')"><i data-lucide="zap" style="width:14px;height:14px"></i>Upgrade to Pro — ₦10,000/month</button>
     </div>`;}
     if(S.msgsLoading)return`<div class="chat-wrap"><div class="chat-empty"><div class="spin"></div><br>Loading forum…</div></div>`;
@@ -4680,12 +4680,18 @@ const P = {
     const logo=(id,bg,fg,sym)=>{
         if(id==='btc'){const c=S.coins.find(x=>x.id==='bitcoin');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
         if(id==='eth'){const c=S.coins.find(x=>x.id==='ethereum');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
-        if(['nvda','tsla','mstr'].includes(id)){
-          const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR'}[id];
+        if(['nvda','tsla','mstr','aapl','googl'].includes(id)){
+          const s={nvda:'NVDA',tsla:'TSLA',mstr:'MSTR',aapl:'AAPL',googl:'GOOGL'}[id];
           return`<div class="al-ico" style="background:#fff;overflow:hidden"><img src="https://financialmodelingprep.com/image-stock/${s}.png" width="36" height="36" style="object-fit:contain;display:block" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=font-size:.65rem;font-weight:700;color:${fg}>${s}</span>'"></div>`;
         }
         if(id==='dangcem'){
           return`<div class="al-ico" style="background:${bg};color:${fg};font-size:.6rem;font-weight:700;font-family:var(--fd)">DAN</div>`;
+        }
+        if(id==='aramco'){
+          return`<div class="al-ico" style="background:#006C35;overflow:hidden"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/b/b0/Saudi_Aramco_logo.svg/120px-Saudi_Aramco_logo.svg.png" width="36" height="36" style="object-fit:contain;display:block;padding:4px" onerror="this.parentNode.innerHTML='<span style=color:#fff;font-size:.55rem;font-weight:700>ARMCO</span>'"></div>`;
+        }
+        if(id==='ccecc'){
+          return`<div class="al-ico" style="background:#C0392B;color:#fff;font-size:.55rem;font-weight:700;font-family:var(--fd)">CCECC</div>`;
         }
         return`<div class="al-ico" style="background:${bg};color:${fg}">${sym}</div>`;
       };
@@ -4710,17 +4716,21 @@ const P = {
         emoji:'🌏', name:'Asia',
         desc:'Top picks from Asian markets',
         assets:[
-          {id:'tet',  n:'#', name:'$TET',  sym:'TET',  bg:'#26A17B',fg:'#fff',    fp:'$0.3',    ytd:-92.59, y1:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
-          {id:'tsmc', n:'#', name:'TSMC',  sym:'TSM',  bg:'#E31837',fg:'#fff',    fp:'$446.81',  ytd:35.29,  y1:131.58,   y5:273.43,   y10:2095,  sj:0},
+          {id:'tet',    n:'#', name:'$TET',         sym:'TET',    bg:'#26A17B',fg:'#fff',    fp:'$0.3',       ytd:-92.59, y1:-85.70,  y5:-60.00,  y10:-14.22,  sj:0},
+          {id:'tsmc',   n:'#', name:'TSMC',         sym:'TSM',    bg:'#E31837',fg:'#fff',    fp:'$446.81',    ytd:35.29,  y1:131.58,  y5:273.43,  y10:2095,    sj:0},
+          {id:'ccecc',  n:'#', name:'$CCECC',       sym:'CCECC',  bg:'#C0392B',fg:'#fff',    fp:'—',          ytd:0,      y1:0,       y5:0,       y10:0,       sj:0},
+          {id:'aramco', n:'#', name:'Saudi Aramco',  sym:'2222',   bg:'#006C35',fg:'#fff',    fp:'$560.83',      ytd:8.12,  y1:-0.05,    y5:-12.93,   y10:-15.8,       sj:0},
         ],
       },
       {
         emoji:'🌎', name:'Americas',
         desc:'Top picks from the Americas',
         assets:[
-          {id:'mstr',   n:'#', name:'Strategy',  sym:'MSTR', bg:'#F7931A',fg:'#fff', fp:'$159.09',    ytd:-1.23,   y1:-12.21, y5:179.94, y10:5200.00,  sj:0},
-          {id:'tsla',   n:'#', name:'Tesla',           sym:'TSLA', bg:'#E84142',fg:'#fff', fp:'$435.79',    ytd:-0.52,  y1:22.25,  y5:100.80,  y10:1250.00,  sj:0},
-          {id:'nasdaq', n:'#', name:'Nasdaq Comp.',    sym:'NDX',  bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62', ytd:16.08,  y1:184.23,  y5:112.00,  y10:235.00,   sj:0},
+          {id:'mstr',   n:'#', name:'Strategy',      sym:'MSTR',  bg:'#F7931A',fg:'#fff', fp:'$159.09',    ytd:-1.23,  y1:-12.21,  y5:179.94,  y10:5200.00, sj:0},
+          {id:'tsla',   n:'#', name:'Tesla',          sym:'TSLA',  bg:'#E84142',fg:'#fff', fp:'$435.79',    ytd:-0.52,  y1:22.25,   y5:100.80,  y10:1250.00, sj:0},
+          {id:'nasdaq', n:'#', name:'Nasdaq Comp.',   sym:'NDX',   bg:'#2B5BE0',fg:'#fff', fp:'$26,972.62', ytd:16.08,  y1:184.23,  y5:112.00,  y10:235.00,  sj:0},
+          {id:'aapl',   n:'#', name:'Apple',          sym:'AAPL',  bg:'#555555',fg:'#fff', fp:'$315.32',    ytd:16.51, y1:48.26,    y5:130.83,  y10:1050.00, sj:0},
+          {id:'googl',  n:'#', name:'Alphabet/Google',sym:'GOOGL', bg:'#4285F4',fg:'#fff', fp:'$357.18',    ytd:12.44,   y1:99.48,   y5:193.43,  y10:520.00,  sj:0},
         ],
       },
       {
@@ -4752,6 +4762,10 @@ const P = {
         lvmh   :'LVMH is the ultimate luxury conglomerate — 75+ brands including Louis Vuitton, Dior, and Moët. Luxury demand from Asia is structurally growing. LVMH captures aspirational spending at the highest margin.',
         tsmc   :'TSMC fabricates the most advanced chips on earth. Without TSMC, there is no iPhone, no Nvidia GPU, no modern AI. They are the single most strategically important company in the global tech supply chain.',
         dangcem:'Dangote Cement is the largest cement producer in Africa. Nigeria\'s infrastructure deficit is massive — roads, housing, commercial real estate. Dangote is the direct pick-and-shovel play on African growth.',
+        aapl:'Apple is the world\'s most valuable consumer technology company. Its ecosystem lock-in — iPhone, Mac, AirPods, App Store, Apple Pay — creates unmatched recurring revenue. Services is now a $100B+ business growing at 15%+ annually.',
+        googl:'Alphabet controls the world\'s attention — Google Search, YouTube, Android, and Google Cloud. AI integration across every product makes this the most underrated AI play in the market. Trades at a discount to peers despite dominant cash generation.',
+        aramco:'Saudi Aramco is the world\'s most profitable company and the backbone of global oil supply. With the lowest extraction cost on earth and a government-backed dividend policy, Aramco is the definitive energy hedge in any long-term portfolio.',
+        ccecc:'China Civil Engineering Construction Corporation — a major state-owned infrastructure contractor with significant African project exposure. A proxy on Chinese-funded African development as Belt and Road Initiative projects continue across the continent.',
       };
 
       const NEWS={
@@ -4768,6 +4782,10 @@ const P = {
         lvmh   :[{h:'LVMH revenue grows 8% driven by Asia-Pacific demand',t:'FT'},{h:'Bernard Arnault increases stake in Louis Vuitton parent',t:'Bloomberg'},{h:'Luxury sector outperforms in risk-off environment',t:'Vogue Business'}],
         tsmc   :[{h:'TSMC confirms 2nm production on track for 2025',t:'DigiTimes'},{h:'Arizona fab expansion receives $6.6B US government grant',t:'Reuters'},{h:'TSMC raises guidance — AI chip demand exceeds forecast',t:'Bloomberg'}],
         dangcem:[{h:'Dangote Cement expands into East Africa with new plant',t:'BusinessDay NG'},{h:'Nigeria cement demand rises 12% on housing push',t:'Nairametrics'},{h:'Aliko Dangote signals pan-African infrastructure play',t:'ThisDay'}],
+        aapl:[{h:'Apple intelligence features rolling out globally — user base responds positively',t:'MacRumors',d:new Date().toISOString(),u:'#'},{h:'App Store revenue hits record high — services margin expands',t:'Bloomberg',d:new Date().toISOString(),u:'#'},{h:'iPhone cycle expected to accelerate — AI upgrade supercycle thesis gains traction',t:'Morgan Stanley',d:new Date().toISOString(),u:'#'}],
+        googl:[{h:'Google Search integrates AI overviews — query volume remains strong',t:'Reuters',d:new Date().toISOString(),u:'#'},{h:'YouTube ad revenue surges — platform outperforms Netflix on watch time',t:'Bloomberg',d:new Date().toISOString(),u:'#'},{h:'Google Cloud accelerates — enterprise AI adoption driving double-digit growth',t:'CNBC',d:new Date().toISOString(),u:'#'}],
+        aramco:[{h:'Saudi Aramco declares record dividend — government confirms payout floor',t:'FT',d:new Date().toISOString(),u:'#'},{h:'Aramco oil production steady — OPEC+ agreement supports price floor',t:'Reuters',d:new Date().toISOString(),u:'#'},{h:'Aramco signs new LNG and hydrogen supply agreements with Asian buyers',t:'Bloomberg',d:new Date().toISOString(),u:'#'}],
+        ccecc:[{h:'CCECC awarded major rail contract in East Africa — $2.1B project',t:'African Business',d:new Date().toISOString(),u:'#'},{h:'China infrastructure spending in Africa reaches five-year high',t:'Reuters',d:new Date().toISOString(),u:'#'},{h:'CCECC parent CCCC reports strong overseas revenue growth in H1',t:'Xinhua',d:new Date().toISOString(),u:'#'}],
       };
 
       const row=(a)=>{
@@ -5598,15 +5616,77 @@ const P = {
         <p style="font-size:.95rem;color:var(--t2);max-width:420px;margin:10px auto 0;line-height:1.6">One flat rate. Full access to marketplace, open forum, and 500+ live coins and assets.</p>
       </div>
 
-      <div class="sub-grid" style="grid-template-columns:1fr 1fr">
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="sub-feat-t">Full Marketplace</div><div class="sub-feat-d">View, connect and interact with every listing on the board.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="sub-feat-t">Open Forum</div><div class="sub-feat-d">Join the community conversation and share market insights.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="sub-feat-t">500+ Crypto Assets</div><div class="sub-feat-d">Full market table with search, pagination, and deep-dive analytics.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="sub-feat-t">Watchlist & Charts</div><div class="sub-feat-d">Track your favourites and access historical performance charts.</div></div>
-        <div class="sub-feat" style="border-color:rgba(212,175,55,.3);background:linear-gradient(135deg,#FBF8EC,#F5EEC8)"><div class="sub-feat-i" style="background:var(--pur)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div><div class="sub-feat-t" style="color:var(--pur)">KayKay AI Assistant</div><div class="sub-feat-d">Voice and text AI that navigates the app, answers questions, and announces your notifications.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="sub-feat-t">Vendor Directory</div><div class="sub-feat-d">City-by-city vendor discovery with community voting and showcase.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg></div><div class="sub-feat-t">Blog Access</div><div class="sub-feat-d">Full access to all blog posts — in-depth market insight and platform updates from Deji.</div></div>
-        <div class="sub-feat"><div class="sub-feat-i"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pur)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="sub-feat-t">Price Alerts</div><div class="sub-feat-d">Set custom alerts for any asset — get notified the moment your target price is hit.</div></div>
+      <!-- Free features strip -->
+      <div style="background:var(--off);border:1px solid var(--bdr);border-radius:var(--rmd);padding:16px 20px;margin-bottom:20px">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:10px">Always Free — No Account Needed</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          ${[
+            {icon:'store',label:'Full Marketplace — post, browse & connect'},
+            {icon:'map-pin',label:'Vendor Directory — browse & vote'},
+            {icon:'trending-up',label:'Live Coin Rates — 500+ assets'},
+            {icon:'book-open',label:'How-To Guides'},
+            {icon:'trophy',label:'Weekly TMC Wagers'},
+          ].map(f=>`<div style="display:flex;align-items:center;gap:7px;font-size:.8125rem;color:var(--t2)">
+            <div style="width:26px;height:26px;border-radius:var(--rsm);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i data-lucide="${f.icon}" style="width:13px;height:13px;color:var(--t2)"></i>
+            </div>
+            ${f.label}
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Paid features — 4 cards -->
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:12px">Pro Unlocks</div>
+      <div class="sub-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0">
+
+        <!-- 1. Datum List -->
+        <div class="sub-feat" style="border-color:rgba(212,175,55,.3);background:linear-gradient(135deg,#FBF8EC,#F5EEC8)">
+          <div class="sub-feat-i" style="background:#D4AF37">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="sub-feat-t" style="color:#B8922A">Datum List</div>
+          <div class="sub-feat-d">Handpicked wealth assets — Gold, BTC, NVDA, TSMC, LVMH, Dangote Cement and more. Live prices + your personal return since joining.</div>
+        </div>
+
+        <!-- 2. Open Forum -->
+        <div class="sub-feat" style="border-color:rgba(212,175,55,.3);background:linear-gradient(135deg,#FBF8EC,#F5EEC8)">
+          <div class="sub-feat-i" style="background:#D4AF37">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="sub-feat-t" style="color:#B8922A">Open Forum</div>
+          <div class="sub-feat-d">Join the real conversation — market takes, trading tips, coin talk, and community intelligence. Pro members only.</div>
+        </div>
+
+        <!-- 3. KayKay AI -->
+        <div class="sub-feat" style="border-color:rgba(212,175,55,.3);background:linear-gradient(135deg,#FBF8EC,#F5EEC8)">
+          <div class="sub-feat-i" style="background:#D4AF37">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+          </div>
+          <div class="sub-feat-t" style="color:#B8922A">KayKay AI</div>
+          <div class="sub-feat-d">Your personal AI assistant — navigate the app by voice, get market answers, and hear live notifications announced to you.</div>
+        </div>
+
+        <!-- 4. Private Consultation -->
+        <div class="sub-feat" style="border-color:rgba(212,175,55,.3);background:linear-gradient(135deg,#FBF8EC,#F5EEC8)">
+          <div class="sub-feat-i" style="background:#D4AF37">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="sub-feat-t" style="color:#B8922A">Private Consultation</div>
+          <div class="sub-feat-d">Direct access to Deji — private 1-on-1 on coin strategy, culture, commerce, and navigating global markets. Pro members get priority booking.</div>
+        </div>
+
+      </div>
+
+      <!-- Consultation CTA -->
+      <div style="background:var(--t1);border-radius:var(--rmd);padding:20px 24px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+        <div>
+          <div style="font-family:var(--fd);font-size:1.1rem;color:#fff;margin-bottom:4px">Book a Private Consultation</div>
+          <div style="font-size:.8rem;color:rgba(255,255,255,.55);line-height:1.5;max-width:360px">Coin strategy · Culture & commerce · Global markets · Portfolio review · Life advice from someone who gets it.</div>
+        </div>
+        <a href="mailto:help@toomuchcoin.com?subject=Private Consultation Request — Pro Member&body=Hi Deji,%0A%0AI'm a Pro member and I'd like to book a private consultation.%0A%0ATopic: %0APreferred time: %0A%0AThanks" style="display:inline-flex;align-items:center;gap:8px;background:#D4AF37;color:#1a1408;border-radius:var(--rsm);padding:11px 22px;font-weight:700;font-size:.875rem;text-decoration:none;white-space:nowrap;transition:var(--ease)" onmouseover="this.style.background='#B8922A'" onmouseout="this.style.background='#D4AF37'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Book Now
+        </a>
       </div>
 
       ${S.subStatus==='trial'?`
@@ -5719,10 +5799,6 @@ const M = {
 
   createOrder(){
     if(!S.user){M.auth();toast('Please sign in to post a listing.');return;}
-    if(!S.subscribed){
-      const myListings=(S.orders||[]).filter(o=>o.userId===S.user.id).length;
-      if(myListings>=3){toast('You\'ve posted your 3 free listings. Upgrade to Pro to continue.');R.go('sub');return;}
-    }
     const pf=S._preFillOrder||{};
     M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
       <div class="modal">
@@ -7410,10 +7486,6 @@ const A = {
 
   connectOrder(id){
     if(!S.user){M.auth();toast('Please sign in to connect.');return;}
-    if(!S.subscribed){
-      const attempts=(S.sentConnections||[]).length;
-      if(attempts>=3){toast('You\'ve used your 3 free connects. Upgrade to Pro to continue.');R.go('sub');return;}
-    }
     const o=(S.orders||[]).find(x=>x.id===id);
     if(!o) return;
     S.viewedOrder=o; M.viewOrder(o);
@@ -7451,6 +7523,7 @@ const A = {
   },
 
   async submitOrder(){
+    if(!S.user){M.auth();return;}
     const unpaid=(S.myConnections||[]).filter(c=>c.status==='deal_done'||c.status==='comm_pending').length;
     if(unpaid>=3){
       const go=confirm(`You have ${unpaid} deals with outstanding commission. Please settle these to maintain your standing. Continue posting anyway?`);
@@ -8337,9 +8410,9 @@ const A = {
       tsmc:'TSMC fabricates the most advanced chips on earth. Without TSMC, there is no iPhone, no Nvidia GPU, no modern AI. They are the single most strategically important company in the global tech supply chain.',
       dangcem:'Dangote Cement is the largest cement producer in Africa. Nigeria\'s infrastructure deficit is massive — roads, housing, commercial real estate. Dangote is the direct pick-and-shovel play on African growth.',
     };
-    const NAMES={gold:'Gold',nvda:'Nvidia',spx:'S&P 500',btc:'Bitcoin',dxy:'Dollar Index',eth:'Ethereum',tet:'$TET',mstr:'Strategy',tsla:'Tesla',nasdaq:'Nasdaq',lvmh:'LVMH',tsmc:'TSMC',dangcem:'Dangote Cement'};
-    const SYMS={gold:'XAU',nvda:'NVDA',spx:'SPX',btc:'BTC',dxy:'DXY',eth:'ETH',tet:'TET',mstr:'MSTR',tsla:'TSLA',nasdaq:'NDX',lvmh:'MC',tsmc:'TSM',dangcem:'DANGCEM'};
-    const COLORS_MAP={gold:'#B8892A',nvda:'#76B900',spx:'#2B5BE0',btc:'#F7931A',dxy:'#26A17B',eth:'#627EEA',tet:'#26A17B',mstr:'#F7931A',tsla:'#E84142',nasdaq:'#2B5BE0',lvmh:'#2C1810',tsmc:'#E31837',dangcem:'#C4622D'};
+    const NAMES={gold:'Gold',nvda:'Nvidia',spx:'S&P 500',btc:'Bitcoin',dxy:'Dollar Index',eth:'Ethereum',tet:'$TET',mstr:'Strategy',tsla:'Tesla',nasdaq:'Nasdaq',lvmh:'LVMH',tsmc:'TSMC',dangcem:'Dangote Cement',ccecc:'CCECC',aramco:'Saudi Aramco',aapl:'Apple',googl:'Alphabet/Google'};
+    const SYMS={gold:'XAU',nvda:'NVDA',spx:'SPX',btc:'BTC',dxy:'DXY',eth:'ETH',tet:'TET',mstr:'MSTR',tsla:'TSLA',nasdaq:'NDX',lvmh:'MC',tsmc:'TSM',dangcem:'DANGCEM',ccecc:'CCECC',aramco:'2222',aapl:'AAPL',googl:'GOOGL'};
+    const COLORS_MAP={gold:'#B8892A',nvda:'#76B900',spx:'#2B5BE0',btc:'#F7931A',dxy:'#26A17B',eth:'#627EEA',tet:'#26A17B',mstr:'#F7931A',tsla:'#E84142',nasdaq:'#2B5BE0',lvmh:'#2C1810',tsmc:'#E31837',dangcem:'#C4622D',ccecc:'#C0392B',aramco:'#006C35',aapl:'#555555',googl:'#4285F4'};
     const NAIRA_IDS=['dangcem'];
     const mp=S._manualPrices||{};
     const cgMap={btc:'bitcoin',eth:'ethereum'};
