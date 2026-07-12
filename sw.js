@@ -1,3 +1,4 @@
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 // Toomuchcoin Service Worker v5
 // Message listener MUST be at top level for OneSignal
 self.addEventListener('message', e => {
