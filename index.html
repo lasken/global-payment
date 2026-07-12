@@ -2633,6 +2633,15 @@ async function createNotif(userId,type,title,body,link='',orderId='',category=''
         try{kkAnnounceNotif(title,body);}catch(e){playNotifSound();}
       }
     }
+    // Always fire push notification to the user — works even when they're offline
+    // every in-app notif also becomes a push notif
+    const pushUrl=link?`https://www.toomuchcoin.com/${link}`:'https://www.toomuchcoin.com';
+    callPushFunction({
+      userId,   // OneSignal routes to this specific user's device
+      title,
+      body,
+      url:pushUrl,
+    }).catch(e=>console.warn('push failed silently:',e.message));
   }catch(e){console.warn('notif create:',e.message);}
 }
 
