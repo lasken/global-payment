@@ -98,7 +98,6 @@
   <script src="config-v2.js" onerror="console.warn('config-v2.js not found')"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
-  <script src="prices.json" onerror="console.warn('Error in loading prices')"></script>
   <style>
     :root{
       --white:#fff;--off:#F8F7F4;--surf:#F2F1EE;--bdr:#E4E2DC;--bdr2:#C8C5BC;
@@ -1179,7 +1178,7 @@ const W={
           userId       :S.user.id,
           status       :'active',
           plan         :'monthly',
-          amount       :'0',
+          amount       :0,
           reference    :'TMC_'+Date.now(),
           paymentMethod:'tmc',
           periodEnd,
@@ -1270,7 +1269,7 @@ const W={
 
   // ── Buy TMC at counter ──
   async submitBuyTMC(){
-    if(!S.user||!S.subscribed){toast('Pro members only.','err');return;}
+    if(!S.user){M.auth();return;}
     const amtRaw=parseFloat(document.getElementById('buy-tmc-amount')?.value);
     const ref=document.getElementById('buy-tmc-ref')?.value?.trim();
     const err=document.getElementById('buy-tmc-err');
@@ -1399,21 +1398,14 @@ const W={
         </button>
       </div>
 
-      <!-- Buy TMC at counter — Pro only -->
-      <div style="background:${S.subscribed?'linear-gradient(135deg,#FBF8EC,#fff8e0)':'var(--off)'};border:1.5px solid ${S.subscribed?'rgba(212,175,55,.35)':'var(--bdr)'};border-radius:var(--rmd);padding:16px;margin-bottom:24px;position:relative;${S.subscribed?'':'overflow:hidden'}">
-        ${!S.subscribed?`<div style="position:absolute;inset:0;background:rgba(248,247,244,.88);backdrop-filter:blur(2px);z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:var(--rmd)">
-          <i data-lucide="lock" style="width:20px;height:20px;color:#D4AF37"></i>
-          <div style="font-weight:700;font-size:.875rem">Pro Members Only</div>
-          <div style="font-size:.78rem;color:var(--t2);text-align:center;max-width:200px;line-height:1.5">Buy $TMC directly at our counter rate — a Pro membership benefit.</div>
-          <button onclick="R.go('sub')" style="background:#D4AF37;color:#1a1408;border:none;border-radius:var(--rsm);padding:8px 20px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:var(--fb)">Upgrade to Pro</button>
-        </div>`:''}
+      <!-- Buy TMC at counter — free for all signed-in users -->
+      <div style="background:linear-gradient(135deg,#FBF8EC,#fff8e0);border:1.5px solid rgba(212,175,55,.35);border-radius:var(--rmd);padding:16px;margin-bottom:24px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <span style="font-weight:700;font-size:.875rem">Buy $TMC at the Counter</span>
-          <span class="tag tpur" style="font-size:.65rem">Pro Benefit</span>
         </div>
         <div style="font-size:.78rem;color:var(--t2);margin-bottom:14px;line-height:1.55">
-          Buy $TMC directly from us at <strong>₦${((W.config.nairaPerTmc||306.08)+50).toFixed(0)} per TMC</strong> — ₦50 above market rate, credited to your wallet instantly. Min 5 TMC.
+          Buy $TMC directly from us at <strong>₦${((W.config.nairaPerTmc||306.08)+50).toFixed(0)} per TMC</strong> — credited to your wallet within 2 hours. Min 5 TMC.
           <br><span style="font-size:.72rem;color:var(--t3);margin-top:3px;display:block">Pay by bank transfer to Zenith 1312154595 · Datum Logistics</span>
         </div>
         <div class="fg" style="margin-bottom:10px">
@@ -2311,11 +2303,10 @@ function stopRealtimeNotifs(){
 // (e.g. user comes back to the tab after phone sleep)
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&S.user){
-    // Check if realtime connection is still alive
-    if(!_realtimeSub){
-      console.log('Realtime: reconnecting after visibility change');
-      startRealtimeNotifs();
-    }
+    // Always restart realtime on tab focus — it may have dropped
+    console.log('Realtime: reconnecting after visibility change');
+    stopRealtimeNotifs();
+    setTimeout(()=>startRealtimeNotifs(),500);
     // Also do one fresh load to catch anything missed while tab was hidden
     loadNotifications().then(()=>renderNav()).catch(()=>{});
   }
@@ -2485,6 +2476,8 @@ function toast(msg,type=''){
 function playNotifSound(type='notif'){
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    // Browser blocks audio before user interaction — skip silently
+    if(ctx.state==='suspended'){ctx.close();return;}
     const play=(freq,startT,dur,vol=0.25)=>{
       const o=ctx.createOscillator();
       const g=ctx.createGain();
@@ -2603,8 +2596,8 @@ async function loadNotifications(){
   const newUnread=S.notifications.filter(n=>!n.read).length;
   const hasNew=S.notifications.some(n=>!prevIds.has(n.id)&&!n.read);
   S.notifUnread=newUnread;
-  // Play sound for any new unread notifications — including ones missed while away
-  if(hasNew||newUnread>prevUnread) playNotifSound();
+  // Only play sound after user has interacted with the page
+  if((hasNew||newUnread>prevUnread)&&document._userHasInteracted) playNotifSound();
 }
 
 async function loadNotifPrefs(){
@@ -2897,18 +2890,19 @@ async function loadSubscription(){
         return;
       }
     } else {
-      // No periodEnd set — calculate it from $createdAt + 30 days
-      const subStart=new Date(doc.$createdAt);
-      const periodEnd=new Date(subStart.getTime()+30*24*60*60*1000);
-      if(periodEnd<now){
-        S.subStatus='expired';
-        S.subscribed=false;
-        try{await DB.update('subscription',doc.$id,{status:'expired',periodEnd:periodEnd.toISOString()});}catch(e){}
-        return;
+        // No periodEnd set — calculate it from $createdAt + 30 days
+        const subStart=new Date(doc.$createdAt);
+        const periodEnd=new Date(subStart.getTime()+30*24*60*60*1000);
+        if(periodEnd<now){
+          S.subStatus='expired';
+          S.subscribed=false;
+          // Only update status, skip periodEnd to avoid 400 if column type is wrong
+          try{await DB.update('subscription',doc.$id,{status:'expired'});}catch(e){console.warn('sub expire:',e.message);}
+          return;
+        }
+        // Save periodEnd silently — don't let it crash loadSubscription
+        try{await DB.update('subscription',doc.$id,{periodEnd:periodEnd.toISOString()});}catch(e){console.warn('periodEnd save:',e.message);}
       }
-      // Save periodEnd so future checks are faster
-      try{await DB.update('subscription',doc.$id,{periodEnd:periodEnd.toISOString()});}catch(e){}
-    }
     S.subStatus='active';
     S.subscribed=true;
     // Store periodEnd for countdown display
@@ -5276,7 +5270,6 @@ const P = {
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-family:var(--fd);font-size:1.35rem">Blog</span>
-          <span class="tag tpur" style="font-size:.68rem"><i data-lucide="lock" style="width:9px;height:9px"></i>Pro</span>
         </div>
         <div style="flex:1;height:1px;background:var(--bdr)"></div>
       </div>
@@ -5418,32 +5411,6 @@ const P = {
         </div>
       </div>`
       :`<div>
-        ${blogFreeNow&&!isGuide?`
-        <div style="background:linear-gradient(135deg,#FBF8EC,#fff8e0);border:1px solid rgba(212,175,55,.3);border-radius:var(--rmd);padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <svg width="22" height="22" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
-            <!-- Box body -->
-            <rect x="8" y="28" width="48" height="28" rx="3" fill="#D4AF37"/>
-            <!-- Box lid -->
-            <rect x="6" y="20" width="52" height="10" rx="2" fill="#B8922A"/>
-            <!-- Ribbon vertical -->
-            <rect x="28" y="20" width="8" height="36" fill="#fff" opacity=".4"/>
-            <!-- Ribbon horizontal on lid -->
-            <rect x="6" y="23" width="52" height="4" fill="#fff" opacity=".4"/>
-            <!-- Bow left loop -->
-            <path d="M32 20 C20 14 14 6 22 4 C28 3 30 12 32 20Z" fill="#B8922A"/>
-            <!-- Bow right loop -->
-            <path d="M32 20 C44 14 50 6 42 4 C36 3 34 12 32 20Z" fill="#B8922A"/>
-            <!-- Bow center knot -->
-            <circle cx="32" cy="20" r="3" fill="#D4AF37"/>
-            <!-- Shine on box -->
-            <rect x="12" y="32" width="6" height="16" rx="2" fill="#fff" opacity=".15"/>
-          </svg>
-          <div style="flex:1;min-width:180px">
-            <div style="font-weight:600;font-size:.8125rem;color:#B8922A;margin-bottom:2px">Free this week only</div>
-            <div style="font-size:.75rem;color:var(--t2)">Blog posts are free to read until 7 July 2026. After that, Pro access is required.</div>
-          </div>
-          <button class="btn bsm" style="background:#D4AF37;color:#1a1408;border:none;font-weight:600" onclick="R.go('sub')">Upgrade — ₦10k/mo</button>
-        </div>`:''}
         <div class="blog-post-body">${bodyHtml}</div>
       </div>`}
 
@@ -7770,7 +7737,7 @@ const A = {
       const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
       await DB.create('subscription',{
         userId:S.user.id,status:'pending',plan:'monthly',
-        amount:'10000',reference:ref,paymentMethod:method,periodEnd,
+        amount:10000,reference:ref,paymentMethod:method,periodEnd,
       });
       S.subStatus='pending';
       // Notify admin
@@ -8387,6 +8354,7 @@ const A = {
 
   _datumAssetPage(){
     const id=S.selDatumAsset;
+    if(!id){A.setCryptoSub('assetlist');return'';}
     const THESIS={
       gold:'Gold remains the world\'s oldest store of value. With rising geopolitical tension, dollar debasement risk, and central bank accumulation at record highs, gold is the ultimate macro hedge in any portfolio.',
       nvda:'Nvidia owns the picks-and-shovels of the AI revolution. Their CUDA ecosystem creates a near-unbreakable moat. Every major AI lab runs on Nvidia GPUs — demand is structural, not cyclical.',
@@ -8453,6 +8421,11 @@ const A = {
       dangcem:    {2024:620,   2025:1180,  2026:1180.00},
       eth:        {2024:2300,  2025:3400,  2026:2013.93},
       tet:        {2024:1,     2025:0.50,  2026:0.3},
+      aapl:       {2024:205.46,    2025:271.86,    2026:315.00},
+      googl:      {2024:188.43,    2025:197.60,    2026:357.00},
+      aramco:     {2024:7.45,   2025:6.90,   2026:7.20},
+      ccecc:      {2024:1.20,   2025:0.95,   2026:0.85},
+      mtn:        {2024:170,    2025:915,    2026:810.00},
     };
 
     if(hist.length<2&&joinDate){
@@ -8479,9 +8452,12 @@ const A = {
     // Read from same source as datum list table for consistency
     let _localBaselines2={};
     try{const _r2=localStorage.getItem('datum_user_baselines');_localBaselines2=_r2?JSON.parse(_r2):{};}catch(e){}
-    // MUST match exact fallback chain used in the table row above
-    const realEntryPrice=_localBaselines2[id]||(S._manualPrices?.[id])||null;
-    const joinPrice=realEntryPrice||livePrice||1;
+    const mp2=S._manualPrices||{};
+    // Entry price: local baselines → manual prices → ENTRY_PRICES lookup → live price → 1
+    const _entryYear=new Date(S.user?.joinedAt||Date.now()).getFullYear();
+    const _entryFallback=ENTRY_PRICES[id]?.[_entryYear]||ENTRY_PRICES[id]?.[2026]||null;
+    const realEntryPrice=_localBaselines2[id]||mp2[id]||_entryFallback||livePrice||1;
+    const joinPrice=realEntryPrice||1;
 
     const currentP=livePrice||hist[hist.length-1]?.p||joinPrice;
     const sinceJoinedPct=(joinPrice&&joinPrice>0)?((currentP-joinPrice)/joinPrice*100):0;
@@ -8940,7 +8916,7 @@ Rules:
       // Create subscription record
       await DB.create('subscription',{
         userId:S.user.id,status:'trial',plan:'trial',
-        amount:'0',reference:'COUPON_'+code,
+        amount:0,reference:'COUPON_'+code,
         paymentMethod:'coupon',trialEnd,
       });
 
@@ -10659,7 +10635,7 @@ const PAY = {
     btn.disabled=true;btn.textContent='Submitting…';
     DB.create('subscription',{
       userId:S.user.id,status:'pending',plan:'monthly',
-      amount:'5',reference:ref,paymentMethod:method,
+      amount:10000,reference:ref,paymentMethod:method,
     }).then(async()=>{
       S.subStatus='pending';
       await createNotif(S.user.id,'subscription',
@@ -10707,7 +10683,7 @@ const PAY = {
               userId       : S.user.id,
               status       : 'active',
               plan         : 'monthly',
-              amount       : '10000',
+              amount       : 10000,
               reference    : data.transaction_id + '',
               paymentMethod: 'flutterwave',
               periodEnd    : _periodEnd,
@@ -10819,6 +10795,10 @@ const PAY = {
   },
 };
 
+document._userHasInteracted=false;
+['click','keydown','touchstart'].forEach(e=>{
+  document.addEventListener(e,()=>{document._userHasInteracted=true;},{once:true,passive:true});
+});
 document.addEventListener('DOMContentLoaded', async()=>{
   const u=await DB.me();
   if(u){
