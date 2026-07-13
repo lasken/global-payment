@@ -103,8 +103,11 @@ export default async function handler(req, res) {
     // 8. ── Unread notification reminders ──
     // Fetch all unread notifications, group by user, push a reminder to each
     try {
+      // Appwrite REST API query format
+      const q1 = encodeURIComponent('equal("read", [false])');
+      const q2 = encodeURIComponent('limit(500)');
       const unreadRes = await fetch(
-        `https://cloud.appwrite.io/v1/databases/${APPWRITE_DB}/collections/notifications/documents?queries[]=${encodeURIComponent(JSON.stringify({method:'equal',attribute:'read',values:[false]}))}&queries[]=${encodeURIComponent(JSON.stringify({method:'limit',value:500}))}`,
+        `https://cloud.appwrite.io/v1/databases/${APPWRITE_DB}/collections/notifications/documents?queries[]=${q1}&queries[]=${q2}`,
         {
           headers: {
             'Content-Type': 'application/json',
