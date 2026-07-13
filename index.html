@@ -6702,6 +6702,31 @@ const A = {
       initOneSignal(S.user.id);
       M.close();
       R.go('profile');
+      // Soft push permission ask after login
+      setTimeout(()=>{
+        if(window.OneSignal&&!localStorage.getItem('push_asked')){
+          localStorage.setItem('push_asked','1');
+          M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+            <div class="modal" style="max-width:380px;text-align:center">
+              <div class="mhdr" style="justify-content:flex-end">
+                <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+              </div>
+              <div style="width:56px;height:56px;background:rgba(212,175,55,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+                <i data-lucide="bell" style="width:24px;height:24px;color:#D4AF37"></i>
+              </div>
+              <div style="font-family:var(--fd);font-size:1.3rem;margin-bottom:8px">Stay in the loop</div>
+              <p style="font-size:.875rem;color:var(--t2);line-height:1.6;margin-bottom:20px">
+                Get notified when you win a wager, someone connects with your listing, new posts drop, and daily market updates — even when you're not on the site.
+              </p>
+              <button class="btn bp" style="width:100%;justify-content:center;padding:12px;background:#D4AF37;border:none;color:#1a1408;font-weight:700;margin-bottom:10px" onclick="M.close();window.OneSignal.Notifications.requestPermission()">
+                <i data-lucide="bell" style="width:14px;height:14px"></i>Turn on notifications
+              </button>
+              <button class="btn bg" style="width:100%;justify-content:center" onclick="M.close()">Maybe later</button>
+            </div>
+          </div>`);
+          lucide.createIcons();
+        }
+      }, 2000);
       const welcomeMsg=S.subStatus==='trial'
         ?'Welcome back! Your free trial is active.'
         :S.subStatus==='expired'
@@ -9878,13 +9903,17 @@ Rules:
       S._blogPosts=null;
       R.go('blog');
       toast(asDraft?'Draft saved! Only you can see it.':'Post published!','ok');
-      // Notify all users about new blog post
-      if(published){
-        await notifyAllUsers(
-          '✦ New post: '+title,
-          'Admin just published a new post. Read it on the blog.',
-          'blog'
-        );
+      // Notify all users about new blog post or guide
+      if(finalPublished){
+        const isGuidePost=bpType==='guide';
+        const pushTitle=isGuidePost
+          ?`📖 New Guide: ${title}`
+          :`✦ New Post: ${title}`;
+        const pushBody=isGuidePost
+          ?`A new free how-to guide just dropped on Toomuchcoin — "${title}". Read it now.`
+          :`The admin just published a new blog post — "${title}". Tap to read.`;
+        const pushLink=isGuidePost?'blog':'blog';
+        await notifyAllUsers(pushTitle, pushBody, pushLink);
       }
     }catch(e){
       err.textContent='Something went wrong. Please try again.';
@@ -9960,6 +9989,17 @@ Rules:
       if(S._currentPost?.id===id) S._currentPost={...S._currentPost,title,excerpt,body,tags,coverImageId,type:bpType,guideCategory:bpGuideCat,published};
       M.close();render();
       toast(asDraft?'Saved as draft.':'Post updated and published!','ok');
+      // Push to all users when publishing (not drafts)
+      if(!asDraft){
+        const isGuidePost=bpType==='guide';
+        const pushTitle=isGuidePost
+          ?`📖 New Guide: ${title}`
+          :`✦ New Post: ${title}`;
+        const pushBody=isGuidePost
+          ?`A new free how-to guide is live — "${title}". Read it on Toomuchcoin.`
+          :`New post from Admin — "${title}". Tap to read on Toomuchcoin.`;
+        notifyAllUsers(pushTitle, pushBody, 'blog').catch(()=>{});
+      }
     }catch(e){
       err.textContent='Something went wrong: '+e.message;
       btn.disabled=false;btn.textContent=asDraft?'Save as Draft':'Save & Publish';
