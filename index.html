@@ -14,14 +14,14 @@
   <link rel="shortcut icon" href="/toomuchcoin.png">
   <link rel="manifest" href="/manifest.json" onerror="this.remove()">
   
-  <meta name="description" content="Toomuchcoin — Africa's P2P marketplace, live prices for 500+ crypto coins, curated Datum List wealth assets, and a global vendor directory. Trade, discover, and grow your wealth without boundaries."/>
+  <meta name="description" content="Toomuchcoin — Global P2P marketplace, live prices for 500+ crypto coins, curated Datum List wealth assets, and a global vendor directory. Trade, discover, and grow your wealth without boundaries."/>
   <meta name="keywords" content="P2P marketplace Nigeria, crypto prices live, Bitcoin price today, Ethereum tracker, African marketplace, Datum List, financial assets Africa, buy sell Nigeria, toomuchcoin, Coin Rates, global commerce"/>
   <meta name="author" content="Toomuchcoin"/>
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"/>
   <meta name="googlebot" content="index, follow"/>
   <link rel="canonical" href="https://www.toomuchcoin.com"/>
   <meta property="og:title" content="Toomuchcoin — P2P Marketplace & Live Coin Rates"/>
-  <meta property="og:description" content="Africa's first user-centric decentralised commerce platform. Live crypto prices, curated wealth assets, and a global P2P marketplace — all in one place."/>
+  <meta property="og:description" content="Global P2P marketplace, live prices for 500+ crypto coins, curated Datum List wealth assets, and a global vendor directory. Trade, discover, and grow your wealth without boundaries."/>
   <meta property="og:site_name" content="Toomuchcoin"/>
   <meta property="og:locale" content="en_US"/>
   <meta name="twitter:site" content="@toomuchcoin"/>
@@ -47,49 +47,63 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Toomuchcoin",
-    "alternateName": "Toomuchcoin x Datum",
-    "url": "https://www.toomuchcoin.com",
-    "description": "Global P2P marketplace, live crypto prices for 500+ coins, curated Datum List wealth assets, and a global vendor directory.",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://www.toomuchcoin.com/financial/coinmarkets?q={search_term_string}",
-      "query-input": "required name=search_term_string"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Toomuchcoin",
-      "url": "https://www.toomuchcoin.com",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://www.toomuchcoin.com/toomuchcoin.png",
-        "width": 512,
-        "height": 512
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://www.toomuchcoin.com/#website",
+        "name": "Toomuchcoin",
+        "alternateName": "Toomuchcoin x Datum",
+        "url": "https://www.toomuchcoin.com",
+        "description": "Global P2P marketplace, live crypto prices for 500+ coins, curated Datum List wealth assets, and a global vendor directory.",
+        "inLanguage": "en-NG",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://www.toomuchcoin.com/financial/coinmarkets?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
       },
-      "sameAs": [],
-      "contactPoint": [{
-        "@type": "ContactPoint",
+      {
+        "@type": "Organization",
+        "@id": "https://www.toomuchcoin.com/#organization",
+        "name": "Toomuchcoin",
+        "url": "https://www.toomuchcoin.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.toomuchcoin.com/toomuchcoin.png",
+          "width": 512,
+          "height": 512
+        },
+        "description": "User-centric decentralised global platform for P2P commerce, live financial markets, and curated wealth assets.",
         "email": "help@toomuchcoin.com",
-        "contactType": "customer support",
-        "availableLanguage": ["English", "Yoruba", "Igbo", "Hausa"]
-      }]
-    }
+        "foundingDate": "2026",
+        "foundingLocation": "Nigeria",
+        "areaServed": "Worldwide",
+        "serviceType": ["P2P Marketplace", "Cryptocurrency Tracker", "Financial Education", "Vendor Directory"],
+        "sameAs": [
+          "https://twitter.com/toomuchcoin"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "help@toomuchcoin.com",
+          "contactType": "customer support",
+          "availableLanguage": ["English", "Yoruba", "Igbo", "Hausa", "Nigerian Pidgin"]
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://www.toomuchcoin.com/#webpage",
+        "url": "https://www.toomuchcoin.com",
+        "name": "Toomuchcoin — P2P Marketplace & Live Coin Rates",
+        "isPartOf": {"@id": "https://www.toomuchcoin.com/#website"},
+        "about": {"@id": "https://www.toomuchcoin.com/#organization"},
+        "description": "Global first user-centric decentralised commerce platform. Live crypto prices, curated wealth assets, and a global P2P marketplace."
+      }
+    ]
   }
   </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "Toomuchcoin",
-    "url": "https://www.toomuchcoin.com",
-    "logo": "https://www.toomuchcoin.com/toomuchcoin.png",
-    "description": "User-centric decentralised global platform for P2P commerce, live financial markets, and curated wealth assets.",
-    "email": "help@toomuchcoin.com",
-    "foundingDate": "2026",
-    "areaServed": "Worldwide",
-    "serviceType": ["P2P Marketplace", "Cryptocurrency Tracker", "Financial Education", "Vendor Directory"]
-  }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/iife/sdk.js"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -2589,7 +2603,8 @@ async function loadNotifications(){
     Query.limit(30),
   ]);
   S.notifications=r.documents.map(d=>({
-    id:d.$id, type:d.type, title:d.title, body:d.body,
+    id:d.$id, type:d.type, title:d.title,
+    body:d.body||d.message||d.desc||'',
     link:d.link||null, read:d.read||false, createdAt:d.$createdAt,
     orderId:d.orderId||null, category:d.category||null,
   }));
@@ -2624,7 +2639,11 @@ async function saveNotifPrefs(){
 
 async function createNotif(userId,type,title,body,link='',orderId='',category=''){
   try{
-    await DB.create('notifications',{userId,type,title,body,link,read:false,orderId,category});
+    // Support both 'body' and 'message' field names depending on collection schema
+    const notifData={userId,type,title,link,read:false,orderId,category};
+    notifData.body=body||'';
+    notifData.message=body||''; // fallback if collection uses 'message'
+    await DB.create('notifications',notifData);
     if(S.user&&userId===S.user.id){
       // Always play sound
       playNotifSound();
@@ -2635,11 +2654,12 @@ async function createNotif(userId,type,title,body,link='',orderId='',category=''
     }
     // Always fire push notification to the user — works even when they're offline
     // every in-app notif also becomes a push notif
+    // Fire push to specific user — works even when they're offline
     const pushUrl=link?`https://www.toomuchcoin.com/${link}`:'https://www.toomuchcoin.com';
     callPushFunction({
-      userId,   // OneSignal routes to this specific user's device
+      userId,
       title,
-      body,
+      body:body||'',
       url:pushUrl,
     }).catch(e=>console.warn('push failed silently:',e.message));
   }catch(e){console.warn('notif create:',e.message);}
@@ -2655,7 +2675,10 @@ async function notifyAllUsers(title,body,link=''){
     for(const uid of userIds){
       try{
         await DB.create('notifications',{
-          userId:uid,type:'zap',title,body,link,read:false,orderId:'',category:'platform'
+          userId:uid,type:'zap',title,
+          body:body||'',
+          message:body||'',
+          link,read:false,orderId:'',category:'platform'
         });
         inAppCount++;
       }catch(e){console.warn('notif create failed for',uid,e.message);}
@@ -2664,14 +2687,27 @@ async function notifyAllUsers(title,body,link=''){
     console.warn('notifyAllUsers — loading profiles failed:',e.message);
   }
 
-  // Step 2: push to everyone via the Appwrite Function (server-side, no CORS issue)
-  const pushResult=await callPushFunction({
-    title,body,
-    segment:'Subscribed Users',
-    url:link?`https://toomuchcoin.com?page=${link}`:'https://toomuchcoin.com',
-  });
-
-  return{inAppCount,pushSuccess:pushResult.success===true};
+  // Step 2: push notification — call Appwrite function directly
+  // This is exactly what market-pulse.js does and it works
+  try{
+    const fnId=(window.TMC_CONFIG||{}).PUSH_FN_ID||'6a33308800352853e374';
+    const execution=await _fn.createExecution(
+      fnId,
+      JSON.stringify({
+        title,
+        body:body||'',
+        segment:'All',
+        url:link?`https://www.toomuchcoin.com/${link}`:'https://www.toomuchcoin.com',
+      }),
+      false // synchronous so we can log the result
+    );
+    const result=JSON.parse(execution.responseBody||'{}');
+    console.log('notifyAllUsers push result:',result);
+    return{inAppCount,pushSuccess:result.success===true};
+  }catch(e){
+    console.warn('notifyAllUsers push failed:',e.message);
+    return{inAppCount,pushSuccess:false};
+  }
 }
 
 async function pushNotif(userId,title,body,url=''){
@@ -3261,21 +3297,257 @@ function KK_send(){
   kkAsk(text);
 }
 
+function _buildPageSchema(){
+  const base='https://www.toomuchcoin.com';
+
+  if(S.page==='land'){
+    return {
+      '@context':'https://schema.org',
+      '@type':'WebPage',
+      'name':'Toomuchcoin — P2P Marketplace & Live Coin Rates',
+      'url':base,
+      'description':'Your Profile, Global Marketplace, and real-time Coin Rates — all in one place.',
+      'publisher':{'@id':base+'/#organization'},
+    };
+  }
+
+  if(S.page==='market'){
+    const listings=(S.orders||[]).filter(o=>o.status==='open').slice(0,10);
+    return {
+      '@context':'https://schema.org',
+      '@type':'ItemList',
+      'name':'Datum Marketplace — Live Listings',
+      'url':base+'/marketplace/orderboard',
+      'description':'P2P marketplace listings — buy, sell, and trade globally on Toomuchcoin.',
+      'numberOfItems':listings.length,
+      'itemListElement':listings.map((o,i)=>({
+        '@type':'ListItem',
+        'position':i+1,
+        'item':{
+          '@type':'Offer',
+          'name':o.title,
+          'description':o.desc||o.title,
+          'price':o.price?.replace(/[^0-9.]/g,'')||'0',
+          'priceCurrency':'USD',
+          'availability':'https://schema.org/InStock',
+          'url':base+'/marketplace/orderboard?listing='+o.id,
+          'seller':{
+            '@type':'Person',
+            'name':o.userName,
+          },
+        },
+      })),
+    };
+  }
+
+  if(S.page==='crypto'){
+    return {
+      '@context':'https://schema.org',
+      '@type':'Dataset',
+      'name':'Live Cryptocurrency Prices — Toomuchcoin Coin Rates',
+      'url':base+'/financial/coinmarkets',
+      'description':'Live prices for 500+ cryptocurrency assets tracked in real time via CoinGecko.',
+      'keywords':['cryptocurrency','bitcoin price','ethereum price','live coin rates','crypto tracker'],
+      'creator':{'@id':base+'/#organization'},
+      'temporalCoverage':'2026/..',
+      'variableMeasured':[
+        {'@type':'PropertyValue','name':'Price','unitText':'USD'},
+        {'@type':'PropertyValue','name':'24h Change','unitText':'Percent'},
+        {'@type':'PropertyValue','name':'Market Cap','unitText':'USD'},
+      ],
+    };
+  }
+
+  if(S.page==='blog'){
+    const posts=(S._blogPosts||[]).filter(p=>p.published&&(!p.type||p.type==='blog')).slice(0,5);
+    return {
+      '@context':'https://schema.org',
+      '@type':'Blog',
+      'name':'Toomuchcoin Blog — Commerce, Coin & Culture',
+      'url':base+'/blog',
+      'description':'Thoughts on commerce, coin, culture, and everything in between — by Deji Lasisi.',
+      'author':{
+        '@type':'Person',
+        'name':'Deji Lasisi',
+        'url':base,
+      },
+      'publisher':{'@id':base+'/#organization'},
+      'blogPost':posts.map(p=>({
+        '@type':'BlogPosting',
+        'headline':p.title,
+        'url':base+'/blog/'+(p.slug||p.id),
+        'datePublished':p.publishedAt||p.originalCreatedAt,
+        'dateModified':p.publishedAt||p.originalCreatedAt,
+        'author':{'@type':'Person','name':'Deji Lasisi'},
+        'publisher':{'@id':base+'/#organization'},
+        'description':p.excerpt||p.title,
+        'image':p.coverImageId?`${base}/v1/storage/buckets/6a1c20600034ef4c775c/files/${p.coverImageId}/view?project=6a163159003bd203c63f`:'',
+      })),
+    };
+  }
+
+  if(S.page==='blogpost'&&S._currentPost){
+    const post=S._currentPost;
+    const isGuide=post.type==='guide';
+    const postUrl=isGuide
+      ?`${base}/howtoguides/${post.guideCategory||'datum_basics'}/${post.slug||post.id}`
+      :`${base}/blog/${post.slug||post.id}`;
+    if(isGuide){
+      return {
+        '@context':'https://schema.org',
+        '@type':'HowTo',
+        'name':post.title,
+        'url':postUrl,
+        'description':post.excerpt||post.title,
+        'image':post.coverImageId?`${base}/v1/storage/buckets/6a1c20600034ef4c775c/files/${post.coverImageId}/view?project=6a163159003bd203c63f`:'',
+        'author':{'@type':'Organization','name':'Toomuchcoin'},
+        'publisher':{'@id':base+'/#organization'},
+        'datePublished':post.publishedAt||post.originalCreatedAt,
+        'inLanguage':'en-NG',
+        'isAccessibleForFree':true,
+      };
+    }
+    return {
+      '@context':'https://schema.org',
+      '@type':'BlogPosting',
+      'headline':post.title,
+      'url':postUrl,
+      'description':post.excerpt||post.title,
+      'image':post.coverImageId?`${base}/v1/storage/buckets/6a1c20600034ef4c775c/files/${post.coverImageId}/view?project=6a163159003bd203c63f`:'',
+      'author':{
+        '@type':'Person',
+        'name':'Deji Lasisi',
+        'url':base,
+      },
+      'publisher':{'@id':base+'/#organization'},
+      'datePublished':post.publishedAt||post.originalCreatedAt,
+      'dateModified':post.publishedAt||post.originalCreatedAt,
+      'mainEntityOfPage':{'@type':'WebPage','@id':postUrl},
+      'articleSection':post.tags?.[0]||'Finance',
+      'inLanguage':'en-NG',
+      'isAccessibleForFree':true,
+    };
+  }
+
+  if(S.page==='sub'){
+    return {
+      '@context':'https://schema.org',
+      '@type':'Product',
+      'name':'Toomuchcoin Pro Membership',
+      'url':base+'/subscribe',
+      'description':'Full access to Datum List, Open Forum, KayKay AI, and Private Consultation with Deji.',
+      'brand':{'@id':base+'/#organization'},
+      'offers':{
+        '@type':'Offer',
+        'name':'Pro Monthly',
+        'price':'10000',
+        'priceCurrency':'NGN',
+        'availability':'https://schema.org/InStock',
+        'url':base+'/subscribe',
+        'priceValidUntil':'2027-01-01',
+        'description':'Monthly Pro membership — Datum List, Open Forum, KayKay AI, Private Consultation.',
+      },
+    };
+  }
+
+  if(S.page==='market'&&S.mTab==='vendors'&&S._vendorDirectory?.length){
+    const vendors=S._vendorDirectory.filter(v=>v.status==='approved').slice(0,10);
+    return {
+      '@context':'https://schema.org',
+      '@type':'ItemList',
+      'name':`${S._vCat||'Business'} Vendors in ${S._vCity||'Nigeria'} — Toomuchcoin`,
+      'url':base+'/marketplace/vendorlist',
+      'itemListElement':vendors.map((v,i)=>({
+        '@type':'ListItem',
+        'position':i+1,
+        'item':{
+          '@type':'LocalBusiness',
+          'name':v.bizName,
+          'description':v.about||v.tagline||v.bizName,
+          'address':{
+            '@type':'PostalAddress',
+            'addressLocality':v.city,
+            'addressCountry':v.country||'NG',
+          },
+          'telephone':v.phone||v.whatsapp||'',
+          'url':v.website||base+'/marketplace/vendorlist',
+          'image':v.posterIds?.[0]?`${AW_ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${v.posterIds[0]}/view?project=${AW_PROJECT_ID}`:'',
+          'aggregateRating':v.votes>0?{
+            '@type':'AggregateRating',
+            'ratingValue':'5',
+            'reviewCount':String(v.votes),
+          }:undefined,
+        },
+      })),
+    };
+  }
+
+  // FAQ page schema — injected on blog page where FAQ lives
+  if(S.page==='blog'){
+    return {
+      '@context':'https://schema.org',
+      '@type':'FAQPage',
+      'mainEntity':[
+        {'@type':'Question','name':'Why the name Toomuchcoin?','acceptedAnswer':{'@type':'Answer','text':'The name Toomuchcoin came about as an improv answer to the proliferation of too many coins in the financial markets. Average users need guidance on the right ones to pick in building long term returns and wealth.'}},
+        {'@type':'Question','name':'Who is Toomuchcoin for?','acceptedAnswer':{'@type':'Answer','text':'Toomuchcoin is for globetrotters, freedom enthusiasts, cyberpunks, hustlers, creatives, freelancers, and traders — the next generation of agentic commerce.'}},
+        {'@type':'Question','name':'What is the Open Forum?','acceptedAnswer':{'@type':'Answer','text':'The Open Forum is a community space where Pro members can discuss and share ideas, ask questions, and provide feedback on topics related to Toomuchcoin, the Global Marketplace and the broader financial landscape.'}},
+        {'@type':'Question','name':'Do you have to pay to post a listing on marketplace?','acceptedAnswer':{'@type':'Answer','text':'No. Posting listings on the Datum Marketplace is completely free for all registered users.'}},
+        {'@type':'Question','name':'What is Datum List?','acceptedAnswer':{'@type':'Answer','text':'Datum List is a curated tracker of handpicked wealth assets — Gold, Bitcoin, NVIDIA, Tesla, TSMC, LVMH, Dangote Cement and more — with live prices and your personal return since joining Toomuchcoin. It is a Pro feature.'}},
+        {'@type':'Question','name':'What is included in Pro membership?','acceptedAnswer':{'@type':'Answer','text':'Pro membership (₦10,000/month) unlocks the Datum List, Open Forum, KayKay AI assistant, and Private Consultation with Deji. The marketplace, vendor directory, coin rates, and how-to guides are free for everyone.'}},
+      ],
+    };
+  }
+
+  return null;
+}
+
+function _injectPageSchema(schema){
+  const old=document.getElementById('dynamic-schema');
+  if(old) old.remove();
+  if(!schema) return;
+  const s=document.createElement('script');
+  s.type='application/ld+json';
+  s.id='dynamic-schema';
+  s.textContent=JSON.stringify(schema);
+  document.head.appendChild(s);
+}
+
 function render(){
   // Remove loading shell on first render
   const _shell=document.getElementById('app-shell');
   if(_shell) _shell.remove();
   // Dynamic page title for SEO + browser tab
   const _pageTitles={
-    land    :'Toomuchcoin — P2P Marketplace & Live Coin Rates',
+    land    :'Toomuchcoin — Africa\'s P2P Marketplace & Live Coin Rates',
     market  :'Datum Marketplace — Buy, Sell & Trade Globally | Toomuchcoin',
-    crypto  :'Coin Rates — Live Crypto Prices 500+ Assets | Toomuchcoin',
+    crypto  :'Coin Rates — Live Prices for 500+ Crypto Assets | Toomuchcoin',
     profile :'My Profile — Toomuchcoin',
-    sub     :'Pro Membership — Unlock Full Access | Toomuchcoin',
+    sub     :'Pro Membership — Datum List, Forum & KayKay AI | Toomuchcoin',
     blog    :'Resources & Blog — Commerce, Coin & Culture | Toomuchcoin',
-    kaykay  :'KayKay AI Assistant — Toomuchcoin',
+    kaykay  :'KayKay AI Assistant — Your Toomuchcoin Brain | Toomuchcoin',
     wallet  :'$TMC Wallet — Datum Coin | Toomuchcoin',
   };
+  // Update meta description dynamically per page
+  const _metaDescs={
+    land    :'Africa\'s P2P marketplace, live crypto prices for 500+ coins, curated Datum List wealth assets, and a global vendor directory. Trade, discover, and grow your wealth.',
+    market  :'Browse live P2P listings — buy, sell, request services, and trade globally on the Datum Marketplace. Free to post. No middlemen.',
+    crypto  :'Live prices for 500+ cryptocurrencies tracked in real time. Search, watchlist, deep-dive charts, and the curated Datum List for serious investors.',
+    sub     :'Upgrade to Toomuchcoin Pro for ₦10,000/month. Unlock Datum List, Open Forum, KayKay AI assistant, and Private Consultation with Deji.',
+    blog    :'Thoughts on commerce, coin, culture, and everything in between — plus free how-to guides and FAQ for Toomuchcoin users.',
+    kaykay  :'KayKay is your AI assistant on Toomuchcoin. Navigate the app by voice, get market answers, and hear live updates — included in Pro.',
+    wallet  :'Your $TMC Datum Coin wallet. Earn TMC daily, use it to pay your subscription, trade it, or exchange for cash.',
+  };
+  const _metaDesc=S._currentPost
+    ?(S._currentPost.excerpt||S._currentPost.title)
+    :(_metaDescs[S.page]||'Africa\'s P2P marketplace and live coin rates — Toomuchcoin.');
+  let _descTag=document.querySelector('meta[name="description"]');
+  if(!_descTag){_descTag=document.createElement('meta');_descTag.name='description';document.head.appendChild(_descTag);}
+  _descTag.content=_metaDesc;
+  // OG tags
+  let _ogTitle=document.querySelector('meta[property="og:title"]');
+  if(_ogTitle) _ogTitle.content=S._currentPost?S._currentPost.title+' — Toomuchcoin':(_pageTitles[S.page]||'Toomuchcoin');
+  let _ogDesc=document.querySelector('meta[property="og:description"]');
+  if(_ogDesc) _ogDesc.content=_metaDesc;
   if(S.page==='blogpost'&&S._currentPost){
     document.title=S._currentPost.title+' — Toomuchcoin';
   } else {
@@ -3294,6 +3566,9 @@ function render(){
   const _savedChatText=_prevCinput?_prevCinput.value:null;
   const _savedCursor=_prevCinput?_prevCinput.selectionStart:null;
   const _wasFocused=_prevCinput===document.activeElement;
+
+  // ── Inject page-specific schema ──
+  _injectPageSchema(_buildPageSchema());
 
   const root=document.getElementById('root');
   if     (S.page==='land')    root.innerHTML=P.land();
@@ -4668,7 +4943,7 @@ const P = {
       if(MANUAL_PRICES[id]!=null) return MANUAL_PRICES[id];
       return null;
     };
-    const NAIRA_IDS=['dangcem','mtn'];
+    const NAIRA_IDS=['dangcem'];
     const fmtAP=(p,id='')=>{
       if(p==null||isNaN(p))return'—';
       const sym=NAIRA_IDS.includes(id)?'₦':'$';
@@ -4713,7 +4988,7 @@ const P = {
         desc:'Top picks from African markets',
         assets:[
           {id:'dangcem', n:'#', name:'Dangote Cement', sym:'DANGCEM', bg:'#C4622D',fg:'#fff', fp:'₦1,047.00', ytd:93.76, y1:168.18, y5:455.29, y10:615.00, sj:0},
-          {id:'mtn',     n:'#', name:'MTN Group',      sym:'MTN',     bg:'#FFCC00',fg:'#000', fp:'₦810',    ytd:58.51,  y1:126.57,  y5:393.9,  y10:515.03, sj:0},
+          {id:'mtn',     n:'#', name:'MTN Group',      sym:'MTN',     bg:'#FFCC00',fg:'#000', fp:'$0.59',    ytd:58.51,  y1:126.57,  y5:393.9,  y10:515.03, sj:0},
         ],
       },
       {
@@ -5258,6 +5533,9 @@ const P = {
           <div class="blog-card-meta" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             ${post.type!=='guide'?`${adminAvatar}<span>Deji Lasisi</span><span style="color:var(--bdr2)">·</span><span>${(post.originalCreatedAt||post.publishedAt)?new Date(post.originalCreatedAt||post.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Recently'}</span>`:''}
             ${post.type==='guide'?`<span class="tag tg" style="font-size:.65rem">Free</span>`:''}
+            ${S.user?.id===ADMIN_ID?`<button onclick="event.stopPropagation();A.pushBlogPost('${post.id}','${post.title.replace(/'/g,"\\'")}','${post.type||'blog'}')" style="margin-left:auto;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);color:#B8922A;border-radius:100px;padding:3px 10px;font-size:.68rem;font-weight:600;cursor:pointer;font-family:var(--fb);display:flex;align-items:center;gap:4px">
+              <i data-lucide="send" style="width:10px;height:10px"></i>Push
+            </button>`:''}
           </div>
         </div>
       </div>`;
@@ -5649,7 +5927,7 @@ const P = {
       <div style="background:var(--t1);border-radius:var(--rmd);padding:20px 24px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
         <div>
           <div style="font-family:var(--fd);font-size:1.1rem;color:#fff;margin-bottom:4px">Book a Private Consultation</div>
-          <div style="font-size:.8rem;color:rgba(255,255,255,.55);line-height:1.5;max-width:360px">Coin strategy · Culture & commerce · Global markets · Portfolio review · Life advice from someone who gets it.</div>
+          <div style="font-size:.8rem;color:rgba(255,255,255,.55);line-height:1.5;max-width:360px">Coin strategy · Culture & commerce · Global markets · Portfolio review</div>
         </div>
         <a href="mailto:help@toomuchcoin.com?subject=Private Consultation Request — Pro Member&body=Hi Toomuchcoin,%0A%0AI'm a member of toomuchcoin and I'd like to book a private consultation.%0A%0ATopic: %0APreferred time: %0A%0AThanks" style="display:inline-flex;align-items:center;gap:8px;background:#D4AF37;color:#1a1408;border-radius:var(--rsm);padding:11px 22px;font-weight:700;font-size:.875rem;text-decoration:none;white-space:nowrap;transition:var(--ease)" onmouseover="this.style.background='#B8922A'" onmouseout="this.style.background='#D4AF37'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -8292,10 +8570,33 @@ const A = {
     S.notifOpen=false;
     const p=document.getElementById('notif-panel');if(p)p.remove();
     renderNav();
-    if(link==='market')R.go('market');
-    else if(link==='profile')R.go('profile');
-    else if(link==='crypto')R.go('crypto');
-    else if(link==='sub')R.go('sub');
+    if(!link){R.go('profile');return;}
+    // Full URL — open directly
+    if(link.startsWith('http')){window.open(link,'_blank');return;}
+    // Page routing
+    const routeMap={
+      market      :()=>R.go('market'),
+      profile     :()=>R.go('profile'),
+      crypto      :()=>R.go('crypto'),
+      sub         :()=>R.go('sub'),
+      blog        :()=>R.go('blog'),
+      wallet      :()=>R.go('wallet'),
+      kaykay      :()=>R.go('kaykay'),
+      land        :()=>R.go('land'),
+      // Marketplace tabs
+      board       :()=>{S.page='market';S.mTab='board';loadOrders();render();},
+      vendors     :()=>{S.page='market';S.mTab='vendors';render();},
+      forum       :()=>{S.page='market';S.mTab='forum';loadChat();render();},
+      wagers      :()=>{S.page='market';S.mTab='wagers';S._wagersLoaded=false;render();},
+      // Crypto tabs
+      datumlist   :()=>{S.page='crypto';S.cryptoSub='assetlist';render();},
+      watchlist   :()=>{S.page='crypto';S.cryptoSub='watchlist';render();},
+      coinmarkets :()=>{S.page='crypto';S.cryptoSub='market';render();},
+    };
+    const handler=routeMap[link];
+    if(handler){handler();return;}
+    // Default fallback
+    R.go('profile');
   },
 
   openDatumAsset(id){
@@ -8408,7 +8709,7 @@ const A = {
     const NAMES={gold:'Gold',nvda:'Nvidia',spx:'S&P 500',btc:'Bitcoin',dxy:'Dollar Index',eth:'Ethereum',tet:'$TET',mstr:'Strategy',tsla:'Tesla',nasdaq:'Nasdaq',lvmh:'LVMH',tsmc:'TSMC',dangcem:'Dangote Cement',aapl:'Apple',googl:'Alphabet (Google)',aramco:'Saudi Aramco',ccecc:'CCECC',mtn:'MTN Group'};
     const SYMS={gold:'XAU',nvda:'NVDA',spx:'SPX',btc:'BTC',dxy:'DXY',eth:'ETH',tet:'TET',mstr:'MSTR',tsla:'TSLA',nasdaq:'NDX',lvmh:'MC',tsmc:'TSM',dangcem:'DANGCEM',aapl:'AAPL',googl:'GOOGL',aramco:'2222',ccecc:'CCECC',mtn:'MTN'};
     const COLORS_MAP={gold:'#B8892A',nvda:'#76B900',spx:'#2B5BE0',btc:'#F7931A',dxy:'#26A17B',eth:'#627EEA',tet:'#26A17B',mstr:'#F7931A',tsla:'#E84142',nasdaq:'#2B5BE0',lvmh:'#2C1810',tsmc:'#E31837',dangcem:'#C4622D',ccecc:'#C0392B',aramco:'#006C35',aapl:'#555555',googl:'#4285F4',mtn:'#FFCC00'};
-    const NAIRA_IDS=['dangcem','mtn'];
+    const NAIRA_IDS=['dangcem'];
     const mp=S._manualPrices||{};
     const cgMap={btc:'bitcoin',eth:'ethereum'};
     const coin=S.coins.find(c=>c.id===cgMap[id]);
@@ -8459,7 +8760,7 @@ const A = {
       googl:      {2024:188.43,    2025:197.60,    2026:357.00},
       aramco:     {2024:7.45,   2025:6.90,   2026:7.20},
       ccecc:      {2024:1.20,   2025:0.95,   2026:0.85},
-      mtn:        {2024:170,    2025:915,    2026:810.00},
+      mtn:        {2024:0.12,    2025:0.66,    2026:0.59},
     };
 
     if(hist.length<2&&joinDate){
@@ -10035,7 +10336,7 @@ Rules:
   },
   async shareReferralLink(){
     const link=`https://www.toomuchcoin.com/?ref=tmc&agent=${S.user.id.slice(0,12)}`;
-    const text=`Join me on Toomuchcoin — Africa's P2P marketplace and financial platform. Sign up here:`;
+    const text=`Join me on Toomuchcoin — Global P2P marketplace and financial platform. Sign up here:`;
     if(navigator.share){
       try{await navigator.share({title:'Join Toomuchcoin',text,url:link});return;}
       catch(e){if(e.name==='AbortError')return;}
@@ -10121,6 +10422,22 @@ Rules:
       A.loadAdminProfile().then(()=>render());
     }
     render();
+  },
+
+  async pushBlogPost(id,title,type){
+    if(S.user?.id!==ADMIN_ID) return;
+    if(!confirm(`Send push notification to all users for:\n"${title}"?`)) return;
+    const isGuide=type==='guide';
+    const pushTitle=isGuide?`📖 Guide: ${title}`:`✦ ${title}`;
+    const pushBody=isGuide
+      ?`Free how-to guide on Toomuchcoin — "${title}". Tap to read.`
+      :`New blog — "${title}". Tap to read on Toomuchcoin.`;
+    try{
+      await notifyAllUsers(pushTitle,pushBody,'blog');
+      toast('Push sent to all users!','ok');
+    }catch(e){
+      toast('Push failed: '+e.message,'err');
+    }
   },
 
   async shareBlogPost(id,title,slug,type,guideCategory){
@@ -10583,7 +10900,7 @@ Rules:
               await createNotif(bet.userId,'deal',
                 `🏆 You won ${payout.toFixed(2)} TMC!`,
                 `Your bet on "${title}" paid out — Option ${winner} (${winner==='A'?(optionA||'A'):(optionB||'B')}) won. Stake returned: ${bet.amount.toFixed(2)} + Winnings: ${winnings.toFixed(2)} TMC.`,
-                'wallet'
+                'wagers'
               );
             } else {
               // --- LOSER ---
@@ -10601,7 +10918,7 @@ Rules:
               await createNotif(bet.userId,'subscription',
                 `Wager result: ${title}`,
                 `Option ${winner} (${winner==='A'?(optionA||'A'):(optionB||'B')}) won this week. Your ${bet.amount.toFixed(2)} TMC stake went to the winners. Better luck next week!`,
-                'market'
+                'wagers'
               );
             }
           }
