@@ -3518,7 +3518,7 @@ function render(){
   if(_shell) _shell.remove();
   // Dynamic page title for SEO + browser tab
   const _pageTitles={
-    land    :'Toomuchcoin — Africa\'s P2P Marketplace & Live Coin Rates',
+    land    :'Toomuchcoin — Global P2P Marketplace & Live Coin Rates',
     market  :'Datum Marketplace — Buy, Sell & Trade Globally | Toomuchcoin',
     crypto  :'Coin Rates — Live Prices for 500+ Crypto Assets | Toomuchcoin',
     profile :'My Profile — Toomuchcoin',
@@ -3529,7 +3529,7 @@ function render(){
   };
   // Update meta description dynamically per page
   const _metaDescs={
-    land    :'Africa\'s P2P marketplace, live crypto prices for 500+ coins, curated Datum List wealth assets, and a global vendor directory. Trade, discover, and grow your wealth.',
+    land    :'Global P2P marketplace, live crypto prices for 500+ coins, curated Datum List wealth assets, and a global vendor directory. Trade, discover, and grow your wealth.',
     market  :'Browse live P2P listings — buy, sell, request services, and trade globally on the Datum Marketplace. Free to post. No middlemen.',
     crypto  :'Live prices for 500+ cryptocurrencies tracked in real time. Search, watchlist, deep-dive charts, and the curated Datum List for serious investors.',
     sub     :'Upgrade to Toomuchcoin Pro for ₦10,000/month. Unlock Datum List, Open Forum, KayKay AI assistant, and Private Consultation with Deji.',
@@ -3539,7 +3539,7 @@ function render(){
   };
   const _metaDesc=S._currentPost
     ?(S._currentPost.excerpt||S._currentPost.title)
-    :(_metaDescs[S.page]||'Africa\'s P2P marketplace and live coin rates — Toomuchcoin.');
+    :(_metaDescs[S.page]||'Global P2P marketplace and live coin rates — Toomuchcoin.');
   let _descTag=document.querySelector('meta[name="description"]');
   if(!_descTag){_descTag=document.createElement('meta');_descTag.name='description';document.head.appendChild(_descTag);}
   _descTag.content=_metaDesc;
@@ -3559,7 +3559,7 @@ function render(){
   const _canonMap={land:'https://www.toomuchcoin.com',market:'https://www.toomuchcoin.com/marketplace/orderboard',crypto:'https://www.toomuchcoin.com/financial/coinmarkets',blog:'https://www.toomuchcoin.com/blog',sub:'https://www.toomuchcoin.com/subscribe'};
   _canon.href=_canonMap[S.page]||'https://www.toomuchcoin.com';
   // Preserve in-progress chat input across re-renders (e.g. background polling)  // Update page title
-  const _titles={land:'Toomuchcoin — P2P Marketplace & Coin Rates',market:'Datum Marketplace — Toomuchcoin',crypto:'Coin Rates — Toomuchcoin',profile:'My Profile — Toomuchcoin',sub:'Pro Membership — Toomuchcoin',blog:'Resources & Blog — Toomuchcoin',kaykay:'KayKay AI — Toomuchcoin',wallet:'$TMC Wallet — Toomuchcoin'};
+  const _titles={land:'Toomuchcoin — Global P2P Marketplace & Coin Rates',market:'Datum Marketplace — Toomuchcoin',crypto:'Coin Rates — Toomuchcoin',profile:'My Profile — Toomuchcoin',sub:'Pro Membership — Toomuchcoin',blog:'Resources & Blog — Toomuchcoin',kaykay:'KayKay AI — Toomuchcoin',wallet:'$TMC Wallet — Toomuchcoin'};
   document.title=_titles[S.page]||(S._currentPost?S._currentPost.title+' — Toomuchcoin':'Toomuchcoin');
   // Preserve in-progress chat input across re-renders (e.g. background polling)
   const _prevCinput=document.getElementById('cinput');
