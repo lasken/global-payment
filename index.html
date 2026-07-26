@@ -2519,6 +2519,11 @@ const COLORS=[
   ['#E5179E','#fff'],['#1DA1F2','#fff'],['#FF007A','#fff'],['#8247E5','#fff'],
   ['#F0B90B','#1A1916'],['#2B9FDB','#fff'],['#C2A633','#fff'],
 ];
+// Paste Appwrite Storage file IDs here for a fixed/hardcoded icon.
+    const ASSET_IMG_IDS={
+      gold:'6a6656dc0005303a2fd6', nvda:'', spx:'', btc:'', dxy:'6a6659b6000086b12a68', eth:'', tet:'', mstr:'', tsla:'',
+      nasdaq:'6a665ab8000d99928ccd', lvmh:'', tsmc:'6a665ab8000d9304d04c', dangcem:'6a6659bf000ad93a1bff', mtn:'6a66590f00354fe0ce87', ccecc:'6a665ab8000d91c28b80', aramco:'6a665ab8000d98962b01', aapl:'', googl:'',
+    };
 function coinIcon(coin,idx,size=34){
   const[bg,fg]=COLORS[idx%COLORS.length];
   if(coin.logo){return`<div class="aico" style="width:${size}px;height:${size}px;background:#f0f0f0"><img src="${coin.logo}" alt="${coin.sym}" width="${size}" height="${size}" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=color:${fg};font-size:.62rem;font-weight:700>${coin.sym.slice(0,3)}</span>'"/></div>`;}
@@ -4955,11 +4960,6 @@ const P = {
       if(v==null||isNaN(v))return`<span style="color:var(--t3);font-size:.75rem">—</span>`;
       return`<span class="perf ${v>=0?'pp':'pn'}">${v>=0?'+':''}${Number(v).toFixed(2)}%</span>`;
     };
-    // Paste Appwrite Storage file IDs here for a fixed/hardcoded icon.
-    const ASSET_IMG_IDS={
-      gold:'6a6656dc0005303a2fd6', nvda:'', spx:'', btc:'', dxy:'6a6659b6000086b12a68', eth:'', tet:'', mstr:'', tsla:'',
-      nasdaq:'6a665ab8000d99928ccd', lvmh:'', tsmc:'6a665ab8000d9304d04c', dangcem:'6a6659bf000ad93a1bff', mtn:'6a66590f00354fe0ce87', ccecc:'6a665ab8000d91c28b80', aramco:'6a665ab8000d98962b01', aapl:'', googl:'',
-    };
     const logo=(id,bg,fg,sym)=>{
         if(ASSET_IMG_IDS[id]){
           return`<div class="al-ico" style="background:#f5f5f5;overflow:hidden"><img src="${fileUrl(ASSET_IMG_IDS[id])}" width="36" height="36" style="object-fit:cover;display:block" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=font-size:.6rem;font-weight:700;color:${fg}>${sym}</span>'"></div>`;
@@ -5416,10 +5416,11 @@ const P = {
         ?`<div style="text-align:center;padding:14px;background:var(--surf);border-radius:var(--rsm);font-size:.875rem;color:var(--t2)"><button type="button" onclick="M.auth()" style="color:var(--t1);font-weight:500;cursor:pointer;background:none;border:none;font-family:var(--fb);font-size:.875rem;text-decoration:underline">Sign in first</button> to continue to payment.</div>`
         :`<div style="display:flex;flex-direction:column;gap:10px">
 
-          <!-- Option 1: Bank Transfer -->
+          <!-- Option 1: Bank Transfer — currency-aware -->
           <div style="border:1.5px solid var(--bdr);border-radius:var(--rmd);overflow:hidden">
             <div style="background:var(--off);padding:10px 14px;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bdr)">Option 1 — Bank Transfer</div>
             <div style="padding:14px">
+              ${CUR.code==='NGN'?`
               <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
                 <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Account Name</span><strong>Datum Logistics</strong></div>
                 <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Bank</span><strong>Zenith Bank</strong></div>
@@ -5435,6 +5436,25 @@ const P = {
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Amount</span><strong style="color:#D4AF37">${CUR.label}</strong></div>
               </div>
+              `:`
+              <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Account Name</span><strong>Datum Logistics</strong></div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Bank</span><strong>Zenith Bank</strong></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem">
+                  <span style="color:var(--t2)">Account Number</span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <strong style="font-family:monospace;font-size:1rem">5076070889</strong>
+                    <button onclick="A.copyText('5076070889','bank-acct-copy-usd')" id="bank-acct-copy-usd" class="btn bg bsm" style="padding:4px 10px">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Swift Code</span><strong style="font-family:monospace">ZEIBNGLAXXX</strong></div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Routing Number</span><strong style="font-family:monospace">122106507</strong></div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--t2)">Amount</span><strong style="color:#D4AF37">${CUR.label}</strong></div>
+              </div>
+              `}
             </div>
           </div>
 
