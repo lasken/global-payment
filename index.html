@@ -4427,7 +4427,7 @@ const P = {
               <i data-lucide="image" style="width:18px;height:18px;color:var(--t3);display:block;margin:0 auto 5px"></i>
               <div style="font-size:.76rem;color:var(--t3)">Click to upload wager image</div>
             </div>
-            <input type="file" id="wg-img" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="(function(f){if(!f)return;const u=URL.createObjectURL(f);const d=document.getElementById('wg-img-preview');if(d){d.innerHTML='<img src='+u+' style=width:100%;max-height:140px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);margin-top:8px;display:block>';}})(this.files[0])"/>
+            <input type="file" id="wg-img" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="A.previewWagerImg(this)"/>
             <div id="wg-img-preview"></div>
           </div>
           <div class="fg">
@@ -4955,7 +4955,15 @@ const P = {
       if(v==null||isNaN(v))return`<span style="color:var(--t3);font-size:.75rem">—</span>`;
       return`<span class="perf ${v>=0?'pp':'pn'}">${v>=0?'+':''}${Number(v).toFixed(2)}%</span>`;
     };
+    // Paste Appwrite Storage file IDs here for a fixed/hardcoded icon.
+    const ASSET_IMG_IDS={
+      gold:'6a6656dc0005303a2fd6', nvda:'', spx:'', btc:'', dxy:'6a6659b6000086b12a68', eth:'', tet:'', mstr:'', tsla:'',
+      nasdaq:'6a665ab8000d99928ccd', lvmh:'', tsmc:'6a665ab8000d9304d04c', dangcem:'6a6659bf000ad93a1bff', mtn:'6a66590f00354fe0ce87', ccecc:'6a665ab8000d91c28b80', aramco:'6a665ab8000d98962b01', aapl:'', googl:'',
+    };
     const logo=(id,bg,fg,sym)=>{
+        if(ASSET_IMG_IDS[id]){
+          return`<div class="al-ico" style="background:#f5f5f5;overflow:hidden"><img src="${fileUrl(ASSET_IMG_IDS[id])}" width="36" height="36" style="object-fit:cover;display:block" onerror="this.parentNode.style.background='${bg}';this.parentNode.innerHTML='<span style=font-size:.6rem;font-weight:700;color:${fg}>${sym}</span>'"></div>`;
+        }
         if(id==='btc'){const c=S.coins.find(x=>x.id==='bitcoin');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
         if(id==='eth'){const c=S.coins.find(x=>x.id==='ethereum');if(c?.logo)return`<div class="al-ico" style="background:#f5f5f5"><img src="${c.logo}" width="34" height="34" style="border-radius:50%;display:block;margin:auto"></div>`;}
         if(['nvda','tsla','mstr','aapl','googl'].includes(id)){
@@ -8705,6 +8713,10 @@ const A = {
       tsmc:'TSMC fabricates the most advanced chips on earth. Without TSMC, there is no iPhone, no Nvidia GPU, no modern AI. They are the single most strategically important company in the global tech supply chain.',
       dangcem:'Dangote Cement is the largest cement producer in Africa. Nigeria\'s infrastructure deficit is massive — roads, housing, commercial real estate. Dangote is the direct pick-and-shovel play on African growth.',
       mtn:'MTN Group is Africa\'s largest mobile network operator with over 280 million subscribers across 19 markets. As Africa\'s digital infrastructure backbone — mobile money, data, fintech — MTN is the single best proxy on African economic growth and smartphone adoption.',
+      aapl:'Apple is the world\'s most valuable consumer technology company. Its ecosystem lock-in — iPhone, Mac, AirPods, App Store, Apple Pay — creates unmatched recurring revenue. Services is now a $100B+ business growing at 15%+ annually.',
+      googl:'Alphabet controls the world\'s attention — Google Search, YouTube, Android, and Google Cloud. AI integration across every product makes this the most underrated AI play in the market.',
+      aramco:'Saudi Aramco is the world\'s most profitable company and the backbone of global oil supply. Lowest extraction cost on earth plus a government-backed dividend policy make it the definitive energy hedge.',
+      ccecc:'China Civil Engineering Construction Corporation — a major state-owned infrastructure contractor with significant African project exposure, a proxy on Belt and Road-funded African development.',
     };
     const NAMES={gold:'Gold',nvda:'Nvidia',spx:'S&P 500',btc:'Bitcoin',dxy:'Dollar Index',eth:'Ethereum',tet:'$TET',mstr:'Strategy',tsla:'Tesla',nasdaq:'Nasdaq',lvmh:'LVMH',tsmc:'TSMC',dangcem:'Dangote Cement',aapl:'Apple',googl:'Alphabet (Google)',aramco:'Saudi Aramco',ccecc:'CCECC',mtn:'MTN Group'};
     const SYMS={gold:'XAU',nvda:'NVDA',spx:'SPX',btc:'BTC',dxy:'DXY',eth:'ETH',tet:'TET',mstr:'MSTR',tsla:'TSLA',nasdaq:'NDX',lvmh:'MC',tsmc:'TSM',dangcem:'DANGCEM',aapl:'AAPL',googl:'GOOGL',aramco:'2222',ccecc:'CCECC',mtn:'MTN'};
@@ -8763,11 +8775,17 @@ const A = {
       mtn:        {2024:0.12,    2025:0.66,    2026:0.59},
     };
 
+    let localBaselines={};
+    try{
+      const _rawLB=localStorage.getItem('datum_user_baselines');
+      localBaselines=_rawLB?JSON.parse(_rawLB):{};
+    }catch(e){localBaselines={};}
+
     if(hist.length<2&&joinDate){
       const daysSinceJoin=Math.max(7,Math.round((Date.now()-joinDate.getTime())/(24*60*60*1000)));
       const points=Math.min(daysSinceJoin,180);
       // Always start from the same baseline price used in the table
-      const joinEntryPrice=localBaselines[id]||livePrice||1000;
+      const joinEntryPrice=localBaselines[id]||ENTRY_PRICES[id]?.[2026]||livePrice||1000;
       let p=joinEntryPrice;
       const vol=0.015;
       hist=Array.from({length:points},(_,i)=>{
@@ -9564,6 +9582,13 @@ Rules:
       </div>
     </div>`);
   },
+  previewWagerImg(input){
+    const preview=document.getElementById('wg-img-preview');
+    if(!preview||!input.files[0]) return;
+    const url=URL.createObjectURL(input.files[0]);
+    preview.innerHTML=`<img src="${url}" style="width:100%;max-height:140px;object-fit:cover;border-radius:var(--rsm);border:1px solid var(--bdr);margin-top:8px;display:block">`;
+  },
+
   previewVendorLogo(input){
     const preview=document.getElementById('vs-logo-preview');
     if(!preview||!input.files[0]) return;
@@ -11204,7 +11229,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
       try{
         const today=new Date().toISOString().split('T')[0];
         const hist=JSON.parse(localStorage.getItem('datum_price_history')||'{}');
-        const STOCK_IDS=['gold','nvda','spx','dxy','tsla','mstr','nasdaq','lvmh','tsmc','dangcem'];
+        const STOCK_IDS=['gold','nvda','spx','dxy','tsla','mstr','nasdaq','lvmh','tsmc','dangcem','aapl','googl','aramco','ccecc','mtn'];
         let changed=false;
         STOCK_IDS.forEach(id=>{
           if(data[id]!=null){
@@ -11237,6 +11262,11 @@ document.addEventListener('DOMContentLoaded', async()=>{
           lvmh    : 748.20,
           tsmc    : 446.81,
           dangcem : 1180.00,
+          aapl    : 315.00,
+          googl   : 357.00,
+          aramco  : 7.20,
+          ccecc   : 0.85,
+          mtn     : 0.59,
         };
         localStorage.setItem('datum_user_baselines',JSON.stringify(LAUNCH_BASELINES));
         localStorage.setItem(BASELINE_SET_KEY,'true');
@@ -11261,11 +11291,11 @@ document.addEventListener('DOMContentLoaded', async()=>{
     })
     .catch(()=>{}); 
   // Reset to fixed launch baselines — run once per device
-  if(localStorage.getItem('datum_baselines_version')!=='3'){
+  if(localStorage.getItem('datum_baselines_version')!=='4'){
     localStorage.removeItem('datum_user_baselines');
     localStorage.removeItem('datum_baselines_locked');
     localStorage.removeItem('datum_baselines_version');
-    localStorage.setItem('datum_baselines_version','3');
+    localStorage.setItem('datum_baselines_version','4');
   }
   // Handle browser back/forward buttons
   window.addEventListener('popstate', (e)=>{
