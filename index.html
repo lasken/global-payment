@@ -1192,7 +1192,7 @@ const W={
           userId       :S.user.id,
           status       :'active',
           plan         :'monthly',
-          amount       :0,
+          amount       :'0',
           reference    :'TMC_'+Date.now(),
           paymentMethod:'tmc',
           periodEnd,
@@ -8077,7 +8077,7 @@ const A = {
       const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
       await DB.create('subscription',{
         userId:S.user.id,status:'pending',plan:'monthly',
-        amount:10000,reference:ref,paymentMethod:method,periodEnd,
+        amount:'10000',reference:ref,paymentMethod:method,periodEnd,
       });
       S.subStatus='pending';
       // Notify admin
@@ -11046,7 +11046,7 @@ const PAY = {
     btn.disabled=true;btn.textContent='Submitting…';
     DB.create('subscription',{
       userId:S.user.id,status:'pending',plan:'monthly',
-      amount:10000,reference:ref,paymentMethod:method,
+      amount:'10000',reference:ref,paymentMethod:method,
     }).then(async()=>{
       S.subStatus='pending';
       await createNotif(S.user.id,'subscription',
@@ -11094,7 +11094,7 @@ const PAY = {
               userId       : S.user.id,
               status       : 'active',
               plan         : 'monthly',
-              amount       : 10000,
+              amount       : '10000',
               reference    : data.transaction_id + '',
               paymentMethod: 'flutterwave',
               periodEnd    : _periodEnd,
