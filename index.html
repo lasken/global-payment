@@ -1186,7 +1186,7 @@ const W={
     const ok=await W.spend(cost,'spend_sub',
       '1 month Pro subscription — paid with $TMC','');
     if(ok){
-      const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
+      const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString().slice(0,19);
       try{
         await DB.create('subscription',{
           userId       :S.user.id,
@@ -8074,7 +8074,7 @@ const A = {
     if(!method){err.textContent='Please select your payment method.';return;}
     btn.disabled=true;btn.textContent='Submitting…';
     try{
-      const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
+      const periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString().slice(0,19);
       await DB.create('subscription',{
         userId:S.user.id,status:'pending',plan:'monthly',
         amount:'10000',reference:ref,paymentMethod:method,periodEnd,
@@ -9296,6 +9296,7 @@ Rules:
       S.subStatus='trial';
       S.subscribed=true;
       S._trialDoc={status:'trial',trialEnd};
+      _cacheClear('subscription_'+S.user.id);
 
       const endDate=new Date(trialEnd).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
       await createNotif(S.user.id,'subscription',
@@ -11089,7 +11090,7 @@ const PAY = {
       callback: async function(data){
         if(data.status === 'successful' || data.status === 'completed'){
           try{
-            const _periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString();
+            const _periodEnd=new Date(Date.now()+30*24*60*60*1000).toISOString().slice(0,19);
             await DB.create('subscription',{
               userId       : S.user.id,
               status       : 'active',
