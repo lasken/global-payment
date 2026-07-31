@@ -4607,7 +4607,7 @@ const P = {
             ${userAvatar(m.userId,m.inits,30)}
             <div class="cbwrap">
               ${!m.own?`<div class="csender">${m.userName}</div>`:''}
-              <div class="cbub">${(m.text||'').replace(/@([A-Za-z0-9_]+)/g,'<span class="mention-tag">@$1</span>')}</div>
+              <div class="cbub">${(m.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/@([A-Za-z0-9_]+)/g,'<span class="mention-tag">@$1</span>')}</div>
               <div class="ctime">${ago(m.ts)}</div>
             </div>
           </div>`).join('')}
@@ -7821,6 +7821,13 @@ const A = {
 
   async submitOrder(){
     if(!S.user){M.auth();return;}
+    // Rate limit: max 5 listings per minute
+    const _now=Date.now();
+    const _last=parseInt(localStorage.getItem('last_order_ts')||'0');
+    const _count=parseInt(localStorage.getItem('order_count_min')||'0');
+    if(_now-_last<60000&&_count>=5){toast('Too many listings — please wait a minute.','err');return;}
+    if(_now-_last>60000){localStorage.setItem('order_count_min','1');localStorage.setItem('last_order_ts',String(_now));}
+    else localStorage.setItem('order_count_min',String(_count+1));
     const unpaid=(S.myConnections||[]).filter(c=>c.status==='deal_done'||c.status==='comm_pending').length;
     if(unpaid>=3){
       const go=confirm(`You have ${unpaid} deals with outstanding commission. Please settle these to maintain your standing. Continue posting anyway?`);
