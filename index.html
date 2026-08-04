@@ -1284,6 +1284,7 @@ const W={
   // ── Buy TMC at counter ──
   async submitBuyTMC(){
     if(!S.user){M.auth();return;}
+    console.log('submitBuyTMC fired for user:',S.user.id);
     const amtRaw=parseFloat(document.getElementById('buy-tmc-amount')?.value);
     const ref=document.getElementById('buy-tmc-ref')?.value?.trim();
     const err=document.getElementById('buy-tmc-err');
@@ -4090,6 +4091,40 @@ const P = {
             </div>
           </div>
           ${all.length===0?`<div style="font-size:.8rem;color:var(--t3);text-align:center;padding:10px 0;border-bottom:1px solid var(--bdr);margin-bottom:12px">No commission records yet.</div>`:''}
+
+          <!-- Admin TMC requests panel -->
+          ${S._adminTMCRequests===undefined?`
+          <div style="background:var(--off);border-radius:var(--rmd);padding:14px;margin-bottom:14px">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:8px">TMC Cash Requests</div>
+            <button class="btn bg bsm" onclick="A.loadTMCRequests()">Load Pending Requests</button>
+          </div>`
+          :S._adminTMCRequests.length===0?`
+          <div style="background:var(--off);border-radius:var(--rmd);padding:14px;margin-bottom:14px">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:8px">TMC Cash Requests</div>
+            <div style="font-size:.8rem;color:var(--t3)">No pending TMC cash requests.</div>
+          </div>`:`
+          <div style="background:var(--off);border-radius:var(--rmd);padding:14px;margin-bottom:14px">
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+              <span>TMC Cash Requests</span>
+              <span style="background:var(--red);color:#fff;border-radius:100px;padding:2px 8px;font-size:.68rem">${S._adminTMCRequests.length} pending</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${S._adminTMCRequests.map(n=>`
+              <div style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rsm);padding:14px">
+                <div style="font-weight:700;font-size:.875rem;color:var(--t1);margin-bottom:4px">${n.title}</div>
+                <div style="font-size:.78rem;color:var(--t2);line-height:1.6;margin-bottom:10px;white-space:pre-wrap">${n.body}</div>
+                <div style="font-size:.72rem;color:var(--t3);margin-bottom:10px">${new Date(n.createdAt).toLocaleString()}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="btn bc bsm" onclick="A.approveTMCRequest('${n.id}','${n.userId||''}')">
+                    <i data-lucide="check" style="width:11px;height:11px"></i>Mark Credited
+                  </button>
+                  <button class="btn bg bsm" style="color:var(--t3)" onclick="A.dismissTMCRequest('${n.id}')">
+                    Dismiss
+                  </button>
+                </div>
+              </div>`).join('')}
+            </div>
+          </div>`}
 
           <!-- Admin tools always visible -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:12px;background:var(--off);border-radius:var(--rsm)">
@@ -8490,6 +8525,63 @@ const A = {
       err.textContent='Something went wrong. Please try again.';
       btn.disabled=false;btn.textContent='Send to All Users';
     }
+  },
+
+  async loadTMCRequests(){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      // Load all unread notifications of type 'commission' sent to admin about TMC purchases
+      const r=await _db.listDocuments(AW_DB_ID,'notifications',[
+        Query.equal('userId',[ADMIN_ID]),
+        Query.equal('type',['commission']),
+        Query.equal('read',[false]),
+        Query.orderDesc('$createdAt'),
+        Query.limit(50),
+      ]);
+      // Filter to only TMC purchase requests
+      S._adminTMCRequests=r.documents
+        .filter(n=>n.title?.includes('TMC Purchase')||n.body?.includes('wants to buy'))
+        .map(n=>({
+          id:n.$id,
+          title:n.title,
+          body:n.body,
+          createdAt:n.$createdAt,
+          userId:n.refId||'',
+        }));
+      render();
+    }catch(e){
+      toast('Failed to load: '+e.message,'err');
+    }
+  },
+
+  async approveTMCRequest(notifId,userId){
+    if(!confirm('Mark this TMC request as processed — have you credited the user\'s wallet?')) return;
+    try{
+      // Mark notification as read
+      await _db.updateDocument(AW_DB_ID,'notifications',notifId,{read:true});
+      // Notify the user their TMC has been credited
+      if(userId){
+        await createNotif(userId,'subscription',
+          '✓ TMC credited to your wallet',
+          'Your TMC purchase has been processed and credited to your wallet. Check your balance.',
+          'wallet'
+        );
+      }
+      // Remove from local list
+      S._adminTMCRequests=(S._adminTMCRequests||[]).filter(n=>n.id!==notifId);
+      render();
+      toast('Marked as credited — user notified.','ok');
+    }catch(e){
+      toast('Failed: '+e.message,'err');
+    }
+  },
+
+  async dismissTMCRequest(notifId){
+    try{
+      await _db.updateDocument(AW_DB_ID,'notifications',notifId,{read:true});
+      S._adminTMCRequests=(S._adminTMCRequests||[]).filter(n=>n.id!==notifId);
+      render();
+    }catch(e){toast('Failed: '+e.message,'err');}
   },
 
   adminCreditTMC(){
