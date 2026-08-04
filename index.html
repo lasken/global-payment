@@ -4096,7 +4096,14 @@ const P = {
           ${S._adminTMCRequests===undefined?`
           <div style="background:var(--off);border-radius:var(--rmd);padding:14px;margin-bottom:14px">
             <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:8px">TMC Cash Requests</div>
-            <button class="btn bg bsm" onclick="A.loadTMCRequests()">Load Pending Requests</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn bg bsm" onclick="A.loadTMCRequests()">
+                <i data-lucide="refresh-cw" style="width:11px;height:11px"></i>Load Requests
+              </button>
+              <button class="btn bg bsm" onclick="A.loadAllAdminNotifs()">
+                <i data-lucide="bell" style="width:11px;height:11px"></i>All Admin Notifs
+              </button>
+            </div>
           </div>`
           :S._adminTMCRequests.length===0?`
           <div style="background:var(--off);border-radius:var(--rmd);padding:14px;margin-bottom:14px">
@@ -8530,40 +8537,54 @@ const A = {
   async loadTMCRequests(){
     if(S.user?.id!==ADMIN_ID) return;
     try{
-      // Load all unread notifications of type 'commission' sent to admin about TMC purchases
+      // Load ALL recent admin notifications and filter client-side
+      // This avoids type mismatch issues
       const r=await _db.listDocuments(AW_DB_ID,'notifications',[
         Query.equal('userId',[ADMIN_ID]),
-        Query.equal('type',['commission']),
-        Query.equal('read',[false]),
         Query.orderDesc('$createdAt'),
-        Query.limit(50),
+        Query.limit(200),
       ]);
-      // Filter to only TMC purchase requests
+      console.log('Admin notifs loaded:',r.documents.length);
+      console.log('Types found:',[...new Set(r.documents.map(n=>n.type))]);
+      console.log('Titles found:',r.documents.map(n=>n.title));
+
+      // Match any notification that looks like a TMC request
       S._adminTMCRequests=r.documents
-        .filter(n=>n.title?.includes('TMC Purchase')||n.body?.includes('wants to buy'))
+        .filter(n=>
+          n.type==='tmc_request'||
+          n.title?.toLowerCase().includes('tmc')||
+          n.title?.toLowerCase().includes('purchase')||
+          n.body?.toLowerCase().includes('wants to buy')||
+          n.body?.toLowerCase().includes('tmc purchase')||
+          n.body?.toLowerCase().includes('naira total')
+        )
         .map(n=>({
           id:n.$id,
           title:n.title,
-          body:n.body,
+          body:n.body||n.message||'',
           createdAt:n.$createdAt,
-          userId:n.refId||'',
+          userId:n.orderId||n.refId||'',
+          read:n.read||false,
         }));
+
+      console.log('TMC requests found:',S._adminTMCRequests.length);
       render();
     }catch(e){
+      console.error('loadTMCRequests error:',e);
       toast('Failed to load: '+e.message,'err');
     }
   },
 
   async approveTMCRequest(notifId,userId){
-    if(!confirm('Mark this TMC request as processed — have you credited the user\'s wallet?')) return;
+    if(!confirm('Mark this TMC request as processed — have you credited the user\'s wallet via the Credit TMC button?')) return;
     try{
       // Mark notification as read
       await _db.updateDocument(AW_DB_ID,'notifications',notifId,{read:true});
       // Notify the user their TMC has been credited
-      if(userId){
+      if(userId&&userId!=='undefined'&&userId.length>5){
         await createNotif(userId,'subscription',
-          '✓ TMC credited to your wallet',
-          'Your TMC purchase has been processed and credited to your wallet. Check your balance.',
+          '✓ Your TMC has been credited!',
+          'Your TMC purchase request has been processed. Your new balance is now updated — check your wallet.',
           'wallet'
         );
       }
@@ -8582,6 +8603,41 @@ const A = {
       S._adminTMCRequests=(S._adminTMCRequests||[]).filter(n=>n.id!==notifId);
       render();
     }catch(e){toast('Failed: '+e.message,'err');}
+  },
+
+  async loadAllAdminNotifs(){
+    if(S.user?.id!==ADMIN_ID) return;
+    try{
+      const r=await _db.listDocuments(AW_DB_ID,'notifications',[
+        Query.equal('userId',[ADMIN_ID]),
+        Query.equal('read',[false]),
+        Query.orderDesc('$createdAt'),
+        Query.limit(100),
+      ]);
+      console.log('All unread admin notifs:',r.documents);
+      // Show in a modal for quick view
+      M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+        <div class="modal" style="max-width:520px;max-height:80vh;overflow-y:auto">
+          <div class="mhdr">
+            <div><div class="mey">Admin</div><h2 class="mtitle">All Unread Notifications (${r.documents.length})</h2></div>
+            <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+          </div>
+          ${r.documents.length===0?`<div style="text-align:center;padding:40px;color:var(--t3)">No unread notifications</div>`
+          :r.documents.map(n=>`
+            <div style="padding:12px;border-bottom:1px solid var(--bdr)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span style="font-weight:700;font-size:.8375rem">${n.title||'No title'}</span>
+                <span style="font-size:.7rem;color:var(--t3)">${new Date(n.$createdAt).toLocaleString()}</span>
+              </div>
+              <div style="font-size:.78rem;color:var(--t2);white-space:pre-wrap;line-height:1.5">${n.body||n.message||'No body'}</div>
+              <div style="font-size:.7rem;color:var(--t3);margin-top:4px">Type: ${n.type} · orderId: ${n.orderId||'none'}</div>
+            </div>`).join('')}
+        </div>
+      </div>`);
+      lucide.createIcons();
+    }catch(e){
+      toast('Failed: '+e.message,'err');
+    }
   },
 
   adminCreditTMC(){
