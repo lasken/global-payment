@@ -1268,7 +1268,7 @@ const W={
     await createNotif(ADMIN_ID,'commission',
       `💸 Cash exchange request — ${S.user.name}`,
       `User: ${S.user.name} (${S.user.email})\nAmount: ${amtRaw.toFixed(3)} TMC = ₦${nairaAmount.toLocaleString()}\nBank: ${bank}\nAccount: ${acct}\nName: ${name}\nProcess within 24 hours.`,
-      'profile','',''
+      'profile',S.user.id,''
     );
     // Notify user
     await createNotif(S.user.id,'subscription',
@@ -1299,7 +1299,7 @@ const W={
       await createNotif(ADMIN_ID,'commission',
         `TMC Purchase: ${S.user.name}`,
         `${S.user.name} (${S.user.email}) wants to buy ${amtRaw} TMC.\nNaira total: ₦${nairaTotal.toLocaleString()} at ₦${counterRate.toFixed(0)}/TMC.\nPayment ref: ${ref}\n\nOnce confirmed, manually credit their wallet via the admin panel.`,
-        'profile','',''
+        'profile',S.user.id,''
       );
       // Notify user
       await createNotif(S.user.id,'subscription',
@@ -8554,9 +8554,12 @@ const A = {
           n.type==='tmc_request'||
           n.title?.toLowerCase().includes('tmc')||
           n.title?.toLowerCase().includes('purchase')||
+          n.title?.toLowerCase().includes('cash exchange')||
           n.body?.toLowerCase().includes('wants to buy')||
           n.body?.toLowerCase().includes('tmc purchase')||
-          n.body?.toLowerCase().includes('naira total')
+          n.body?.toLowerCase().includes('naira total')||
+          n.body?.toLowerCase().includes('cash exchange')||
+          (n.body?.toLowerCase().includes('bank:')&&n.body?.toLowerCase().includes('account:'))
         )
         .map(n=>({
           id:n.$id,
@@ -11666,9 +11669,10 @@ document.addEventListener('DOMContentLoaded', async()=>{
   }
 
   // 404 fallback for completely unknown paths
-  const _knownPaths=['/','/marketplace/orderboard','/marketplace/vendorlist','/marketplace/openforum','/financial/coinmarkets','/financial/datumlist','/financial/watchlist','/financial/portfolio','/blog','/subscribe','/profile','/kaykay'];
-  const _isKnown=_knownPaths.includes(_path)||_path.startsWith('/blog/')||_path.startsWith('/howtoguides/')||_path.startsWith('/marketplace/vendorlist/')||_path.startsWith('/api/');
-  if(!_isKnown&&_path!=='/'&&_path!==''){
+  const _knownPrefixes=['/marketplace','/financial','/blog','/howtoguides','/subscribe','/profile','/kaykay','/wallet','/api'];
+  const _normalizedPath=(_path.length>1&&_path.endsWith('/'))?_path.slice(0,-1):_path;
+  const _isKnown=_normalizedPath===''||_normalizedPath==='/'||_knownPrefixes.some(p=>_normalizedPath===p||_normalizedPath.startsWith(p+'/'));
+  if(!_isKnown){
     S.page='404';render();
   }
   const _qs=new URLSearchParams(window.location.search);
