@@ -1264,21 +1264,22 @@ const W={
     // Deduct TMC first
     const ok=await W.spend(amtRaw,'spend_commission',`Cash exchange — ₦${nairaAmount.toLocaleString()} to ${bank} ${acct}`,'');
     if(!ok) return;
-    // Notify admin to process
+    // Notify admin — store userId in orderId field and amount in category for refund use
     await createNotif(ADMIN_ID,'commission',
-      `💸 Cash exchange request — ${S.user.name}`,
-      `User: ${S.user.name} (${S.user.email})\nAmount: ${amtRaw.toFixed(3)} TMC = ₦${nairaAmount.toLocaleString()}\nBank: ${bank}\nAccount: ${acct}\nName: ${name}\nProcess within 24 hours.`,
-      'profile',S.user.id,''
+      `💸 Cash Exchange — ${S.user.name} — ${amtRaw.toFixed(3)} TMC`,
+      `User: ${S.user.name}\nEmail: ${S.user.email}\nUser ID: ${S.user.id}\nAmount: ${amtRaw.toFixed(3)} TMC\nNaira Value: ₦${nairaAmount.toLocaleString()}\nRate: ₦${(W.config.nairaPerTmc||306.08).toFixed(0)}/TMC\n\nPay to:\nBank: ${bank}\nAccount: ${acct}\nAccount Name: ${name}\n\nTMC already deducted. Dismiss ONLY after sending cash. Dismiss without sending = refund user.`,
+      'wallet',S.user.id,String(amtRaw)
     );
     // Notify user
     await createNotif(S.user.id,'subscription',
-      'Cash exchange request received ✓',
-      `Your request to exchange ${amtRaw.toFixed(3)} TMC (≈ ₦${nairaAmount.toLocaleString()}) to ${bank} ${acct} has been received. We'll process it within 24 hours.`,
+      '💸 Cash exchange request received ✓',
+      `Your request to exchange ${amtRaw.toFixed(3)} TMC (≈ ₦${nairaAmount.toLocaleString()}) to ${bank} ${acct} (${name}) has been received.\n\nWe'll send the cash within 24 hours. You'll get a notification when it's done.`,
       'wallet','',''
     );
+    await loadNotifications();
     err.textContent='';
     toast(`Exchange submitted! ₦${nairaAmount.toLocaleString()} will be sent to ${bank} ${acct} within 24 hours.`,'ok');
-    render(); // refresh wallet page with new balance
+    render();
   },
 
   // ── Buy TMC at counter ──
@@ -1295,16 +1296,16 @@ const W={
     if(!confirm(`Buy ${amtRaw} TMC for ₦${nairaTotal.toLocaleString()}?\n\nPay to: Zenith Bank 1312154595 (Datum Logistics)\nReference: ${ref}\n\nTMC will be credited within 2 hours after admin confirms payment.`)) return;
     err.textContent='';
     try{
-      // Notify admin
+      // Notify admin — store userId in orderId for easy wallet crediting
       await createNotif(ADMIN_ID,'commission',
-        `TMC Purchase: ${S.user.name}`,
-        `${S.user.name} (${S.user.email}) wants to buy ${amtRaw} TMC.\nNaira total: ₦${nairaTotal.toLocaleString()} at ₦${counterRate.toFixed(0)}/TMC.\nPayment ref: ${ref}\n\nOnce confirmed, manually credit their wallet via the admin panel.`,
-        'profile',S.user.id,''
+        `🛒 TMC Purchase Request — ${S.user.name} — ${amtRaw} TMC`,
+        `User: ${S.user.name}\nEmail: ${S.user.email}\nUser ID: ${S.user.id}\nAmount: ${amtRaw} TMC\nNaira Total: ₦${nairaTotal.toLocaleString()} at ₦${counterRate.toFixed(0)}/TMC\nPayment Ref: ${ref}\n\nCredit their wallet using the Credit Wallet button. TMC NOT yet deducted — this is a purchase request only.`,
+        'wallet',S.user.id,String(amtRaw)
       );
       // Notify user
       await createNotif(S.user.id,'subscription',
-        'TMC purchase request received ✓',
-        `Your request to buy ${amtRaw} TMC (₦${nairaTotal.toLocaleString()}) has been received. We'll credit your wallet within 2 hours of payment confirmation.`,
+        '🛒 TMC purchase request received ✓',
+        `Your request to buy ${amtRaw} TMC (₦${nairaTotal.toLocaleString()}) has been received.\n\nPay to: Zenith Bank 1312154595 (Datum Logistics)\nRef: ${ref}\n\nTMC will be credited within 2 hours of payment confirmation.`,
         'wallet','',''
       );
       await loadNotifications();
@@ -4122,10 +4123,13 @@ const P = {
                 <div style="font-size:.78rem;color:var(--t2);line-height:1.6;margin-bottom:10px;white-space:pre-wrap">${n.body}</div>
                 <div style="font-size:.72rem;color:var(--t3);margin-bottom:10px">${new Date(n.createdAt).toLocaleString()}</div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <button class="btn bc bsm" onclick="A.approveTMCRequest('${n.id}','${n.userId||''}')">
-                    <i data-lucide="check" style="width:11px;height:11px"></i>Mark Credited
+                  <button class="btn bc bsm" onclick="A.approveTMCRequest('${n.id}','${n.userId||''}','${n.source||'notif'}')">
+                    <i data-lucide="check" style="width:11px;height:11px"></i>Mark Done
                   </button>
-                  <button class="btn bg bsm" style="color:var(--t3)" onclick="A.dismissTMCRequest('${n.id}')">
+                  <button class="btn bg bsm" onclick="A.adminCreditTMC()" title="Manually credit wallet">
+                    <i data-lucide="plus-circle" style="width:11px;height:11px"></i>Credit Wallet
+                  </button>
+                  <button class="btn bg bsm" style="color:var(--t3)" onclick="A.dismissTMCRequest('${n.id}','${n.source||'notif'}')">
                     Dismiss
                   </button>
                 </div>
@@ -8537,40 +8541,64 @@ const A = {
   async loadTMCRequests(){
     if(S.user?.id!==ADMIN_ID) return;
     try{
-      // Load ALL recent admin notifications and filter client-side
-      // This avoids type mismatch issues
-      const r=await _db.listDocuments(AW_DB_ID,'notifications',[
+      // Pull from BOTH sources — notifications AND tmc_transactions
+      // Cash exchange requests are saved to tmc_transactions as spend_commission
+      // Buy TMC requests are saved to notifications as commission type
+
+      // Source 1: notifications to admin
+      const r1=await _db.listDocuments(AW_DB_ID,'notifications',[
         Query.equal('userId',[ADMIN_ID]),
         Query.orderDesc('$createdAt'),
         Query.limit(200),
       ]);
-      console.log('Admin notifs loaded:',r.documents.length);
-      console.log('Types found:',[...new Set(r.documents.map(n=>n.type))]);
-      console.log('Titles found:',r.documents.map(n=>n.title));
-
-      // Match any notification that looks like a TMC request
-      S._adminTMCRequests=r.documents
+      const fromNotifs=r1.documents
         .filter(n=>
+          n.type==='commission'||
           n.type==='tmc_request'||
           n.title?.toLowerCase().includes('tmc')||
-          n.title?.toLowerCase().includes('purchase')||
           n.title?.toLowerCase().includes('cash exchange')||
-          n.body?.toLowerCase().includes('wants to buy')||
-          n.body?.toLowerCase().includes('tmc purchase')||
+          n.title?.toLowerCase().includes('purchase')||
+          n.body?.toLowerCase().includes('bank:')||
+          n.body?.toLowerCase().includes('account:')||
           n.body?.toLowerCase().includes('naira total')||
-          n.body?.toLowerCase().includes('cash exchange')||
-          (n.body?.toLowerCase().includes('bank:')&&n.body?.toLowerCase().includes('account:'))
+          n.body?.toLowerCase().includes('wants to buy')
         )
         .map(n=>({
           id:n.$id,
-          title:n.title,
+          source:'notif',
+          title:n.title||'TMC Request',
           body:n.body||n.message||'',
           createdAt:n.$createdAt,
-          userId:n.orderId||n.refId||'',
+          userId:n.orderId||'',
           read:n.read||false,
         }));
 
-      console.log('TMC requests found:',S._adminTMCRequests.length);
+      // Source 2: tmc_transactions — cash exchange = spend_commission with "Cash exchange" in description
+      const r2=await _db.listDocuments(AW_DB_ID,'tmc_transactions',[
+        Query.orderDesc('$createdAt'),
+        Query.limit(200),
+      ]);
+      const fromTx=r2.documents
+        .filter(n=>
+          (n.type==='spend_commission'&&n.description?.toLowerCase().includes('cash exchange'))
+        )
+        .map(n=>({
+          id:n.$id,
+          source:'transaction',
+          title:`💸 Cash Exchange — ${Math.abs(n.amount)} TMC`,
+          body:n.description||'',
+          createdAt:n.createdAt||n.$createdAt,
+          userId:n.userId||'',
+          amount:Math.abs(n.amount),
+          read:false,
+        }));
+
+      // Combine, deduplicate by id, sort by date newest first
+      const combined=[...fromNotifs,...fromTx]
+        .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+
+      S._adminTMCRequests=combined;
+      console.log('TMC requests found:',combined.length,'(notifs:'+fromNotifs.length+' tx:'+fromTx.length+')');
       render();
     }catch(e){
       console.error('loadTMCRequests error:',e);
@@ -8578,34 +8606,112 @@ const A = {
     }
   },
 
-  async approveTMCRequest(notifId,userId){
-    if(!confirm('Mark this TMC request as processed — have you credited the user\'s wallet via the Credit TMC button?')) return;
+  async approveTMCRequest(notifId,userId,source){
+    const req=(S._adminTMCRequests||[]).find(n=>n.id===notifId);
+    const isCashExchange=req&&(
+      req.title?.toLowerCase().includes('cash exchange')||
+      req.body?.toLowerCase().includes('bank:')
+    );
+    const isPurchase=req&&(
+      req.title?.toLowerCase().includes('purchase')||
+      req.body?.toLowerCase().includes('credit their wallet')
+    );
+    const confirmMsg=isCashExchange
+      ?'Confirm you have sent the cash to the user\'s bank account?\n\nThis will notify them that cash has been sent.'
+      :isPurchase
+      ?'Confirm you have credited the user\'s wallet with the TMC they purchased?\n\nThis will notify them that TMC has been credited.'
+      :'Mark this request as processed?';
+    if(!confirm(confirmMsg)) return;
     try{
-      // Mark notification as read
-      await _db.updateDocument(AW_DB_ID,'notifications',notifId,{read:true});
-      // Notify the user their TMC has been credited
-      if(userId&&userId!=='undefined'&&userId.length>5){
-        await createNotif(userId,'subscription',
-          '✓ Your TMC has been credited!',
-          'Your TMC purchase request has been processed. Your new balance is now updated — check your wallet.',
-          'wallet'
-        );
+      if(source!=='transaction'){
+        await _db.updateDocument(AW_DB_ID,'notifications',notifId,{read:true}).catch(()=>{});
       }
-      // Remove from local list
+      const _uid=userId&&userId.length>5&&userId!=='undefined'?userId:null;
+      if(_uid){
+        const userMsg=isCashExchange
+          ?'Your cash has been sent to your bank account. Please check your account — it may take a few minutes to reflect.'
+          :isPurchase
+          ?'Your TMC purchase has been confirmed and credited to your wallet. Check your balance now.'
+          :'Your request has been completed. Check your wallet or bank account.';
+        const userTitle=isCashExchange
+          ?'✅ Cash sent to your bank account'
+          :isPurchase
+          ?'✅ TMC credited to your wallet'
+          :'✅ Request completed';
+        await createNotif(_uid,'subscription',userTitle,userMsg,'wallet');
+      }
       S._adminTMCRequests=(S._adminTMCRequests||[]).filter(n=>n.id!==notifId);
       render();
-      toast('Marked as credited — user notified.','ok');
+      toast('Marked as done — user notified.','ok');
     }catch(e){
       toast('Failed: '+e.message,'err');
     }
   },
 
-  async dismissTMCRequest(notifId){
+  async dismissTMCRequest(notifId,source){
+    // Find the request to check if it was a cash exchange (needs refund)
+    const req=(S._adminTMCRequests||[]).find(n=>n.id===notifId);
+    const isCashExchange=req&&(
+      req.title?.toLowerCase().includes('cash exchange')||
+      req.body?.toLowerCase().includes('bank:')||
+      req.body?.toLowerCase().includes('already deducted')
+    );
+    const userId=req?.userId||'';
+    const amount=parseFloat(req?.amount||0)||
+      parseFloat((req?.body?.match(/Amount:\s*([\d.]+)\s*TMC/)?.[1])||0)||
+      parseFloat((req?.title?.match(/([\d.]+)\s*TMC/)?.[1])||0);
+
+    if(isCashExchange&&userId&&amount>0){
+      if(!confirm(`Dismiss this cash exchange request?\n\nThis will REFUND ${amount} TMC back to the user since you have not sent the cash.\n\nOnly dismiss without refund if you already sent the cash.`)) return;
+      // Refund the user's TMC
+      try{
+        const walletRes=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
+          Query.equal('userId',[userId]),
+          Query.limit(1),
+        ]);
+        if(walletRes.documents[0]){
+          const wd=walletRes.documents[0];
+          const newBal=parseFloat(((wd.balance||0)+amount).toFixed(3));
+          const newEarned=parseFloat(((wd.lifetimeEarned||0)+amount).toFixed(3));
+          await _db.updateDocument(AW_DB_ID,'tmc_wallet',wd.$id,{
+            balance:newBal,
+            lifetimeEarned:newEarned,
+          });
+          // Log refund transaction
+          await _db.createDocument(AW_DB_ID,'tmc_transactions',ID.unique(),{
+            userId,
+            type:'admin_grant',
+            amount:Number(amount),
+            balanceAfter:newBal,
+            description:`Cash exchange refund — request dismissed by admin`,
+            refId:notifId,
+            createdAt:new Date().toISOString(),
+          });
+          // Notify user of refund
+          await createNotif(userId,'subscription',
+            `↩️ Cash exchange refund — ${amount} TMC returned`,
+            `Your cash exchange request of ${amount} TMC was cancelled. Your TMC has been refunded to your wallet. New balance: ${newBal.toFixed(3)} TMC.`,
+            'wallet'
+          );
+          toast(`Refunded ${amount} TMC to user.`,'ok');
+        }
+      }catch(e){
+        toast('Refund failed: '+e.message,'err');
+        return;
+      }
+    } else {
+      if(!confirm('Dismiss this request?')) return;
+    }
+
+    // Mark notification as read
     try{
-      await _db.updateDocument(AW_DB_ID,'notifications',notifId,{read:true});
-      S._adminTMCRequests=(S._adminTMCRequests||[]).filter(n=>n.id!==notifId);
-      render();
-    }catch(e){toast('Failed: '+e.message,'err');}
+      if(source!=='transaction'){
+        await _db.updateDocument(AW_DB_ID,'notifications',notifId,{read:true}).catch(()=>{});
+      }
+    }catch(e){}
+
+    S._adminTMCRequests=(S._adminTMCRequests||[]).filter(n=>n.id!==notifId);
+    render();
   },
 
   async loadAllAdminNotifs(){
@@ -11668,11 +11774,19 @@ document.addEventListener('DOMContentLoaded', async()=>{
     })();
   }
 
-  // 404 fallback for completely unknown paths
+  // 404 fallback — only for truly unknown paths
+  // Never show 404 on homepage or index
   const _knownPrefixes=['/marketplace','/financial','/blog','/howtoguides','/subscribe','/profile','/kaykay','/wallet','/api'];
   const _normalizedPath=(_path.length>1&&_path.endsWith('/'))?_path.slice(0,-1):_path;
-  const _isKnown=_normalizedPath===''||_normalizedPath==='/'||_knownPrefixes.some(p=>_normalizedPath===p||_normalizedPath.startsWith(p+'/'));
-  if(!_isKnown){
+  const _isKnown=
+    _normalizedPath===''||
+    _normalizedPath==='/'||
+    _normalizedPath==='/index.html'||
+    _normalizedPath==='/index'||
+    _knownPrefixes.some(p=>_normalizedPath===p||_normalizedPath.startsWith(p+'/'));
+  // Only show 404 if genuinely unknown AND page hasn't already been set by a route above
+  if(!_isKnown&&S.page==='land'){
+    console.warn('Unknown path — 404:',_normalizedPath);
     S.page='404';render();
   }
   const _qs=new URLSearchParams(window.location.search);
