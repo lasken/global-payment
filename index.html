@@ -1262,7 +1262,7 @@ const W={
     if(!confirm(`Exchange ${amtRaw.toFixed(3)} TMC for ₦${Math.round(amtRaw*(W.config.nairaPerTmc||306.08)).toLocaleString()}?\n\nBank: ${bank}\nAccount: ${acct}\nName: ${name}\n\nThis is non-reversible.`)) return;
     const nairaAmount=Math.round(amtRaw*(W.config.nairaPerTmc||306.08));
     // Deduct TMC first
-    const ok=await W.spend(amtRaw,'spend_commission',`Cash exchange — ₦${nairaAmount.toLocaleString()} to ${bank} ${acct}`,'');
+    const ok=await W.spend(amtRaw,'cash_exchange',`Cash exchange — ₦${nairaAmount.toLocaleString()} to ${bank} ${acct}`,'');
     if(!ok) return;
     // Notify admin — store userId in orderId field and amount in category for refund use
     await createNotif(ADMIN_ID,'commission',
@@ -1339,6 +1339,7 @@ const W={
       referral         :'users',
       spend_sub        :'zap',
       spend_commission :'dollar-sign',
+      cash_exchange    :'banknote',
       admin_grant      :'gift',
       wager_win        :'trophy',
       wager_loss       :'trending-down',
@@ -1353,9 +1354,10 @@ const W={
       vote             :'Voted for Vendor',
       guide_read       :'Read a Guide',
       referral         :'Referral Bonus',
-      spend_sub        :'Subscription',
-      spend_commission :'Wager / Commission',
-      admin_grant      :'Credit / Wager Win',
+      spend_sub        :'Pro Subscription',
+      spend_commission :'Commission',
+      cash_exchange    :'Cash Exchange',
+      admin_grant      :'Admin Credit',
       wager_win        :'Wager Won',
       wager_loss       :'Wager Lost',
       wager_refund     :'Wager Refund',
@@ -8580,6 +8582,7 @@ const A = {
       ]);
       const fromTx=r2.documents
         .filter(n=>
+          n.type==='cash_exchange'||
           (n.type==='spend_commission'&&n.description?.toLowerCase().includes('cash exchange'))
         )
         .map(n=>({
@@ -11074,7 +11077,7 @@ Rules:
     if(!confirm(`Stake ${amtRaw.toFixed(2)} TMC on "${opt==='A'?wagerTitle+' → Option A':wagerTitle+' → Option B'}"?\n\nThis is non-refundable unless the wager is voided.`)) return;
 
     // Deduct TMC first
-    const ok=await W.spend(amtRaw,'spend_commission',`Wager: ${wagerTitle} — Option ${opt}`,wagerId);
+    const ok=await W.spend(amtRaw,'wager_stake',`Wager: ${wagerTitle} — Option ${opt}`,wagerId);
     if(!ok) return;
 
     // Save bet directly via _db to avoid AW_COL mapping issues
