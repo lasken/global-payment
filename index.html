@@ -1318,6 +1318,196 @@ const W={
     }
   },
 
+  // ── Send TMC to friend ──
+  async sendTMC(){
+    if(!S.user){M.auth();return;}
+    if(!W.wallet){toast('Wallet loading…','err');return;}
+    const bal=W.wallet.balance||0;
+    if(bal<=0){toast('You have no TMC to send.','err');return;}
+    M.show(`<div class="mback" onclick="if(event.target===this)M.close()">
+      <div class="modal" style="max-width:440px">
+        <div class="mhdr">
+          <div><div class="mey">$TMC Wallet</div><h2 class="mtitle">Send $TMC to a Friend</h2></div>
+          <button class="mclose" onclick="M.close()"><i data-lucide="x" style="width:15px;height:15px"></i></button>
+        </div>
+        <div style="background:linear-gradient(135deg,#1a1408,#2a1f00);border-radius:var(--rmd);padding:16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:.78rem;color:rgba(212,175,55,.6)">Your balance</div>
+          <div style="font-family:var(--fd);font-size:1.4rem;color:#D4AF37;font-weight:700">${W.fmt(bal)} TMC</div>
+        </div>
+        <div class="fg">
+          <label>Recipient's email or username</label>
+          <input type="text" id="send-tmc-recipient" placeholder="Enter their email or @username" autocomplete="off"/>
+          <div id="send-tmc-user-preview" style="min-height:32px;margin-top:6px"></div>
+        </div>
+        <div class="fg">
+          <label>Amount to send <span style="font-weight:400;color:var(--t3)">(max ${W.fmt(bal)} TMC)</span></label>
+          <div style="position:relative">
+            <input type="number" id="send-tmc-amount" placeholder="e.g. 5" min="0.1" max="${bal}" step="0.1"
+              oninput="(function(){
+                const v=parseFloat(document.getElementById('send-tmc-amount').value)||0;
+                const bal=${bal};
+                const p=document.getElementById('send-tmc-amount-preview');
+                if(v>bal){document.getElementById('send-tmc-amount').value=bal.toFixed(3);}
+                if(p) p.textContent=v>0?'≈ \$'+(v*${W.config.usdPerTmc||0.222}).toFixed(2)+' USD':'';
+              })()"/>
+          </div>
+          <div id="send-tmc-amount-preview" style="font-size:.78rem;color:#D4AF37;font-weight:600;margin-top:4px;min-height:18px"></div>
+        </div>
+        <div class="fg">
+          <label>Note (optional)</label>
+          <input type="text" id="send-tmc-note" placeholder="e.g. Thanks for lunch!" maxlength="100"/>
+        </div>
+        <div class="ferr" id="send-tmc-err"></div>
+        <button class="btn" id="send-tmc-btn" style="width:100%;justify-content:center;padding:13px;background:#D4AF37;border:none;color:#1a1408;font-weight:700" onclick="W.confirmSendTMC()">
+          <i data-lucide="send" style="width:14px;height:14px"></i>Send $TMC
+        </button>
+        <div style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:10px">TMC transfers are instant and irreversible</div>
+      </div>
+    </div>`);
+    lucide.createIcons();
+  },
+
+  async confirmSendTMC(){
+    const recipientInput=document.getElementById('send-tmc-recipient')?.value?.trim().toLowerCase();
+    const amount=parseFloat(document.getElementById('send-tmc-amount')?.value);
+    const note=document.getElementById('send-tmc-note')?.value?.trim();
+    const err=document.getElementById('send-tmc-err');
+    const btn=document.getElementById('send-tmc-btn');
+
+    if(!recipientInput){err.textContent='Please enter recipient email or username.';return;}
+    if(!amount||isNaN(amount)||amount<0.1){err.textContent='Minimum send amount is 0.1 TMC.';return;}
+    if(amount>W.wallet.balance){err.textContent=`You only have ${W.fmt(W.wallet.balance)} TMC.`;return;}
+
+    // Find recipient by email or username
+    btn.disabled=true;btn.textContent='Looking up recipient…';
+    err.textContent='';
+
+    try{
+      // Search by email first
+      let recipientProfile=null;
+      const byEmail=await _db.listDocuments(AW_DB_ID,'profiles',[
+        Query.equal('email',[recipientInput]),
+        Query.limit(1),
+      ]).catch(()=>({documents:[]}));
+      if(byEmail.documents[0]) recipientProfile=byEmail.documents[0];
+
+      // If not found by email try by name (case insensitive not supported — try exact)
+      if(!recipientProfile){
+        const byName=await _db.listDocuments(AW_DB_ID,'profiles',[
+          Query.search('name',recipientInput.replace('@','')),
+          Query.limit(5),
+        ]).catch(()=>({documents:[]}));
+        if(byName.documents.length===1) recipientProfile=byName.documents[0];
+        else if(byName.documents.length>1){
+          // Show picker
+          err.textContent=`Found ${byName.documents.length} users matching that name — please use their email instead.`;
+          btn.disabled=false;btn.textContent='Send $TMC';
+          return;
+        }
+      }
+
+      if(!recipientProfile){
+        err.textContent='No user found with that email or username. Ask them to share their registered email.';
+        btn.disabled=false;btn.textContent='Send $TMC';
+        return;
+      }
+
+      if(recipientProfile.userId===S.user.id){
+        err.textContent='You cannot send TMC to yourself.';
+        btn.disabled=false;btn.textContent='Send $TMC';
+        return;
+      }
+
+      const recipientName=recipientProfile.name||recipientProfile.displayName||'User';
+      const recipientId=recipientProfile.userId;
+
+      if(!confirm(`Send ${amount.toFixed(3)} TMC to ${recipientName}?\n\nThis is instant and cannot be undone.`)){
+        btn.disabled=false;btn.textContent='Send $TMC';
+        return;
+      }
+
+      btn.textContent='Sending…';
+
+      // Deduct from sender — fetch fresh wallet to get $id
+      const senderWalletRes=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
+        Query.equal('userId',[S.user.id]),
+        Query.limit(1),
+      ]);
+      if(!senderWalletRes.documents[0]){
+        err.textContent='Wallet not found. Please refresh and try again.';
+        btn.disabled=false;btn.textContent='Send $TMC';
+        return;
+      }
+      const senderWallet=senderWalletRes.documents[0];
+      const newSenderBal=parseFloat(((senderWallet.balance||0)-amount).toFixed(3));
+      if(newSenderBal<0){
+        err.textContent='Insufficient balance.';
+        btn.disabled=false;btn.textContent='Send $TMC';
+        return;
+      }
+      await _db.updateDocument(AW_DB_ID,'tmc_wallet',senderWallet.$id,{
+        balance:newSenderBal,
+        lifetimeSpent:parseFloat(((senderWallet.lifetimeSpent||0)+amount).toFixed(3)),
+      });
+      // Log sender transaction
+      const _sendTxId='tx'+Date.now()+'s';
+      await _db.createDocument(AW_DB_ID,'tmc_transactions',_sendTxId,{
+        userId:S.user.id,
+        type:'tmc_send',
+        amount:-Number(amount),
+        balanceAfter:newSenderBal,
+        description:`Sent ${amount.toFixed(3)} TMC to ${recipientName}${note?' — '+note:''}`,
+        refId:recipientId,
+        createdAt:new Date().toISOString(),
+      });
+
+      // Credit recipient
+      const recipWalletRes=await _db.listDocuments(AW_DB_ID,'tmc_wallet',[
+        Query.equal('userId',[recipientId]),
+        Query.limit(1),
+      ]);
+      if(recipWalletRes.documents[0]){
+        const rw=recipWalletRes.documents[0];
+        const newRecipBal=parseFloat(((rw.balance||0)+amount).toFixed(3));
+        await _db.updateDocument(AW_DB_ID,'tmc_wallet',rw.$id,{
+          balance:newRecipBal,
+          lifetimeEarned:parseFloat(((rw.lifetimeEarned||0)+amount).toFixed(3)),
+        });
+        // Log recipient transaction
+        const _recvTxId='tx'+Date.now()+'r';
+        await _db.createDocument(AW_DB_ID,'tmc_transactions',_recvTxId,{
+          userId:recipientId,
+          type:'tmc_receive',
+          amount:Number(amount),
+          balanceAfter:newRecipBal,
+          description:`Received ${amount.toFixed(3)} TMC from ${S.user.name}${note?' — '+note:''}`,
+          refId:S.user.id,
+          createdAt:new Date().toISOString(),
+        });
+        // Notify recipient
+        await createNotif(recipientId,'deal',
+          `💛 ${S.user.name} sent you ${amount.toFixed(3)} TMC!`,
+          `You just received ${amount.toFixed(3)} TMC from ${S.user.name}.${note?' Message: "'+note+'"':''} Check your wallet.`,
+          'wallet'
+        );
+      }
+
+      // Update local wallet state
+      W.wallet.balance=newSenderBal;
+      W.wallet.lifetimeSpent=(W.wallet.lifetimeSpent||0)+amount;
+      _cacheClear('tmc_wallet_'+S.user.id);
+
+      M.close();
+      render();
+      toast(`Sent ${amount.toFixed(3)} TMC to ${recipientName}! 🎉`,'ok');
+
+    }catch(e){
+      console.error('sendTMC error:',e);
+      err.textContent='Failed: '+e.message;
+      btn.disabled=false;btn.textContent='Send $TMC';
+    }
+  },
+
   // ── Format balance for display ──
   fmt(n){
     if(n==null) return'—';
@@ -1340,6 +1530,8 @@ const W={
       spend_sub        :'zap',
       spend_commission :'dollar-sign',
       cash_exchange    :'banknote',
+      tmc_send         :'send',
+      tmc_receive      :'download',
       admin_grant      :'gift',
       wager_win        :'trophy',
       wager_loss       :'trending-down',
@@ -1357,6 +1549,8 @@ const W={
       spend_sub        :'Pro Subscription',
       spend_commission :'Commission',
       cash_exchange    :'Cash Exchange',
+      tmc_send         :'Sent to Friend',
+      tmc_receive      :'Received from Friend',
       admin_grant      :'Admin Credit',
       wager_win        :'Wager Won',
       wager_loss       :'Wager Lost',
@@ -1410,7 +1604,13 @@ const W={
           <i data-lucide="zap" style="width:15px;height:15px"></i>
           Pay Sub (${W.config.subsRate||45} TMC)
         </button>
-        <button class="btn bo" style="justify-content:center;padding:13px;border-color:#D4AF37;color:#D4AF37" onclick="S.page='market';S.mTab='board';S.mFilter='finance';S._preFillOrder={title:'WTB $TMC — offering ₦',category:'finance',type:'buy',price:'',desc:'Looking to buy $TMC Datum Coins. Will pay ₦'+(W.config.nairaPerTmc||333)+' per TMC. DM with amount available.'};loadOrders();render()">
+        <button class="btn bo" style="justify-content:center;padding:13px;border-color:#D4AF37;color:#D4AF37" onclick="W.sendTMC()">
+          <i data-lucide="send" style="width:15px;height:15px"></i>
+          Send $TMC
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <button class="btn bo" style="justify-content:center;padding:13px;border-color:var(--bdr);color:var(--t2)" onclick="S.page='market';S.mTab='board';S.mFilter='finance';S._preFillOrder={title:'WTB $TMC — offering ₦',category:'finance',type:'buy',price:'',desc:'Looking to buy $TMC Datum Coins. Will pay ₦'+(W.config.nairaPerTmc||333)+' per TMC. DM with amount available.'};loadOrders();render()">
           <i data-lucide="arrow-left-right" style="width:15px;height:15px"></i>
           Trade $TMC
         </button>
@@ -4120,15 +4320,22 @@ const P = {
             </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               ${S._adminTMCRequests.map(n=>`
-              <div style="background:var(--white);border:1.5px solid var(--bdr);border-radius:var(--rsm);padding:14px">
-                <div style="font-weight:700;font-size:.875rem;color:var(--t1);margin-bottom:4px">${n.title}</div>
-                <div style="font-size:.78rem;color:var(--t2);line-height:1.6;margin-bottom:10px;white-space:pre-wrap">${n.body}</div>
+              <div style="background:var(--white);border:1.5px solid ${n.read?'var(--bdr)':'rgba(212,175,55,.4)'};border-radius:var(--rsm);padding:14px">
+                <div style="font-weight:700;font-size:.875rem;color:var(--t1);margin-bottom:6px">${n.title}</div>
+                ${n.userName?`
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;padding:8px 10px;background:rgba(212,175,55,.08);border-radius:var(--rsm);border:1px solid rgba(212,175,55,.2)">
+                  <i data-lucide="user" style="width:13px;height:13px;color:#D4AF37;flex-shrink:0"></i>
+                  <span style="font-size:.8rem;font-weight:700;color:var(--t1)">${n.userName}</span>
+                  ${n.email?`<span style="font-size:.72rem;color:var(--t3)">· ${n.email}</span>`:''}
+                  ${n.userId?`<span style="font-size:.68rem;color:var(--t3);margin-left:auto">ID: ${n.userId.slice(0,8)}…</span>`:''}
+                </div>`:''}
+                <div style="font-size:.78rem;color:var(--t2);line-height:1.8;margin-bottom:10px;white-space:pre-wrap;background:var(--off);padding:10px;border-radius:var(--rsm)">${n.body}</div>
                 <div style="font-size:.72rem;color:var(--t3);margin-bottom:10px">${new Date(n.createdAt).toLocaleString()}</div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                   <button class="btn bc bsm" onclick="A.approveTMCRequest('${n.id}','${n.userId||''}','${n.source||'notif'}')">
                     <i data-lucide="check" style="width:11px;height:11px"></i>Mark Done
                   </button>
-                  <button class="btn bg bsm" onclick="A.adminCreditTMC()" title="Manually credit wallet">
+                  <button class="btn bg bsm" onclick="A.adminCreditTMC()">
                     <i data-lucide="plus-circle" style="width:11px;height:11px"></i>Credit Wallet
                   </button>
                   <button class="btn bg bsm" style="color:var(--t3)" onclick="A.dismissTMCRequest('${n.id}','${n.source||'notif'}')">
@@ -8565,36 +8772,60 @@ const A = {
           n.body?.toLowerCase().includes('naira total')||
           n.body?.toLowerCase().includes('wants to buy')
         )
-        .map(n=>({
-          id:n.$id,
-          source:'notif',
-          title:n.title||'TMC Request',
-          body:n.body||n.message||'',
-          createdAt:n.$createdAt,
-          userId:n.orderId||'',
-          read:n.read||false,
-        }));
+        .map(n=>{
+          // Extract username from body "User: NAME\n" or from title "— NAME —"
+          const userMatch=n.body?.match(/User:\s*([^\n]+)/);
+          const titleMatch=n.title?.match(/—\s*([^—]+?)\s*—/);
+          const userName=userMatch?.[1]?.trim()||titleMatch?.[1]?.trim()||'';
+          // Extract email from body
+          const emailMatch=n.body?.match(/Email:\s*([^\n]+)/);
+          const email=emailMatch?.[1]?.trim()||'';
+          return{
+            id:n.$id,
+            source:'notif',
+            title:n.title||'TMC Request',
+            body:n.body||n.message||'',
+            createdAt:n.$createdAt,
+            userId:n.orderId||'',
+            userName,
+            email,
+            read:n.read||false,
+          };
+        });
 
       // Source 2: tmc_transactions — cash exchange = spend_commission with "Cash exchange" in description
       const r2=await _db.listDocuments(AW_DB_ID,'tmc_transactions',[
         Query.orderDesc('$createdAt'),
         Query.limit(200),
       ]);
-      const fromTx=r2.documents
-        .filter(n=>
-          n.type==='cash_exchange'||
-          (n.type==='spend_commission'&&n.description?.toLowerCase().includes('cash exchange'))
-        )
-        .map(n=>({
-          id:n.$id,
-          source:'transaction',
-          title:`💸 Cash Exchange — ${Math.abs(n.amount)} TMC`,
-          body:n.description||'',
-          createdAt:n.createdAt||n.$createdAt,
-          userId:n.userId||'',
-          amount:Math.abs(n.amount),
-          read:false,
-        }));
+      // Load profile names for transaction userIds
+      const fromTxRaw=r2.documents.filter(n=>
+        n.type==='cash_exchange'||
+        (n.type==='spend_commission'&&n.description?.toLowerCase().includes('cash exchange'))
+      );
+      // Batch load profiles for userIds
+      const txUserIds=[...new Set(fromTxRaw.map(n=>n.userId).filter(Boolean))];
+      const profileMap={};
+      if(txUserIds.length>0){
+        try{
+          const pRes=await _db.listDocuments(AW_DB_ID,'profiles',[
+            Query.equal('userId',txUserIds.slice(0,25)),
+            Query.limit(25),
+          ]);
+          pRes.documents.forEach(p=>{profileMap[p.userId]=p.name||p.displayName||'';});
+        }catch(e){}
+      }
+      const fromTx=fromTxRaw.map(n=>({
+        id:n.$id,
+        source:'transaction',
+        title:`💸 Cash Exchange — ${Math.abs(n.amount)} TMC`,
+        body:n.description||'',
+        createdAt:n.createdAt||n.$createdAt,
+        userId:n.userId||'',
+        userName:profileMap[n.userId]||'',
+        amount:Math.abs(n.amount),
+        read:false,
+      }));
 
       // Combine, deduplicate by id, sort by date newest first
       const combined=[...fromNotifs,...fromTx]
