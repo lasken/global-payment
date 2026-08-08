@@ -1318,6 +1318,21 @@ const W={
     }
   },
 
+  // ── Trade TMC — open post listing modal directly ──
+  tradeTMCDirect(){
+    if(!S.user){M.auth();return;}
+    // Pre-fill the order and open modal immediately
+    S._preFillOrder={
+      title:'WTB $TMC — offering ₦',
+      category:'finance',
+      type:'buy',
+      price:'',
+      desc:'Looking to buy $TMC Datum Coins. Will pay ₦'+(W.config.nairaPerTmc||306)+' per TMC. DM with amount available.',
+    };
+    // Open the create order modal directly without navigating away
+    A.createOrder();
+  },
+
   // ── Send TMC to friend ──
   async sendTMC(){
     if(!S.user){M.auth();return;}
@@ -1490,6 +1505,13 @@ const W={
           `You just received ${amount.toFixed(3)} TMC from ${S.user.name}.${note?' Message: "'+note+'"':''} Check your wallet.`,
           'wallet'
         );
+        // Notify sender too
+        await createNotif(S.user.id,'deal',
+          `✅ Sent ${amount.toFixed(3)} TMC to ${recipientName}`,
+          `Your transfer of ${amount.toFixed(3)} TMC to ${recipientName} was successful.${note?' Note: "'+note+'"':''} New balance: ${newSenderBal.toFixed(3)} TMC.`,
+          'wallet'
+        );
+        await loadNotifications();
       }
 
       // Update local wallet state
@@ -1610,7 +1632,7 @@ const W={
         </button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-        <button class="btn bo" style="justify-content:center;padding:13px;border-color:var(--bdr);color:var(--t2)" onclick="S.page='market';S.mTab='board';S.mFilter='finance';S._preFillOrder={title:'WTB $TMC — offering ₦',category:'finance',type:'buy',price:'',desc:'Looking to buy $TMC Datum Coins. Will pay ₦'+(W.config.nairaPerTmc||333)+' per TMC. DM with amount available.'};loadOrders();render()">
+        <button class="btn bo" style="justify-content:center;padding:13px;border-color:var(--bdr);color:var(--t2)" onclick="W.tradeTMCDirect()">
           <i data-lucide="arrow-left-right" style="width:15px;height:15px"></i>
           Trade $TMC
         </button>
@@ -3779,6 +3801,19 @@ function render(){
   // ── Inject page-specific schema ──
   _injectPageSchema(_buildPageSchema());
 
+  // Maintenance banner
+  let _mb=document.getElementById('maintenance-banner');
+  if(_MAINTENANCE){
+    if(!_mb){
+      _mb=document.createElement('div');
+      _mb.id='maintenance-banner';
+      _mb.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#DC2626;color:#fff;text-align:center;padding:10px 16px;font-size:.8375rem;font-weight:600';
+      _mb.textContent='🔧 We are experiencing a temporary issue. Login is unavailable right now — we\'re fixing it urgently. Sorry for the inconvenience.';
+      document.body.prepend(_mb);
+    }
+  } else {
+    if(_mb) _mb.remove();
+  }
   const root=document.getElementById('root');
   if     (S.page==='land')    root.innerHTML=P.land();
   else if(S.page==='profile') root.innerHTML=P.profile();
@@ -3821,6 +3856,7 @@ function render(){
     }
   }
 }
+const _MAINTENANCE=true; // set to true when Appwrite is down, false when fixed
 function renderNav(){
   const el=document.getElementById('nact');
   if(S.user){
