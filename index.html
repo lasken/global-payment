@@ -3807,9 +3807,9 @@ function render(){
     if(!_mb){
       _mb=document.createElement('div');
       _mb.id='maintenance-banner';
-      _mb.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#DC2626;color:#fff;text-align:center;padding:10px 16px;font-size:.8375rem;font-weight:600';
-      _mb.textContent='🔧 We are experiencing a temporary issue. Login is unavailable right now — we\'re fixing it urgently. Sorry for the inconvenience.';
-      document.body.prepend(_mb);
+      _mb.style.cssText='position:fixed;top:56px;left:0;right:0;z-index:998;background:#DC2626;color:#fff;text-align:center;padding:9px 16px;font-size:.8rem;font-weight:600;letter-spacing:.01em;display:flex;align-items:center;justify-content:center;gap:8px';
+      _mb.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> System maintenance in progress — login temporarily unavailable. Back shortly.';
+      document.body.appendChild(_mb);
     }
   } else {
     if(_mb) _mb.remove();
@@ -7331,7 +7331,12 @@ const A = {
         :'Welcome back, '+S.user.name.split(' ')[0]+'!';
       toast(welcomeMsg,'ok');
     }catch(e){
-      err.textContent='Login failed: '+(e.message.includes('401')||e.message.includes('invalid')?'Wrong email or password.':e.message);
+      const _em=e.message||'';
+      if(_em.includes('readonly')||_em.includes('read only')||_em.includes('Read only')){
+        err.innerHTML='Our system is temporarily under maintenance. Please try again shortly — we\'re fixing it urgently. 🔧';
+      } else {
+        err.textContent='Login failed: '+(_em.includes('401')||_em.includes('invalid')?'Wrong email or password.':_em);
+      }
       btn.disabled=false;btn.textContent='Sign In';
     }
   },
